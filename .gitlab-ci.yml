@@ -98,14 +98,13 @@ deploy:
   script:
     - !reference [.configure_docker, script]
     - |
-      : "${DEPLOY_DIR:?set DEPLOY_DIR}"
       tsh ssh "${DEPLOY_SSH_USER}@${DEPLOY_VM}" "sudo install -d -o '${DEPLOY_SSH_USER}' '${FRONTEND_DIR}'"
       tsh scp docker-compose.prod.yml "${DEPLOY_SSH_USER}@${DEPLOY_VM}:${FRONTEND_DIR}/docker-compose.yml"
     - |
       tsh ssh "${DEPLOY_SSH_USER}@${DEPLOY_VM}" "sudo bash -s" <<EOF
       set -euo pipefail
       cd '${FRONTEND_DIR}'
-      export IMAGE='${IMAGE_REPO}' IMAGE_TAG='${IMAGE_TAG}' FRONTEND_PORT='${FRONTEND_PORT}'
+      export DOCKER_CONFIG='${DEPLOY_DIR}/.docker' IMAGE='${IMAGE_REPO}' IMAGE_TAG='${IMAGE_TAG}' FRONTEND_PORT='${FRONTEND_PORT}'
       docker compose pull web
       docker compose up -d --wait web
       for i in 1 2 3 4 5 6 7 8 9 10; do

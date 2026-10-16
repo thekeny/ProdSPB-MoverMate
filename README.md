@@ -100,7 +100,7 @@ npm run test:watch # режим наблюдения
 ## CI/CD
 
 Пайплайн `.gitlab-ci.yml`: `check` (lint · typecheck · test) → `build` → `deploy`. Шаблоны Spirit
-(Kaniko, Teleport, `docker login` на VM) завендорены из `pipelines/pipelines` в `.gitlab/ci/`.
+(Kaniko, Teleport, авторизация в registry на VM) завендорены из `pipelines/pipelines` в `.gitlab/ci/`.
 
 - **Любой push:** проверки; отчёт biome попадает в GitLab Code Quality.
 - **MR и master:** `build:next` собирает приложение (`next build`, standalone) в обычной node-джобе, затем
@@ -115,7 +115,7 @@ npm run test:watch # режим наблюдения
 
 | Переменная | Назначение |
 |---|---|
-| `SPIRIT_DOCKER_SA_KEY` | **File**, не protected: ключ сервисного аккаунта Spirit (registry, Teleport, `docker login` на VM) |
+| `SPIRIT_DOCKER_SA_KEY` | **File**, не protected: ключ сервисного аккаунта Spirit (registry, Teleport, токен для `docker pull` на VM) |
 | `DOCKER_ARTIFACTORY_REGISTRY` | адрес registry Spirit |
 | `DEPLOY_SSH_USER`, `DEPLOY_VM` | пользователь и имя VM в Teleport |
 | `DEPLOY_DIR` | каталог стеков на VM; фронтенд живёт в `$DEPLOY_DIR/frontend` |
