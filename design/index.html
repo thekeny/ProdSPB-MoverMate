@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color"
+        content="#f5f3ee">
+  <title>Terra - Hackathon UI Kit</title>
+  <link rel="preconnect"
+        href="https://fonts.googleapis.com">
+  <link rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
+        rel="stylesheet">
+  <link rel="stylesheet"
+        href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand"
+       href="#top"
+       aria-label="Terra, в начало страницы"><span>terra</span><i></i></a>
+    <nav aria-label="Разделы гайда">
+      <a href="#foundations">Основа</a>
+      <a href="#components">Компоненты</a>
+      <a href="#preview">Превью</a>
+    </nav>
+    <a class="header-action"
+       href="#preview">Смотреть сайт <span aria-hidden="true">↗</span></a>
+  </header>
+  
+  <main id="top">
+    <section class="intro shell">
+      <p class="kicker">Hackathon website kit / 2026</p>
+      <h1>Дизайн, который<br><em>не тормозит</em> идею.</h1>
+      <div class="intro-bottom">
+        <p>Две готовые визуальные системы для продукта, сервиса или проекта. Выберите направление утром, соберите сайт до демо.</p>
+        <div class="switcher"
+             role="tablist"
+             aria-label="Выбор дизайн-направления">
+          <button class="active"
+                  id="terra-tab"
+                  role="tab"
+                  aria-selected="true"
+                  aria-controls="terra-panel">Terra
+          </button>
+          <button id="signal-tab"
+                  role="tab"
+                  aria-selected="false"
+                  aria-controls="signal-panel">Signal
+          </button>
+        </div>
+      </div>
+    </section>
+    
+    <section class="concept-shell">
+      <article class="concept active"
+               id="terra-panel"
+               role="tabpanel"
+               aria-labelledby="terra-tab">
+        <div class="concept-copy">
+          <p class="concept-index">01 / Terra</p>
+          <h2>Человечный<br>технологичный.</h2>
+          <p>Спокойная система для проектов, которым важно вызывать доверие: education, health, climate, civic tech, локальные сервисы.</p>
+          <div class="tags">
+            <span>Тёплый</span><span>Уверенный</span><span>Редакционный</span>
+          </div>
+        </div>
+        <div class="hero-demo terra-demo">
+          <div class="demo-nav">
+            <b>mira</b><span>О проекте</span><span>Как это работает</span>
+            <button>Попробовать</button>
+          </div>
+          <div class="demo-body">
+            <p>Помогаем соседям<br>делать больше <i>вместе.</i></p>
+            <div class="demo-orbit"><span>24</span><small>активных<br>идеи рядом</small>
+            </div>
+          </div>
+          <div class="demo-footer">
+            <span>Соседские инициативы</span><span>Санкт-Петербург, 2026</span>
+          </div>
+        </div>
+      </article>
+      
+      <article class="concept signal"
+               id="signal-panel"
+               role="tabpanel"
+               aria-labelledby="signal-tab"
+               hidden>
+        <div class="concept-copy">
+          <p class="concept-index">02 / Signal</p>
+          <h2>Чёткий<br>и собранный.</h2>
+          <p>Контрастный интерфейс для данных, инструментов и командных продуктов: AI, devtools, fintech, productivity.</p>
+          <div class="tags">
+            <span>Точный</span><span>Динамичный</span><span>Системный</span>
+          </div>
+        </div>
+        <div class="hero-demo signal-demo">
+          <div class="signal-top"><b>nord / workspace</b><span>⌘ K</span>
+            <button>Новый проект</button>
+          </div>
+          <div class="signal-grid">
+            <div>
+              <small>Пульс команды</small><strong>86<span>%</span></strong><em>+12% за неделю</em>
+            </div>
+            <div class="signal-lines"
+                 aria-label="График активности">
+              <i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="signal-list"><small>В работе сейчас</small>
+              <p><b></b> Исследование</p>
+              <p><b></b> Прототип</p>
+              <p><b></b> Питч</p>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+    
+    <section class="guide shell"
+             id="foundations">
+      <div class="section-heading">
+        <p class="kicker">Дизайн-система</p>
+        <h2>Основа для<br>быстрой сборки.</h2>
+      </div>
+      <div class="token-grid">
+        <article class="token-card palette-card">
+          <p class="card-label">Палитра / Terra</p>
+          <div class="swatches">
+            <div><i class="swatch ink"></i><b>Ink</b><span>#1D2923</span></div>
+            <div><i class="swatch moss"></i><b>Moss</b><span>#42664D</span>
+            </div>
+            <div><i class="swatch sand"></i><b>Sand</b><span>#E8E2D5</span>
+            </div>
+            <div><i class="swatch paper"></i><b>Paper</b><span>#F5F3EE</span>
+            </div>
+            <div><i class="swatch coral"></i><b>Coral</b><span>#D96B4C</span>
+            </div>
+          </div>
+        </article>
+        <article class="token-card type-card">
+          <p class="card-label">Типографика</p>
+          <p class="type-display">Заголовки<br>с характером</p>
+          <p class="type-body">Manrope, 16/25. Для спокойного чтения, интерфейсов и всего, что должно работать без лишнего шума.</p>
+          <div class="type-scale">
+            <span>12</span><span>14</span><span>16</span><span>20</span><span>32</span><span>56</span>
+          </div>
+        </article>
+        <article class="token-card rules-card">
+          <p class="card-label">Правила</p>
+          <ol>
+            <li><b>01</b><span>Одна акцентная кнопка на экран.</span></li>
+            <li><b>02</b><span>Воздух важнее лишней карточки.</span></li>
+            <li>
+              <b>03</b><span>Радиус: 12px для интерфейса, 24px для крупных блоков.</span>
+            </li>
+            <li><b>04</b><span>Интерфейс говорит простыми глаголами.</span></li>
+          </ol>
+        </article>
+      </div>
+    </section>
+    
+    <section class="components"
+             id="components">
+      <div class="shell">
+        <div class="section-heading">
+          <p class="kicker">Библиотека</p>
+          <h2>Компоненты в<br>живом контексте.</h2>
+        </div>
+        <div class="component-grid">
+          <article class="component buttons">
+            <p class="card-label">Кнопки</p>
+            <div class="button-row">
+              <button class="btn primary">Создать проект <span>↗</span></button>
+              <button class="btn secondary">Подробнее</button>
+            </div>
+            <div class="button-row">
+              <button class="btn text-btn">Посмотреть все <span>→</span>
+              </button>
+              <button class="icon-btn"
+                      aria-label="Добавить">+
+              </button>
+            </div>
+            <p class="usage">Основная: одно целевое действие. Вторичная: выбор без конкуренции.</p>
+          </article>
+          <article class="component form-card">
+            <p class="card-label">Поля и статус</p>
+            <label for="email">Электронная почта</label>
+            <div class="input-wrap">
+              <input id="email"
+                     type="email"
+                     value="hello@team.dev">
+              <span>✓</span></div>
+            <div class="status success"><i></i>Адрес выглядит верно</div>
+            <div class="status error">
+              <i></i>Введите адрес в формате name@mail.com
+            </div>
+          </article>
+          <article class="component content-card">
+            <p class="card-label">Карточка идеи</p>
+            <span class="category">Исследование</span>
+            <h3>Куда уходит<br>время команды?</h3>
+            <div class="card-meta"><span>12 часов сэкономлено</span>
+              <a href="#components"
+                 aria-label="Открыть идею">↗
+              </a>
+            </div>
+          </article>
+          <article class="component note-card">
+            <p class="card-label">Уведомление</p>
+            <div class="notice">
+              <div class="notice-mark">✓</div>
+              <div><b>Черновик сохранён</b>
+                <p>Можно вернуться к нему позже.</p>
+              </div>
+              <button aria-label="Закрыть уведомление">×</button>
+            </div>
+            <p class="usage">Показывайте результат действия рядом с местом, где оно произошло.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+    
+    <section class="preview shell"
+             id="preview">
+      <div class="preview-copy">
+        <p class="kicker">Мини-страница</p>
+        <h2>Вот так это<br>ощущается в деле.</h2>
+        <p>Не начинайте с пустого экрана. Возьмите этот ритм, замените текст и соберите свой смысл.</p>
+        <a class="btn primary"
+           href="#top">Вернуться к направлениям <span>↑</span></a>
+      </div>
+      <div class="phone"
+           aria-label="Пример мобильной версии сайта">
+        <div class="phone-bar"><span>9:41</span><i></i><b>•••</b></div>
+        <div class="phone-content">
+          <div class="phone-logo">mira<span>.</span></div>
+          <p>Больше хорошего<br><em>рядом с домом.</em></p>
+          <div class="mini-map">
+            <i class="pin one"></i><i class="pin two"></i><i class="pin three"></i><b>Найти идеи рядом</b>
+          </div>
+          <small>Сегодня рядом с вами</small>
+          <div class="mini-item">
+            <i></i><span><b>Сад у библиотеки</b><em>Идёт сбор волонтёров</em></span><strong>12</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  
+  <footer>
+    <a class="brand"
+       href="#top"><span>terra</span><i></i></a>
+    <p>Гайд для вашей сильной идеи.</p>
+    <span>Собрано для хакатона</span></footer>
+  <script src="script.js"></script>
+</body>
+</html>
