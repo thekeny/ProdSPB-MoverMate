@@ -99,7 +99,7 @@ deploy:
     - !reference [.configure_docker, script]
     - |
       : "${DEPLOY_DIR:?set DEPLOY_DIR}"
-      tsh ssh "${DEPLOY_SSH_USER}@${DEPLOY_VM}" "mkdir -p '${FRONTEND_DIR}'"
+      tsh ssh "${DEPLOY_SSH_USER}@${DEPLOY_VM}" "sudo install -d -o '${DEPLOY_SSH_USER}' '${FRONTEND_DIR}'"
       tsh scp docker-compose.prod.yml "${DEPLOY_SSH_USER}@${DEPLOY_VM}:${FRONTEND_DIR}/docker-compose.yml"
     - |
       tsh ssh "${DEPLOY_SSH_USER}@${DEPLOY_VM}" "sudo bash -s" <<EOF
