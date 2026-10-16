@@ -22,3 +22,4 @@
 - Maintain consistent coding style and project conventions.
 - Keep `src/configs/` as the single source of truth for URLs, route paths, and static constants.
 - Update this `AGENTS.md` file whenever adding architectural decisions, new tooling, or project conventions.
+- Create design with rules from `DESIGN.md`
