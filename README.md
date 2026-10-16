@@ -103,8 +103,9 @@ npm run test:watch # режим наблюдения
 (Kaniko, Teleport, `docker login` на VM) завендорены из `pipelines/pipelines` в `.gitlab/ci/`.
 
 - **Любой push:** проверки; отчёт biome попадает в GitLab Code Quality.
-- **MR:** сборка образа без публикации.
-- **master:** Kaniko публикует `${DOCKER_ARTIFACTORY_REGISTRY}/<namespace>/<project>:<short-sha>`.
+- **MR и master:** `build:next` собирает приложение (`next build`, standalone) в обычной node-джобе, затем
+  Kaniko только упаковывает готовый `.next/standalone` в образ: сборка внутри Kaniko не влезала по памяти.
+  В MR образ не публикуется, на master Kaniko публикует `${DOCKER_ARTIFACTORY_REGISTRY}/<namespace>/<project>:<short-sha>`.
 - **Deploy** (ручная кнопка на master): копирует `docker-compose.prod.yml` в `$DEPLOY_DIR/frontend`
   на VM и поднимает отдельный compose-проект `frontend` (порт `FRONTEND_PORT`, по умолчанию `3000`),
   затем smoke-тест `curl 127.0.0.1:$FRONTEND_PORT/`. Стек бэкенда на той же VM не затрагивается.
@@ -124,6 +125,7 @@ npm run test:watch # режим наблюдения
 Локальная проверка образа:
 
 ```sh
-docker build --build-arg NEXT_PUBLIC_API_URL=http://localhost:8000 -t frontend .
+NEXT_PUBLIC_API_URL=http://localhost:8000 npm run build
+docker build -t frontend .
 docker run --rm -p 3000:3000 frontend
 ```

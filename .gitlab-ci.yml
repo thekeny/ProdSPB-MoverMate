@@ -47,11 +47,24 @@ test:
   script:
     - npm test -- --passWithNoTests
 
+build:next:
+  extends:
+    - .check
+    - .rules-merge-or-master
+  stage: build
+  script:
+    - npm run build
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - .next/standalone
+      - .next/static
+
 .build:image:
   extends: .dp_build
+  needs: [build:next]
   variables:
     IMAGE_NAME: ${IMAGE_REPO}:${CI_COMMIT_SHORT_SHA}
-    KANIKO_ARGS: --build-arg NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 build:mr:
   extends:
@@ -59,7 +72,7 @@ build:mr:
     - .rules-merge
   variables:
     KANIKO_CACHE: "false"
-    KANIKO_ARGS: --build-arg NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} --no-push
+    KANIKO_ARGS: --no-push
 
 build:image:
   extends:
