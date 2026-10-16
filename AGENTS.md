@@ -16,6 +16,8 @@
 - `src/lib/` — utility functions (`cn`, helpers)
 - `src/tests/` — Vitest tests (mirror the `src/` structure, e.g. `src/tests/lib/utils.test.ts`); run with `npm test`
 - `src/middleware.ts` — Next.js middleware
+- `.gitlab-ci.yml` — CI/CD (check → build → deploy); Spirit templates vendored from `pipelines/pipelines` into `.gitlab/ci/`
+- `Dockerfile` + `docker-compose.prod.yml` — standalone Next.js image (`output: "standalone"`) and the prod stack deployed to `$DEPLOY_DIR/frontend`; keep the node image in sync between `Dockerfile` and `.gitlab-ci.yml`
 
 ## Rules for Agents
 - Keep code clean: avoid redundant, explanatory, or trivial comments unless strictly necessary.

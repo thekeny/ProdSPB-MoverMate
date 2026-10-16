@@ -1,0 +1,10 @@
+# Production stack, used by the `deploy` CI job in $DEPLOY_DIR/frontend on the target server.
+# Provided by the deploy job: IMAGE (registry path), IMAGE_TAG (git short sha), FRONTEND_PORT.
+# A separate compose project, so it never touches the backend stack on the same VM.
+name: frontend
+
+services:
+  web:
+    image: ${IMAGE:?IMAGE is required}:${IMAGE_TAG:?IMAGE_TAG is required}
+    ports: ["${FRONTEND_PORT:-3000}:3000"]
+    restart: unless-stopped

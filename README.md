@@ -95,3 +95,35 @@ npm run test:watch # режим наблюдения
   ```sh
   npm run repomix
   ```
+---
+
+## CI/CD
+
+Пайплайн `.gitlab-ci.yml`: `check` (lint · typecheck · test) → `build` → `deploy`. Шаблоны Spirit
+(Kaniko, Teleport, `docker login` на VM) завендорены из `pipelines/pipelines` в `.gitlab/ci/`.
+
+- **Любой push:** проверки; отчёт biome попадает в GitLab Code Quality.
+- **MR:** сборка образа без публикации.
+- **master:** Kaniko публикует `${DOCKER_ARTIFACTORY_REGISTRY}/<namespace>/<project>:<short-sha>`.
+- **Deploy** (ручная кнопка на master): копирует `docker-compose.prod.yml` в `$DEPLOY_DIR/frontend`
+  на VM и поднимает отдельный compose-проект `frontend` (порт `FRONTEND_PORT`, по умолчанию `3000`),
+  затем smoke-тест `curl 127.0.0.1:$FRONTEND_PORT/`. Стек бэкенда на той же VM не затрагивается.
+- **Откат:** перезапустить `deploy` в пайплайне последнего хорошего коммита.
+
+Переменные CI (Settings → CI/CD → Variables):
+
+| Переменная | Назначение |
+|---|---|
+| `SPIRIT_DOCKER_SA_KEY` | **File**, не protected: ключ сервисного аккаунта Spirit (registry, Teleport, `docker login` на VM) |
+| `DOCKER_ARTIFACTORY_REGISTRY` | адрес registry Spirit |
+| `DEPLOY_SSH_USER`, `DEPLOY_VM` | пользователь и имя VM в Teleport |
+| `DEPLOY_DIR` | каталог стеков на VM; фронтенд живёт в `$DEPLOY_DIR/frontend` |
+| `NEXT_PUBLIC_API_URL` | URL бэкенда, вшивается в клиентский бандл при сборке |
+| `FRONTEND_PORT` | опционально: порт на VM, по умолчанию `3000` |
+
+Локальная проверка образа:
+
+```sh
+docker build --build-arg NEXT_PUBLIC_API_URL=http://localhost:8000 -t frontend .
+docker run --rm -p 3000:3000 frontend
+```

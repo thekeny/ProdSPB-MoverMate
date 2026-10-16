@@ -1,0 +1,11 @@
+.git
+.gitlab
+.gitlab-ci.yml
+.next
+node_modules
+coverage
+.env*
+*.md
+docker-compose*.yml
+Dockerfile
+.dockerignore
