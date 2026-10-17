@@ -120,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       id: updated.id,
       username: updated.username,
     });
+    await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PROJECTS });
   };
 
   const changePassword = async (values: {

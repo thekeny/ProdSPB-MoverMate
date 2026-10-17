@@ -19,6 +19,7 @@
 - The browser calls the backend through the Next rewrite `/api/v1/*` to `${NEXT_PUBLIC_API_URL}/api/v1/*` (`next.config.ts`), because the backend CORS allows only its own origin
 - `openapi-ts.config.ts` — Hey API generator config (spec input, output path, plugins)
 - `src/lib/` — utilities: `id` (uid), `format` (dates, plural), `project` (project factory), `project-storage` (normalization), `api-error`, `utils` (`cn`)
+- Forms use React Hook Form for state/submission and Zod schemas under `src/lib/forms/` via `@hookform/resolvers`; show field errors on blur and wire Base UI controls through `Controller`.
 - `src/tests/` — Vitest tests (mirror the `src/` structure, e.g. `src/tests/lib/utils.test.ts`); run with `npm test`
 - `.gitlab-ci.yml` — CI/CD (check → build → deploy); Spirit templates vendored from `pipelines/pipelines` into `.gitlab/ci/`
 - `Dockerfile` + `docker-compose.prod.yml` — runtime-only image that packages a prebuilt standalone Next.js app (`output: "standalone"`, run `npm run build` before `docker build`; never build inside Kaniko, it runs out of memory) and the prod stack deployed to `$DEPLOY_DIR/frontend`; keep the node image in sync between `Dockerfile` and `.gitlab-ci.yml`
@@ -40,5 +41,6 @@
 - Use `diagnosing-bugs` for hard, intermittent, or unclear bugs; establish a reproducible feedback loop before changing code.
 
 ## Backend status
-- The backend currently exposes only health, `/api/v1/auth/*` and `/api/v1/users/me*`. Auth is real; projects, rooms, boxes, items, tasks, members, labels and search are still local (`localStorage`, keyed by user id) until the endpoints from `frontend-backend-alignment.md` section 2 appear in `/openapi.json`. Then run `npm run openapi` and migrate each area.
+- Auth, projects, project collaborators and moving-date reminders use the backend API. The generated SDK is in `src/api/generated/`; regenerate with `npm run openapi` when the backend OpenAPI spec changes.
+- Rooms, boxes, items, tasks, labels and search remain local. They are stored under the signed-in user and keyed by the backend project ID; project metadata and collaborator identities come from the API.
 - There is no `middleware.ts`: tokens live in localStorage, so route guarding stays client-side (`src/app/(app)/layout.tsx`). Revisit if the backend moves refresh to an httpOnly cookie.

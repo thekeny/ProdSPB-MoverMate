@@ -1,5 +1,6 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -10,6 +11,10 @@ import {
 } from "@/components/ui/select";
 import { TextInput } from "@/components/ui/text-input";
 import type { Project } from "@/configs/types/project.type";
+import {
+  type PackingItemFormValues,
+  packingItemSchema,
+} from "@/lib/forms/project.schema";
 import { uid } from "@/lib/id";
 
 export function PackingList({
@@ -19,12 +24,23 @@ export function PackingList({
   project: Project;
   updateProject: (apply: (project: Project) => Project) => void;
 }) {
-  const [name, setName] = useState("");
-  const [room, setRoom] = useState(project.lastSourceRoom);
-  const [priority, setPriority] = useState<"NORMAL" | "FIRST_NECESSITY">(
-    "NORMAL",
-  );
-  const [quantity, setQuantity] = useState(1);
+  const {
+    register,
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<PackingItemFormValues>({
+    resolver: zodResolver(packingItemSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues: {
+      name: "",
+      room: project.lastSourceRoom || project.sourceRooms[0] || "",
+      priority: "NORMAL",
+      quantity: 1,
+    },
+  });
   const pending = project.items
     .filter((item) => item.state === "TO_PACK")
     .sort(
@@ -39,9 +55,8 @@ export function PackingList({
       <h2 className="text-lg font-extrabold">Упаковать</h2>
       <form
         className="mt-4 grid gap-2 lg:grid-cols-[minmax(0,1fr)_8rem_9rem_5rem_auto]"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!name.trim()) return;
+        noValidate
+        onSubmit={handleSubmit(({ name, room, priority, quantity }) => {
           updateProject((current) => ({
             ...current,
             lastSourceRoom: room,
@@ -58,65 +73,97 @@ export function PackingList({
               },
             ],
           }));
-          setName("");
-          setQuantity(1);
-        }}
+          reset({ name: "", room, priority, quantity: 1 });
+        })}
       >
         <TextInput
-          value={name}
-          onChange={(event) => setName(event.target.value)}
+          {...register("name")}
           placeholder="Название вещи"
           aria-label="Название вещи"
+          aria-invalid={errors.name ? true : undefined}
+          aria-describedby={errors.name ? "packing-name-error" : undefined}
         />
-        <Select
-          value={room}
-          onValueChange={(value) => setRoom(value ?? "")}
-          items={project.sourceRooms.map((entry) => ({
-            label: entry,
-            value: entry,
-          }))}
-        >
-          <SelectTrigger aria-label="Исходная комната">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {project.sourceRooms.map((entry) => (
-              <SelectItem key={entry} value={entry}>
-                {entry}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={priority}
-          onValueChange={(value) => setPriority(value as typeof priority)}
-          items={[
-            { label: "Обычная", value: "NORMAL" },
-            { label: "Первый день", value: "FIRST_NECESSITY" },
-          ]}
-        >
-          <SelectTrigger aria-label="Приоритет">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="NORMAL">Обычная</SelectItem>
-            <SelectItem value="FIRST_NECESSITY">Первый день</SelectItem>
-          </SelectContent>
-        </Select>
+        {errors.name && (
+          <p
+            id="packing-name-error"
+            className="text-xs text-[#A84D3C] lg:col-span-full"
+            role="alert"
+          >
+            {errors.name.message}
+          </p>
+        )}
+        <Controller
+          control={control}
+          name="room"
+          render={({ field }) => (
+            <Select
+              value={field.value}
+              onValueChange={field.onChange}
+              items={project.sourceRooms.map((entry) => ({
+                label: entry,
+                value: entry,
+              }))}
+            >
+              <SelectTrigger
+                aria-label="Исходная комната"
+                onBlur={field.onBlur}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {project.sourceRooms.map((entry) => (
+                  <SelectItem key={entry} value={entry}>
+                    {entry}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
+        <Controller
+          control={control}
+          name="priority"
+          render={({ field }) => (
+            <Select
+              value={field.value}
+              onValueChange={field.onChange}
+              items={[
+                { label: "Обычная", value: "NORMAL" },
+                { label: "Первый день", value: "FIRST_NECESSITY" },
+              ]}
+            >
+              <SelectTrigger aria-label="Приоритет" onBlur={field.onBlur}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NORMAL">Обычная</SelectItem>
+                <SelectItem value="FIRST_NECESSITY">Первый день</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        />
         <TextInput
+          {...register("quantity", { valueAsNumber: true })}
           type="number"
           min={1}
           step={1}
-          value={quantity}
-          onChange={(event) =>
-            setQuantity(Math.max(1, Number(event.target.value) || 1))
-          }
           aria-label="Количество"
+          aria-invalid={errors.quantity ? true : undefined}
+          aria-describedby={
+            errors.quantity ? "packing-quantity-error" : undefined
+          }
           className="w-full sm:col-span-1"
         />
-        <Button type="submit" disabled={!name.trim()}>
-          Добавить
-        </Button>
+        {errors.quantity && (
+          <p
+            id="packing-quantity-error"
+            className="text-xs text-[#A84D3C]"
+            role="alert"
+          >
+            {errors.quantity.message}
+          </p>
+        )}
+        <Button type="submit">Добавить</Button>
       </form>
       <div className="mt-4 grid gap-2">
         {pending.length ? (

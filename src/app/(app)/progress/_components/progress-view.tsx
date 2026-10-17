@@ -179,7 +179,7 @@ export function ProgressView({
       </section>
       {foundItem && (
         <Modal
-          className="max-w-md"
+          className="max-w-xl"
           label={`Где нашлась вещь ${foundItem.name}`}
           onClose={() => setFoundItem(null)}
         >

@@ -146,8 +146,8 @@ export default function BoxesPage() {
           sourceRooms={project.sourceRooms}
           lastSourceRoom={project.lastSourceRoom}
           onClose={() => setShowForm(false)}
-          onSubmit={(event) => {
-            addBox(event);
+          onSubmit={(values) => {
+            addBox(values);
             setShowForm(false);
           }}
         />

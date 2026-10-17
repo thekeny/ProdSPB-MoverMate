@@ -7,6 +7,16 @@ export type ClientOptions = {
 };
 
 /**
+ * AddCollaboratorRequest
+ */
+export type AddCollaboratorRequest = {
+  /**
+   * Username
+   */
+  username: string;
+};
+
+/**
  * ChangePasswordRequest
  */
 export type ChangePasswordRequest = {
@@ -28,6 +38,57 @@ export type ChangeUsernameRequest = {
    * New Username
    */
   new_username: string;
+};
+
+/**
+ * CollaboratorResponse
+ */
+export type CollaboratorResponse = {
+  user: UserRefResponse;
+  /**
+   * Is Owner
+   */
+  is_owner: boolean;
+  /**
+   * Created At
+   *
+   * When the user joined the project
+   */
+  created_at: string;
+};
+
+/**
+ * CreateProjectRequest
+ */
+export type CreateProjectRequest = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Moving Date
+   */
+  moving_date: string;
+  /**
+   * Time Zone
+   *
+   * IANA time zone name
+   */
+  time_zone: string;
+  /**
+   * Origin Address
+   */
+  origin_address?: string | null;
+  /**
+   * Destination Address
+   */
+  destination_address?: string | null;
+  qr_code_strategy?: QrCodeStrategy;
+  /**
+   * Reminder Offsets Days
+   */
+  reminder_offsets_days?: Array<number>;
+  rooms?: ProjectRoomsRequest;
 };
 
 /**
@@ -102,6 +163,118 @@ export type LoginRequest = {
 };
 
 /**
+ * ProjectResponse
+ */
+export type ProjectResponse = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Moving Date
+   */
+  moving_date: string;
+  /**
+   * Origin Address
+   */
+  origin_address: string | null;
+  /**
+   * Destination Address
+   */
+  destination_address: string | null;
+  qr_code_strategy: QrCodeStrategy;
+  /**
+   * Time Zone
+   *
+   * IANA time zone name
+   */
+  time_zone: string;
+  /**
+   * Reminder Offsets Days
+   *
+   * Days before the move when every member is reminded (09:00 local time)
+   */
+  reminder_offsets_days: Array<number>;
+  owner: UserRefResponse;
+  /**
+   * Is Owner
+   *
+   * The current user owns the project and may delete it
+   */
+  is_owner: boolean;
+  /**
+   * Created At
+   */
+  created_at: string;
+  /**
+   * Updated At
+   */
+  updated_at: string;
+};
+
+/**
+ * ProjectRoomsRequest
+ */
+export type ProjectRoomsRequest = {
+  /**
+   * Source
+   *
+   * Rooms of the old home
+   */
+  source?: Array<string>;
+  /**
+   * Destination
+   *
+   * Rooms of the new home
+   */
+  destination?: Array<string>;
+};
+
+/**
+ * PushKeysRequest
+ */
+export type PushKeysRequest = {
+  /**
+   * P256Dh
+   */
+  p256dh: string;
+  /**
+   * Auth
+   */
+  auth: string;
+};
+
+/**
+ * PushSubscriptionRequest
+ *
+ * `PushSubscription.toJSON()` of the browser, as is.
+ */
+export type PushSubscriptionRequest = {
+  /**
+   * Endpoint
+   */
+  endpoint: string;
+  keys: PushKeysRequest;
+  /**
+   * Expirationtime
+   *
+   * Sent by browsers; ignored: push services report expired endpoints
+   */
+  expirationTime?: number | null;
+};
+
+/**
+ * QrCodeStrategy
+ *
+ * Who may open a box card by its QR code (docs/db-design.md, section 8).
+ */
+export type QrCodeStrategy = "PROTECTED" | "OPEN";
+
+/**
  * Readiness
  */
 export type Readiness = "ok" | "degraded" | "unavailable";
@@ -144,6 +317,18 @@ export type RegisterRequest = {
 };
 
 /**
+ * SetProjectRemindersRequest
+ */
+export type SetProjectRemindersRequest = {
+  /**
+   * Offsets Days
+   *
+   * Days before the move, 0 (the moving day) to 365; replaces the current set
+   */
+  offsets_days: Array<number>;
+};
+
+/**
  * TokenPairResponse
  */
 export type TokenPairResponse = {
@@ -170,6 +355,40 @@ export type TokenPairResponse = {
 };
 
 /**
+ * UpdateProjectRequest
+ *
+ * Partial update: omitted fields stay as they are, null clears an address.
+ */
+export type UpdateProjectRequest = {
+  name?: NotNullStr;
+  moving_date?: NotNullDate;
+  time_zone?: NotNullStr;
+  qr_code_strategy?: QrCodeStrategy;
+  /**
+   * Origin Address
+   */
+  origin_address?: string | null;
+  /**
+   * Destination Address
+   */
+  destination_address?: string | null;
+};
+
+/**
+ * UserRefResponse
+ */
+export type UserRefResponse = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Username
+   */
+  username: string;
+};
+
+/**
  * UserResponse
  */
 export type UserResponse = {
@@ -182,6 +401,24 @@ export type UserResponse = {
    */
   username: string;
 };
+
+/**
+ * VapidPublicKeyResponse
+ */
+export type VapidPublicKeyResponse = {
+  /**
+   * Public Key
+   *
+   * applicationServerKey for pushManager.subscribe() (base64url, P-256)
+   */
+  public_key: string;
+};
+
+export type NotNullQrCodeStrategy = QrCodeStrategy;
+
+export type NotNullDate = string;
+
+export type NotNullStr = string;
 
 /**
  * LoginRequest
@@ -210,6 +447,8 @@ export type RegisterRequestWritable = {
    */
   password: string;
 };
+
+export type NotNullQrCodeStrategyWritable = QrCodeStrategy;
 
 export type LiveHealthLiveGetData = {
   body?: never;
@@ -420,6 +659,10 @@ export type DeleteMeApiV1UsersMeDeleteErrors = {
    */
   401: ErrorResponse;
   /**
+   * Owns active projects
+   */
+  409: ErrorResponse;
+  /**
    * Invalid request
    */
   422: ErrorResponse;
@@ -566,3 +809,563 @@ export type ChangeUsernameApiV1UsersMeUsernamePutResponses = {
 
 export type ChangeUsernameApiV1UsersMeUsernamePutResponse =
   ChangeUsernameApiV1UsersMeUsernamePutResponses[keyof ChangeUsernameApiV1UsersMeUsernamePutResponses];
+
+export type ListProjectsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/api/v1/projects";
+};
+
+export type ListProjectsErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type ListProjectsError = ListProjectsErrors[keyof ListProjectsErrors];
+
+export type ListProjectsResponses = {
+  /**
+   * Response Listprojects
+   *
+   * Successful Response
+   */
+  200: Array<ProjectResponse>;
+};
+
+export type ListProjectsResponse =
+  ListProjectsResponses[keyof ListProjectsResponses];
+
+export type CreateProjectData = {
+  body: CreateProjectRequest;
+  headers?: {
+    /**
+     * Idempotency-Key
+     *
+     * Optional. Retries with the same key replay the first response.
+     */
+    "idempotency-key"?: string | null;
+  };
+  path?: never;
+  query?: never;
+  url: "/api/v1/projects";
+};
+
+export type CreateProjectErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * Two rooms of one kind share a name
+   */
+  409: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type CreateProjectError = CreateProjectErrors[keyof CreateProjectErrors];
+
+export type CreateProjectResponses = {
+  /**
+   * Successful Response
+   */
+  201: ProjectResponse;
+};
+
+export type CreateProjectResponse =
+  CreateProjectResponses[keyof CreateProjectResponses];
+
+export type DeleteProjectData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/api/v1/projects/{project_id}";
+};
+
+export type DeleteProjectErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * Only the owner may delete
+   */
+  403: ErrorResponse;
+  /**
+   * No such project, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type DeleteProjectError = DeleteProjectErrors[keyof DeleteProjectErrors];
+
+export type DeleteProjectResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteProjectResponse =
+  DeleteProjectResponses[keyof DeleteProjectResponses];
+
+export type GetProjectData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/api/v1/projects/{project_id}";
+};
+
+export type GetProjectErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type GetProjectError = GetProjectErrors[keyof GetProjectErrors];
+
+export type GetProjectResponses = {
+  /**
+   * Successful Response
+   */
+  200: ProjectResponse;
+};
+
+export type GetProjectResponse = GetProjectResponses[keyof GetProjectResponses];
+
+export type UpdateProjectData = {
+  body: UpdateProjectRequest;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/api/v1/projects/{project_id}";
+};
+
+export type UpdateProjectErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type UpdateProjectError = UpdateProjectErrors[keyof UpdateProjectErrors];
+
+export type UpdateProjectResponses = {
+  /**
+   * Successful Response
+   */
+  200: ProjectResponse;
+};
+
+export type UpdateProjectResponse =
+  UpdateProjectResponses[keyof UpdateProjectResponses];
+
+export type SetProjectRemindersData = {
+  body: SetProjectRemindersRequest;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/api/v1/projects/{project_id}/reminders";
+};
+
+export type SetProjectRemindersErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type SetProjectRemindersError =
+  SetProjectRemindersErrors[keyof SetProjectRemindersErrors];
+
+export type SetProjectRemindersResponses = {
+  /**
+   * Successful Response
+   */
+  200: ProjectResponse;
+};
+
+export type SetProjectRemindersResponse =
+  SetProjectRemindersResponses[keyof SetProjectRemindersResponses];
+
+export type ListCollaboratorsData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/api/v1/projects/{project_id}/collaborators";
+};
+
+export type ListCollaboratorsErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type ListCollaboratorsError =
+  ListCollaboratorsErrors[keyof ListCollaboratorsErrors];
+
+export type ListCollaboratorsResponses = {
+  /**
+   * Response Listcollaborators
+   *
+   * Successful Response
+   */
+  200: Array<CollaboratorResponse>;
+};
+
+export type ListCollaboratorsResponse =
+  ListCollaboratorsResponses[keyof ListCollaboratorsResponses];
+
+export type AddCollaboratorData = {
+  body: AddCollaboratorRequest;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/api/v1/projects/{project_id}/collaborators";
+};
+
+export type AddCollaboratorErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project or user
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type AddCollaboratorError =
+  AddCollaboratorErrors[keyof AddCollaboratorErrors];
+
+export type AddCollaboratorResponses = {
+  /**
+   * Already a member
+   */
+  200: CollaboratorResponse;
+  /**
+   * Successful Response
+   */
+  201: CollaboratorResponse;
+};
+
+export type AddCollaboratorResponse =
+  AddCollaboratorResponses[keyof AddCollaboratorResponses];
+
+export type RemoveCollaboratorData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * User Id
+     */
+    user_id: string;
+  };
+  query?: never;
+  url: "/api/v1/projects/{project_id}/collaborators/{user_id}";
+};
+
+export type RemoveCollaboratorErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * The owner cannot be removed
+   */
+  409: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type RemoveCollaboratorError =
+  RemoveCollaboratorErrors[keyof RemoveCollaboratorErrors];
+
+export type RemoveCollaboratorResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type RemoveCollaboratorResponse =
+  RemoveCollaboratorResponses[keyof RemoveCollaboratorResponses];
+
+export type GetVapidPublicKeyData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/api/v1/push/vapid-public-key";
+};
+
+export type GetVapidPublicKeyErrors = {
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type GetVapidPublicKeyError =
+  GetVapidPublicKeyErrors[keyof GetVapidPublicKeyErrors];
+
+export type GetVapidPublicKeyResponses = {
+  /**
+   * Successful Response
+   */
+  200: VapidPublicKeyResponse;
+};
+
+export type GetVapidPublicKeyResponse =
+  GetVapidPublicKeyResponses[keyof GetVapidPublicKeyResponses];
+
+export type DeletePushSubscriptionData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Endpoint
+     *
+     * The browser's endpoint
+     */
+    endpoint: string;
+  };
+  url: "/api/v1/push/subscriptions";
+};
+
+export type DeletePushSubscriptionErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type DeletePushSubscriptionError =
+  DeletePushSubscriptionErrors[keyof DeletePushSubscriptionErrors];
+
+export type DeletePushSubscriptionResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeletePushSubscriptionResponse =
+  DeletePushSubscriptionResponses[keyof DeletePushSubscriptionResponses];
+
+export type UpsertPushSubscriptionData = {
+  body: PushSubscriptionRequest;
+  path?: never;
+  query?: never;
+  url: "/api/v1/push/subscriptions";
+};
+
+export type UpsertPushSubscriptionErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type UpsertPushSubscriptionError =
+  UpsertPushSubscriptionErrors[keyof UpsertPushSubscriptionErrors];
+
+export type UpsertPushSubscriptionResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type UpsertPushSubscriptionResponse =
+  UpsertPushSubscriptionResponses[keyof UpsertPushSubscriptionResponses];

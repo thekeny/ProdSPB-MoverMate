@@ -159,16 +159,26 @@ export function BoxesView({
                   )}
                 </div>
                 <div className="mt-5 rounded-md bg-[#F5F3EE] p-3 text-xs text-[#68716C]">
-                  <div className="flex justify-between">
-                    <span className="min-w-0 truncate">
-                      {contents.length
-                        ? contents
-                            .slice(0, 2)
-                            .map((item) => item.name)
-                            .join(", ")
-                        : "Список вещей пуст"}
-                      {contents.length > 2 && ` и еще ${contents.length - 2}`}
-                    </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {contents.length ? (
+                      <>
+                        {contents.slice(0, 2).map((item) => (
+                          <span
+                            key={item.id}
+                            className="max-w-full truncate rounded-md bg-[#E8E2D5] px-2 py-1"
+                          >
+                            {item.name}
+                          </span>
+                        ))}
+                        {contents.length > 2 && (
+                          <span className="px-1 py-1">
+                            +{contents.length - 2}
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span>Список вещей пуст</span>
+                    )}
                   </div>
                   <div className="mt-3 flex items-center justify-between font-bold text-[#42664D]">
                     <span className="tnum">

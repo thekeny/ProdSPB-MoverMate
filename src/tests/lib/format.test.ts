@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { formatDate, plural } from "@/lib/format";
 import { uid } from "@/lib/id";
-import { createEmptyProject } from "@/lib/project";
+import { createProjectLocalData } from "@/lib/project";
 
 describe("formatDate", () => {
   it("форматирует валидную дату", () => {
@@ -35,16 +35,9 @@ describe("uid", () => {
   });
 });
 
-describe("createEmptyProject", () => {
-  it("создаёт проект с корректной структурой", () => {
-    const project = createEmptyProject({
-      name: "Тест",
-      ownerId: "test-user",
-      date: "2026-12-01",
-      from: "",
-      to: "",
-    });
-    expect(project.qrCodeStrategy).toBe("protected");
+describe("createProjectLocalData", () => {
+  it("создаёт локальные данные для нового серверного проекта", () => {
+    const project = createProjectLocalData();
     expect(project.boxes).toEqual([]);
     expect(project.nextBoxNumber).toBe(1);
     expect(project.items).toEqual([]);

@@ -96,17 +96,24 @@ export function LabelsView({
                   </div>
                   {url && <Qr value={url} size={88} />}
                 </div>
-                <p className="mt-5 rounded-[8px] bg-[#EDF1E8] p-3 text-xs leading-5 text-[#4E5752]">
-                  <strong>Содержимое:</strong>{" "}
-                  {contents.length
-                    ? contents
-                        .map(
-                          (item) =>
-                            `${item.name}${item.quantity > 1 ? ` — ${item.quantity} шт.` : ""}`,
-                        )
-                        .join(", ")
-                    : "Заполняется"}
-                </p>
+                <div className="mt-5 rounded-[8px] bg-[#EDF1E8] p-3 text-xs leading-5 text-[#4E5752]">
+                  <strong>Содержимое:</strong>
+                  {contents.length ? (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {contents.map((item) => (
+                        <span
+                          key={item.id}
+                          className="inline-flex rounded-md bg-[#DDE7D6] px-2 py-1 font-medium text-[#1D2923]"
+                        >
+                          {item.name}
+                          {item.quantity > 1 ? ` · ${item.quantity} шт.` : ""}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-1">Заполняется</p>
+                  )}
+                </div>
                 <Button
                   variant="link"
                   onClick={() => onSelect(box.id)}

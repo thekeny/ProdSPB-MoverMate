@@ -1,6 +1,6 @@
 import { ROOM_PRESETS } from "@/configs/consts/rooms.const";
 import type { Item, MoveBox, Status } from "@/configs/types/box.type";
-import type { Project } from "@/configs/types/project.type";
+import type { ProjectLocalData } from "@/configs/types/project.type";
 import type { Task, TaskStage } from "@/configs/types/task.type";
 import { uid } from "@/lib/id";
 
@@ -12,6 +12,11 @@ const statusKeys: Status[] = [
   "unpacked",
 ];
 const taskStages: TaskStage[] = ["BEFORE", "DURING", "AFTER"];
+
+export type StoredProjects = {
+  activeId: string | null;
+  data: Record<string, ProjectLocalData>;
+};
 
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -36,11 +41,7 @@ function names(value: unknown, fallback: readonly string[]) {
 
 function normalizeBox(raw: unknown, number: number): MoveBox | null {
   if (!record(raw) || !string(raw.id) || !string(raw.title)) return null;
-  const rawStatus = string(raw.status);
-  const status = rawStatus;
-  const safeStatus = statusKeys.includes(status as Status)
-    ? (status as Status)
-    : "packing";
+  const status = string(raw.status);
   return {
     id: string(raw.id),
     number,
@@ -49,7 +50,9 @@ function normalizeBox(raw: unknown, number: number): MoveBox | null {
     room: string(raw.room) || ROOM_PRESETS[0],
     sourceRooms: names(raw.sourceRooms, [ROOM_PRESETS[0]]),
     fragile: raw.fragile === true,
-    status: safeStatus,
+    status: statusKeys.includes(status as Status)
+      ? (status as Status)
+      : "packing",
   };
 }
 
@@ -111,8 +114,8 @@ function normalizeTask(raw: unknown): Task | null {
   };
 }
 
-export function normalizeProject(raw: unknown, ownerId = ""): Project | null {
-  if (!record(raw) || !string(raw.id) || !string(raw.name)) return null;
+export function normalizeProjectData(value: unknown): ProjectLocalData {
+  const raw: Record<string, unknown> = record(value) ? value : {};
   const oldBoxes = Array.isArray(raw.boxes)
     ? raw.boxes.filter(
         (entry) => record(entry) && string(entry.id) && string(entry.title),
@@ -178,22 +181,11 @@ export function normalizeProject(raw: unknown, ownerId = ""): Project | null {
     ? raw.tasks.map(normalizeTask).filter((task): task is Task => task !== null)
     : [];
   return {
-    id: string(raw.id),
-    ownerId: string(raw.ownerId) || ownerId,
-    name: string(raw.name),
-    date: string(raw.date),
-    from: string(raw.from),
-    to: string(raw.to),
-    qrCodeStrategy: raw.qrCodeStrategy === "open" ? "open" : "protected",
     sourceRooms,
     lastSourceRoom: sourceRooms.includes(string(raw.lastSourceRoom))
       ? string(raw.lastSourceRoom)
       : sourceRoom,
     destinationRooms,
-    members: names(
-      raw.members,
-      tasks.flatMap((task) => task.assignees),
-    ),
     boxes,
     nextBoxNumber: Math.max(
       positiveInteger(raw.nextBoxNumber, 1),
@@ -202,4 +194,30 @@ export function normalizeProject(raw: unknown, ownerId = ""): Project | null {
     items,
     tasks,
   };
+}
+
+export function parseStoredProjects(saved: string | null): StoredProjects {
+  const empty: StoredProjects = { activeId: null, data: {} };
+  if (!saved) return empty;
+  try {
+    const parsed: unknown = JSON.parse(saved);
+    if (!record(parsed)) return empty;
+    const entries = record(parsed.data)
+      ? Object.entries(parsed.data)
+      : Array.isArray(parsed.projects)
+        ? parsed.projects.flatMap((project) =>
+            record(project) && string(project.id)
+              ? [[string(project.id), project] as const]
+              : [],
+          )
+        : [];
+    return {
+      activeId: string(parsed.activeId) || null,
+      data: Object.fromEntries(
+        entries.map(([id, data]) => [id, normalizeProjectData(data)]),
+      ),
+    };
+  } catch {
+    return empty;
+  }
 }

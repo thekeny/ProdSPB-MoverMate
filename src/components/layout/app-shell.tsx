@@ -7,7 +7,10 @@ import { MobileHeader } from "@/components/layout/mobile-header";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { ProjectSettingsModal } from "@/components/layout/project-settings-modal";
 import { Sidebar } from "@/components/layout/sidebar";
-import { PROJECTS_STORAGE_PREFIX } from "@/configs/consts/storage.const";
+import {
+  LEGACY_PROJECTS_STORAGE_PREFIX,
+  PROJECTS_STORAGE_PREFIX,
+} from "@/configs/consts/storage.const";
 import { pages } from "@/configs/paths/pages.path";
 import type { Account } from "@/configs/types/account.type";
 import type { Project } from "@/configs/types/project.type";
@@ -30,6 +33,8 @@ export function AppShell({
     setActiveId,
     updateProjectMeta,
     updateProject,
+    addCollaborator,
+    removeCollaborator,
     deleteProject,
   } = useProjects();
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -70,17 +75,18 @@ export function AppShell({
         <ProjectSettingsModal
           project={project}
           canDelete={project.ownerId === account.id}
-          ownerUsername={account.username}
           onClose={() => setSettingsOpen(false)}
-          onSave={(values) => {
-            updateProjectMeta(values);
+          onSave={async (values) => {
+            await updateProjectMeta(values);
             setSettingsOpen(false);
           }}
-          onDelete={() => {
+          onDelete={async () => {
             setSettingsOpen(false);
-            deleteProject();
+            await deleteProject();
           }}
           onUpdateProject={updateProject}
+          onAddMember={addCollaborator}
+          onRemoveMember={removeCollaborator}
         />
       )}
       {accountSettingsOpen && (
@@ -98,6 +104,9 @@ export function AppShell({
             try {
               localStorage.removeItem(
                 `${PROJECTS_STORAGE_PREFIX}:${account.id}`,
+              );
+              localStorage.removeItem(
+                `${LEGACY_PROJECTS_STORAGE_PREFIX}:${account.id}`,
               );
             } catch {
               // Account deletion succeeded even if browser storage cannot be cleared.

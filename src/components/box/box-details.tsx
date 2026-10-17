@@ -1,7 +1,9 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Pencil, Plus, Trash2 } from "lucide-react";
 import { useId, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
@@ -19,6 +21,7 @@ import { statuses } from "@/configs/consts/statuses.const";
 import type { MoveBox } from "@/configs/types/box.type";
 import type { Project } from "@/configs/types/project.type";
 import { plural } from "@/lib/format";
+import { boxEditSchema, roomItemSchema } from "@/lib/forms/project.schema";
 import { uid } from "@/lib/id";
 import { cn } from "@/lib/utils";
 
@@ -36,9 +39,22 @@ export function BoxDetails({
   onDelete?: () => void;
 }) {
   const fragileId = useId();
-  const [newItem, setNewItem] = useState("");
-  const [sourceRoom, setSourceRoom] = useState(project.lastSourceRoom);
   const [editing, setEditing] = useState(false);
+  const addItemForm = useForm<{ name: string; sourceRoom: string }>({
+    resolver: zodResolver(roomItemSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues: {
+      name: "",
+      sourceRoom: project.lastSourceRoom || project.sourceRooms[0] || "",
+    },
+  });
+  const editForm = useForm<{ title: string; room: string; fragile: boolean }>({
+    resolver: zodResolver(boxEditSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues: { title: box.title, room: box.room, fragile: box.fragile },
+  });
   const contents = project.items.filter(
     (item) => item.boxId === box.id && item.state === "IN_BOX",
   );
@@ -146,10 +162,8 @@ export function BoxDetails({
         </h3>
         <form
           className="mt-3 grid gap-2 sm:grid-cols-[1fr_10rem_auto]"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const name = newItem.trim();
-            if (!name) return;
+          noValidate
+          onSubmit={addItemForm.handleSubmit(({ name, sourceRoom }) => {
             updateProject((current) => ({
               ...current,
               lastSourceRoom: sourceRoom,
@@ -165,7 +179,7 @@ export function BoxDetails({
                 ...current.items,
                 {
                   id: uid("item"),
-                  name,
+                  name: name.trim(),
                   state: "IN_BOX",
                   sourceRoom,
                   boxId: box.id,
@@ -174,35 +188,56 @@ export function BoxDetails({
                 },
               ],
             }));
-            setNewItem("");
-          }}
+            addItemForm.reset({ name: "", sourceRoom });
+          })}
         >
           <TextInput
-            value={newItem}
-            onChange={(event) => setNewItem(event.target.value)}
+            {...addItemForm.register("name")}
             placeholder="Добавить вещь"
             aria-label="Название вещи"
+            aria-invalid={addItemForm.formState.errors.name ? true : undefined}
+            aria-describedby={
+              addItemForm.formState.errors.name ? "box-item-error" : undefined
+            }
           />
-          <Select
-            value={sourceRoom}
-            onValueChange={(value) => setSourceRoom(value ?? "")}
-            items={project.sourceRooms.map((room) => ({
-              label: room,
-              value: room,
-            }))}
-          >
-            <SelectTrigger aria-label="Комната, откуда вещь">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {project.sourceRooms.map((room) => (
-                <SelectItem key={room} value={room}>
-                  {room}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button type="submit" variant="outline" disabled={!newItem.trim()}>
+          {addItemForm.formState.errors.name && (
+            <p
+              id="box-item-error"
+              role="alert"
+              className="text-xs text-[#A84D3C] sm:col-span-full"
+            >
+              {addItemForm.formState.errors.name.message}
+            </p>
+          )}
+          <Controller
+            control={addItemForm.control}
+            name="sourceRoom"
+            render={({ field }) => (
+              <Select
+                value={field.value}
+                onValueChange={field.onChange}
+                items={project.sourceRooms.map((room) => ({
+                  label: room,
+                  value: room,
+                }))}
+              >
+                <SelectTrigger
+                  aria-label="Комната, откуда вещь"
+                  onBlur={field.onBlur}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {project.sourceRooms.map((room) => (
+                    <SelectItem key={room} value={room}>
+                      {room}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          <Button type="submit" variant="outline">
             <Plus />
             Добавить
           </Button>
@@ -285,59 +320,72 @@ export function BoxDetails({
       </div>
       {editing && (
         <Modal
-          className="max-w-md"
+          className="max-w-xl"
           label="Редактировать коробку"
           onClose={() => setEditing(false)}
         >
           <h2 className="text-2xl font-extrabold">Редактировать коробку</h2>
           <form
             className="mt-6 grid gap-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              const data = new FormData(event.currentTarget);
-              const title = String(data.get("title") ?? "").trim();
-              if (!title) return;
+            noValidate
+            onSubmit={editForm.handleSubmit(({ title, room, fragile }) => {
               updateBox((current) => ({
                 ...current,
-                title,
-                room: String(data.get("room") ?? current.room),
-                fragile: data.get("fragile") === "on",
+                title: title.trim(),
+                room,
+                fragile,
               }));
               setEditing(false);
-            }}
+            })}
           >
-            <Field label="Краткое описание">
-              <TextInput name="title" required defaultValue={box.title} />
+            <Field
+              label="Краткое описание"
+              error={editForm.formState.errors.title?.message}
+            >
+              <TextInput {...editForm.register("title")} />
             </Field>
             <Field label="Куда">
-              <Select
+              <Controller
+                control={editForm.control}
                 name="room"
-                defaultValue={box.room}
-                items={project.destinationRooms.map((room) => ({
-                  label: room,
-                  value: room,
-                }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {project.destinationRooms.map((room) => (
-                    <SelectItem key={room} value={room}>
-                      {room}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                render={({ field }) => (
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    items={project.destinationRooms.map((room) => ({
+                      label: room,
+                      value: room,
+                    }))}
+                  >
+                    <SelectTrigger onBlur={field.onBlur}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {project.destinationRooms.map((room) => (
+                        <SelectItem key={room} value={room}>
+                          {room}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </Field>
             <label
               htmlFor={fragileId}
               className="flex items-center gap-2 text-sm font-bold"
             >
-              <Checkbox
-                id={fragileId}
+              <Controller
+                control={editForm.control}
                 name="fragile"
-                defaultChecked={box.fragile}
+                render={({ field }) => (
+                  <Checkbox
+                    id={fragileId}
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    onBlur={field.onBlur}
+                  />
+                )}
               />
               Хрупкое
             </label>

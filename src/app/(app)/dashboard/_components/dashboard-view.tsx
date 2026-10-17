@@ -119,9 +119,24 @@ export function DashboardView({
                 {nextTask.title}
               </h2>
               <p className="mt-2 text-sm leading-6 text-[#4E5752]">
-                {formatTaskDue(nextTask.dueAt)}.{" "}
-                {nextTask.assignees.join(", ") || "Ответственный не назначен"}.
+                {formatTaskDue(nextTask.dueAt)}.
               </p>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {nextTask.assignees.length ? (
+                  nextTask.assignees.map((assignee) => (
+                    <span
+                      key={assignee}
+                      className="rounded-md bg-[#EDF1E8] px-2 py-1 text-xs text-[#42664D]"
+                    >
+                      {assignee}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-xs text-[#68716C]">
+                    Ответственный не назначен
+                  </span>
+                )}
+              </div>
               <Button
                 variant="ghost"
                 onClick={() => {

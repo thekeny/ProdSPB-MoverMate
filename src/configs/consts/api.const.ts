@@ -12,4 +12,10 @@ export const API = {
 
 export const QUERY_KEYS = {
   ME: ["me"],
+  PROJECTS: ["projects"],
+  COLLABORATORS: (projectId: string) => [
+    "projects",
+    projectId,
+    "collaborators",
+  ],
 } as const;

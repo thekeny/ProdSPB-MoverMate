@@ -1,22 +1,35 @@
 import type { Item, MoveBox, QrStrategy } from "@/configs/types/box.type";
 import type { Task } from "@/configs/types/task.type";
 
-export type Project = {
+export type Collaborator = {
+  userId: string;
+  username: string;
+  isOwner: boolean;
+};
+
+export type ProjectLocalData = {
+  sourceRooms: string[];
+  lastSourceRoom: string;
+  destinationRooms: string[];
+  boxes: MoveBox[];
+  nextBoxNumber: number;
+  items: Item[];
+  tasks: Task[];
+};
+
+export type Project = ProjectLocalData & {
   id: string;
   ownerId: string;
+  isOwner: boolean;
   name: string;
   date: string;
   from: string;
   to: string;
   qrCodeStrategy: QrStrategy;
-  sourceRooms: string[];
-  lastSourceRoom: string;
-  destinationRooms: string[];
+  timeZone: string;
+  reminderOffsetsDays: number[];
+  collaborators: Collaborator[];
   members: string[];
-  boxes: MoveBox[];
-  nextBoxNumber: number;
-  items: Item[];
-  tasks: Task[];
 };
 
 export type ProjectFlowMode = "select" | "create";

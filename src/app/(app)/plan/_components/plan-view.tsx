@@ -1,5 +1,7 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { BookOpen, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { TaskFields } from "@/app/(app)/plan/_components/task-fields";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -9,6 +11,7 @@ import { MOVING_TIPS } from "@/configs/consts/moving-tips.const";
 import type { Project } from "@/configs/types/project.type";
 import type { Task, TaskStage } from "@/configs/types/task.type";
 import { formatTaskDue } from "@/lib/format";
+import { type TaskFormValues, taskSchema } from "@/lib/forms/project.schema";
 import { cn } from "@/lib/utils";
 
 function TaskEditForm({
@@ -27,30 +30,50 @@ function TaskEditForm({
     >,
   ) => void;
 }) {
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<TaskFormValues>({
+    resolver: zodResolver(taskSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues: {
+      title: task.title,
+      description: task.description,
+      stage: task.stage,
+      assignees: task.assignees,
+      dueDate: task.dueAt?.slice(0, 10) ?? "",
+      dueTime: task.dueAt?.slice(11, 16) ?? "",
+    },
+  });
   return (
-    <Modal className="max-w-md" label="Редактировать задачу" onClose={onClose}>
+    <Modal className="max-w-xl" label="Редактировать задачу" onClose={onClose}>
       <h2 className="text-2xl font-extrabold tracking-[-0.04em]">
         Редактировать задачу
       </h2>
       <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          const data = new FormData(event.currentTarget);
-          const title = String(data.get("title") ?? "").trim();
-          if (!title) return;
+        onSubmit={handleSubmit((values) =>
           onSave({
-            title,
-            description: String(data.get("description") ?? "").trim(),
-            stage: (data.get("stage") as TaskStage) ?? task.stage,
-            assignees: data.getAll("assignees").map(String),
-            dueAt: String(data.get("dueDate") ?? "")
-              ? `${data.get("dueDate")}${data.get("dueTime") ? `T${data.get("dueTime")}` : ""}`
+            title: values.title.trim(),
+            description: values.description.trim(),
+            stage: values.stage as TaskStage,
+            assignees: values.assignees,
+            dueAt: values.dueDate
+              ? `${values.dueDate}${values.dueTime ? `T${values.dueTime}` : ""}`
               : null,
-          });
-        }}
+          }),
+        )}
+        noValidate
         className="mt-6 grid gap-4"
       >
-        <TaskFields task={task} members={members} />
+        <TaskFields
+          members={members}
+          register={register}
+          control={control}
+          errors={errors}
+        />
         <div className="mt-2 flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>
             Отмена
@@ -183,12 +206,22 @@ export function PlanView({
                               {task.description}
                             </span>
                           )}
-                          <span className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-xs text-[#68716C]">
-                            <span>
-                              {task.assignees.join(", ") ||
-                                "Без ответственного"}
+                          <span className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-[#68716C]">
+                            {task.assignees.length ? (
+                              task.assignees.map((assignee) => (
+                                <span
+                                  key={assignee}
+                                  className="rounded-md bg-[#EDF1E8] px-2 py-1"
+                                >
+                                  {assignee}
+                                </span>
+                              ))
+                            ) : (
+                              <span>Без ответственного</span>
+                            )}
+                            <span className="ml-1">
+                              {formatTaskDue(task.dueAt)}
                             </span>
-                            <span>{formatTaskDue(task.dueAt)}</span>
                           </span>
                         </label>
                         <div className="flex shrink-0 items-start gap-1">

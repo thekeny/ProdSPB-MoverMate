@@ -1,10 +1,12 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight } from "lucide-react";
-import type { FormEvent } from "react";
+import { type SubmitHandler, useForm } from "react-hook-form";
 import { Logo } from "@/components/layout/logo";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { TextInput } from "@/components/ui/text-input";
 import type { AuthMode } from "@/configs/types/auth.type";
+import { type AuthFormValues, authFormSchema } from "@/lib/forms/auth.schema";
 import { cn } from "@/lib/utils";
 
 export function AuthScreen({
@@ -16,10 +18,21 @@ export function AuthScreen({
 }: {
   mode: AuthMode;
   setMode: (mode: AuthMode) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSubmit: (values: AuthFormValues) => void;
   pending: boolean;
   error: string | null;
 }) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<AuthFormValues>({
+    resolver: zodResolver(authFormSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    shouldUnregister: true,
+  });
+  const submit: SubmitHandler<AuthFormValues> = (values) => onSubmit(values);
   return (
     <main className="grid min-h-screen place-items-center bg-[#F5F3EE] p-5">
       <section className="w-full max-w-md rounded-xl bg-white p-7 sm:p-9">
@@ -48,13 +61,15 @@ export function AuthScreen({
             Регистрация
           </Button>
         </div>
-        <form onSubmit={onSubmit} className="mt-6 grid gap-4">
-          <Field label="Имя пользователя">
+        <form
+          onSubmit={handleSubmit(submit)}
+          noValidate
+          className="mt-6 grid gap-4"
+        >
+          <Field label="Имя пользователя" error={errors.username?.message}>
             <TextInput
+              {...register("username")}
               name="username"
-              required
-              minLength={3}
-              maxLength={32}
               placeholder="mover"
               autoCapitalize="none"
               spellCheck={false}
@@ -64,13 +79,11 @@ export function AuthScreen({
           <p className="-mt-2 text-xs text-[#68716C]">
             От 3 до 32 символов. Регистр букв не важен.
           </p>
-          <Field label="Пароль">
+          <Field label="Пароль" error={errors.password?.message}>
             <TextInput
+              {...register("password")}
               name="password"
               type="password"
-              required
-              minLength={8}
-              maxLength={128}
               placeholder="Минимум 8 символов"
               autoComplete={
                 mode === "login" ? "current-password" : "new-password"
@@ -78,13 +91,14 @@ export function AuthScreen({
             />
           </Field>
           {mode === "register" && (
-            <Field label="Повторите пароль">
+            <Field
+              label="Повторите пароль"
+              error={errors.confirmPassword?.message}
+            >
               <TextInput
+                {...register("confirmPassword")}
                 name="confirmPassword"
                 type="password"
-                required
-                minLength={8}
-                maxLength={128}
                 placeholder="Повторите пароль"
                 autoComplete="new-password"
               />

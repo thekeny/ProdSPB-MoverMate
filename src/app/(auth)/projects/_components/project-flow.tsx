@@ -1,12 +1,24 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, ArrowRight, ChevronRight, Plus } from "lucide-react";
-import type { FormEvent } from "react";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { Logo } from "@/components/layout/logo";
 import { Button } from "@/components/ui/button";
+import { ChipInput } from "@/components/ui/chip-input";
 import { Field } from "@/components/ui/field";
 import { TextInput } from "@/components/ui/text-input";
 import { ROOM_PRESETS } from "@/configs/consts/rooms.const";
 import type { Project, ProjectFlowMode } from "@/configs/types/project.type";
+import { apiErrorMessage } from "@/lib/api-error";
+import {
+  getLocalDateInputMaxValue,
+  getLocalDateInputValue,
+} from "@/lib/date-time";
 import { formatDate } from "@/lib/format";
+import {
+  type ProjectFormValues,
+  projectCreationSchema,
+} from "@/lib/forms/project.schema";
 
 export function ProjectFlow({
   projects,
@@ -19,8 +31,28 @@ export function ProjectFlow({
   mode: ProjectFlowMode;
   setMode: (value: ProjectFlowMode) => void;
   setActiveId: (id: string) => void;
-  onCreate: (event: FormEvent<HTMLFormElement>) => void;
+  onCreate: (values: ProjectFormValues) => Promise<void>;
 }) {
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ProjectFormValues>({
+    resolver: zodResolver(projectCreationSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues: {
+      name: "",
+      date: "",
+      from: "",
+      to: "",
+      sourceRooms: [...ROOM_PRESETS],
+      destinationRooms: [...ROOM_PRESETS],
+    },
+  });
   return (
     <main className="grid min-h-screen place-items-center bg-[#F5F3EE] p-5">
       <section className="w-full max-w-md rounded-xl bg-white p-7">
@@ -76,36 +108,77 @@ export function ProjectFlow({
             <h1 className="mt-4 text-3xl font-extrabold tracking-[-0.05em]">
               Новый переезд
             </h1>
-            <form onSubmit={onCreate} className="mt-6 grid gap-4">
-              <Field label="Название">
+            <form
+              onSubmit={handleSubmit(async (values) => {
+                setCreateError(null);
+                setCreating(true);
+                try {
+                  await onCreate(values);
+                } catch (error) {
+                  setCreateError(apiErrorMessage(error));
+                } finally {
+                  setCreating(false);
+                }
+              })}
+              noValidate
+              className="mt-6 grid gap-4"
+            >
+              <Field label="Название" error={errors.name?.message}>
                 <TextInput
-                  required
-                  name="name"
+                  {...register("name")}
                   placeholder="Переезд в новую квартиру"
                 />
               </Field>
-              <Field label="Дата переезда">
-                <TextInput required name="date" type="date" />
+              <Field label="Дата переезда" error={errors.date?.message}>
+                <TextInput
+                  {...register("date")}
+                  type="date"
+                  min={getLocalDateInputValue()}
+                  max={getLocalDateInputMaxValue()}
+                />
               </Field>
               <Field label="Откуда (необязательно)">
-                <TextInput name="from" placeholder="ул. Ленина, 14" />
+                <TextInput {...register("from")} placeholder="ул. Ленина, 14" />
               </Field>
               <Field label="Куда (необязательно)">
-                <TextInput name="to" placeholder="ул. Садовая, 8" />
+                <TextInput {...register("to")} placeholder="ул. Садовая, 8" />
               </Field>
-              <Field label="Комнаты откуда, через запятую">
-                <TextInput
+              <Field label="Комнаты откуда">
+                <Controller
+                  control={control}
                   name="sourceRooms"
-                  defaultValue={ROOM_PRESETS.join(", ")}
+                  render={({ field }) => (
+                    <ChipInput
+                      ariaLabel="Комнаты откуда"
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      onBlur={field.onBlur}
+                      placeholder="Комната, пробел или Enter"
+                    />
+                  )}
                 />
               </Field>
-              <Field label="Комнаты куда, через запятую">
-                <TextInput
+              <Field label="Комнаты куда">
+                <Controller
+                  control={control}
                   name="destinationRooms"
-                  defaultValue={ROOM_PRESETS.join(", ")}
+                  render={({ field }) => (
+                    <ChipInput
+                      ariaLabel="Комнаты куда"
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      onBlur={field.onBlur}
+                      placeholder="Комната, пробел или Enter"
+                    />
+                  )}
                 />
               </Field>
-              <Button type="submit" className="mt-2 h-11">
+              {createError && (
+                <p role="alert" className="text-sm text-[#A84D3C]">
+                  {createError}
+                </p>
+              )}
+              <Button type="submit" disabled={creating} className="mt-2 h-11">
                 Создать
                 <ArrowRight />
               </Button>

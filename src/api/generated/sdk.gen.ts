@@ -9,18 +9,42 @@ import type {
 } from "./client";
 import { client } from "./client.gen";
 import type {
+  AddCollaboratorData,
+  AddCollaboratorErrors,
+  AddCollaboratorResponses,
   ChangePasswordApiV1UsersMePasswordPutData,
   ChangePasswordApiV1UsersMePasswordPutErrors,
   ChangePasswordApiV1UsersMePasswordPutResponses,
   ChangeUsernameApiV1UsersMeUsernamePutData,
   ChangeUsernameApiV1UsersMeUsernamePutErrors,
   ChangeUsernameApiV1UsersMeUsernamePutResponses,
+  CreateProjectData,
+  CreateProjectErrors,
+  CreateProjectResponses,
   DeleteMeApiV1UsersMeDeleteData,
   DeleteMeApiV1UsersMeDeleteErrors,
   DeleteMeApiV1UsersMeDeleteResponses,
+  DeleteProjectData,
+  DeleteProjectErrors,
+  DeleteProjectResponses,
+  DeletePushSubscriptionData,
+  DeletePushSubscriptionErrors,
+  DeletePushSubscriptionResponses,
   GetMeApiV1UsersMeGetData,
   GetMeApiV1UsersMeGetErrors,
   GetMeApiV1UsersMeGetResponses,
+  GetProjectData,
+  GetProjectErrors,
+  GetProjectResponses,
+  GetVapidPublicKeyData,
+  GetVapidPublicKeyErrors,
+  GetVapidPublicKeyResponses,
+  ListCollaboratorsData,
+  ListCollaboratorsErrors,
+  ListCollaboratorsResponses,
+  ListProjectsData,
+  ListProjectsErrors,
+  ListProjectsResponses,
   LiveHealthLiveGetData,
   LiveHealthLiveGetResponses,
   LoginApiV1AuthLoginPostData,
@@ -38,6 +62,18 @@ import type {
   RegisterApiV1AuthRegisterPostData,
   RegisterApiV1AuthRegisterPostErrors,
   RegisterApiV1AuthRegisterPostResponses,
+  RemoveCollaboratorData,
+  RemoveCollaboratorErrors,
+  RemoveCollaboratorResponses,
+  SetProjectRemindersData,
+  SetProjectRemindersErrors,
+  SetProjectRemindersResponses,
+  UpdateProjectData,
+  UpdateProjectErrors,
+  UpdateProjectResponses,
+  UpsertPushSubscriptionData,
+  UpsertPushSubscriptionErrors,
+  UpsertPushSubscriptionResponses,
 } from "./types.gen";
 
 export type Options<
@@ -197,7 +233,7 @@ export const logoutApiV1AuthLogoutPost = <ThrowOnError extends boolean = false>(
  * Delete Me
  *
  * Soft-delete the account and end every session; the username
- * becomes free at once.
+ * becomes free at once. Owners delete their projects first.
  */
 export const deleteMeApiV1UsersMeDelete = <
   ThrowOnError extends boolean = false,
@@ -285,6 +321,267 @@ export const changeUsernameApiV1UsersMeUsernamePut = <
   >({
     security: [{ scheme: "bearer", type: "http" }],
     url: "/api/v1/users/me/username",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List Projects
+ *
+ * Active projects of the current user, by moving date.
+ */
+export const listProjects = <ThrowOnError extends boolean = false>(
+  options?: Options<ListProjectsData, ThrowOnError>,
+): RequestResult<ListProjectsResponses, ListProjectsErrors, ThrowOnError> =>
+  (options?.client ?? client).get<
+    ListProjectsResponses,
+    ListProjectsErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects",
+    ...options,
+  });
+
+/**
+ * Create Project
+ *
+ * The current user becomes the owner and first member. Rooms are created in
+ * the same transaction; task templates are not copied.
+ */
+export const createProject = <ThrowOnError extends boolean = false>(
+  options: Options<CreateProjectData, ThrowOnError>,
+): RequestResult<CreateProjectResponses, CreateProjectErrors, ThrowOnError> =>
+  (options.client ?? client).post<
+    CreateProjectResponses,
+    CreateProjectErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Project
+ *
+ * Soft-delete with everything inside; final for users. Owner only.
+ */
+export const deleteProject = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteProjectData, ThrowOnError>,
+): RequestResult<DeleteProjectResponses, DeleteProjectErrors, ThrowOnError> =>
+  (options.client ?? client).delete<
+    DeleteProjectResponses,
+    DeleteProjectErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}",
+    ...options,
+  });
+
+/**
+ * Get Project
+ */
+export const getProject = <ThrowOnError extends boolean = false>(
+  options: Options<GetProjectData, ThrowOnError>,
+): RequestResult<GetProjectResponses, GetProjectErrors, ThrowOnError> =>
+  (options.client ?? client).get<
+    GetProjectResponses,
+    GetProjectErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}",
+    ...options,
+  });
+
+/**
+ * Update Project
+ *
+ * Any member may. A new moving date or time zone moves pending reminders.
+ */
+export const updateProject = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateProjectData, ThrowOnError>,
+): RequestResult<UpdateProjectResponses, UpdateProjectErrors, ThrowOnError> =>
+  (options.client ?? client).patch<
+    UpdateProjectResponses,
+    UpdateProjectErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Set Project Reminders
+ *
+ * Replace the moving date reminders; the same set again changes nothing.
+ */
+export const setProjectReminders = <ThrowOnError extends boolean = false>(
+  options: Options<SetProjectRemindersData, ThrowOnError>,
+): RequestResult<
+  SetProjectRemindersResponses,
+  SetProjectRemindersErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    SetProjectRemindersResponses,
+    SetProjectRemindersErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}/reminders",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List Collaborators
+ *
+ * Members of the project, the owner first.
+ */
+export const listCollaborators = <ThrowOnError extends boolean = false>(
+  options: Options<ListCollaboratorsData, ThrowOnError>,
+): RequestResult<
+  ListCollaboratorsResponses,
+  ListCollaboratorsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    ListCollaboratorsResponses,
+    ListCollaboratorsErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}/collaborators",
+    ...options,
+  });
+
+/**
+ * Add Collaborator
+ *
+ * Add a user by username; any member may. Adding a member again is a no-op (200).
+ */
+export const addCollaborator = <ThrowOnError extends boolean = false>(
+  options: Options<AddCollaboratorData, ThrowOnError>,
+): RequestResult<
+  AddCollaboratorResponses,
+  AddCollaboratorErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    AddCollaboratorResponses,
+    AddCollaboratorErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}/collaborators",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Remove Collaborator
+ *
+ * Any member may remove any other member except the owner; one's own id means
+ * leaving the project. Removing a non-member is a no-op.
+ */
+export const removeCollaborator = <ThrowOnError extends boolean = false>(
+  options: Options<RemoveCollaboratorData, ThrowOnError>,
+): RequestResult<
+  RemoveCollaboratorResponses,
+  RemoveCollaboratorErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    RemoveCollaboratorResponses,
+    RemoveCollaboratorErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}/collaborators/{user_id}",
+    ...options,
+  });
+
+/**
+ * Get Vapid Public Key
+ *
+ * The server's VAPID key; needed before the browser can subscribe.
+ */
+export const getVapidPublicKey = <ThrowOnError extends boolean = false>(
+  options?: Options<GetVapidPublicKeyData, ThrowOnError>,
+): RequestResult<
+  GetVapidPublicKeyResponses,
+  GetVapidPublicKeyErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    GetVapidPublicKeyResponses,
+    GetVapidPublicKeyErrors,
+    ThrowOnError
+  >({ url: "/api/v1/push/vapid-public-key", ...options });
+
+/**
+ * Delete Push Subscription
+ *
+ * Stop pushing to this browser (call it on logout too). Always 204.
+ */
+export const deletePushSubscription = <ThrowOnError extends boolean = false>(
+  options: Options<DeletePushSubscriptionData, ThrowOnError>,
+): RequestResult<
+  DeletePushSubscriptionResponses,
+  DeletePushSubscriptionErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    DeletePushSubscriptionResponses,
+    DeletePushSubscriptionErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/push/subscriptions",
+    ...options,
+  });
+
+/**
+ * Upsert Push Subscription
+ *
+ * Send `PushSubscription.toJSON()` after every subscribe and on app start:
+ * upsert by endpoint, the browser then gets the current user's notifications.
+ */
+export const upsertPushSubscription = <ThrowOnError extends boolean = false>(
+  options: Options<UpsertPushSubscriptionData, ThrowOnError>,
+): RequestResult<
+  UpsertPushSubscriptionResponses,
+  UpsertPushSubscriptionErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    UpsertPushSubscriptionResponses,
+    UpsertPushSubscriptionErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/push/subscriptions",
     ...options,
     headers: {
       "Content-Type": "application/json",

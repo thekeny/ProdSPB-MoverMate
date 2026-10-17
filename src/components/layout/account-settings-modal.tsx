@@ -1,11 +1,18 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { ApiError } from "@/api/request";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { TextInput } from "@/components/ui/text-input";
 import { apiErrorMessage } from "@/lib/api-error";
+import {
+  changePasswordSchema,
+  usernameFormSchema,
+} from "@/lib/forms/auth.schema";
 
 export function AccountSettingsModal({
   username,
@@ -26,42 +33,64 @@ export function AccountSettingsModal({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const usernameForm = useForm<{ username: string }>({
+    resolver: zodResolver(usernameFormSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues: { username },
+  });
+  const passwordForm = useForm<{
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }>({
+    resolver: zodResolver(changePasswordSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
 
   return (
-    <Modal className="max-w-md" label="Настройки аккаунта" onClose={onClose}>
+    <Modal className="max-w-xl" label="Настройки аккаунта" onClose={onClose}>
       <h2 className="text-2xl font-extrabold">Аккаунт</h2>
       <form
         className="mt-5 grid gap-3"
-        onSubmit={async (event) => {
-          event.preventDefault();
-          setError(null);
-          setNotice(null);
-          const data = new FormData(event.currentTarget);
-          const nextUsername = String(data.get("username") ?? "")
-            .trim()
-            .toLowerCase();
-          if (nextUsername.length < 3 || nextUsername.length > 32) {
-            setError("Имя пользователя должно содержать от 3 до 32 символов.");
-            return;
-          }
-          setPending(true);
-          try {
-            await onChangeUsername(nextUsername);
-            setNotice("Имя пользователя обновлено.");
-          } catch (cause) {
-            setError(apiErrorMessage(cause));
-          } finally {
-            setPending(false);
-          }
-        }}
+        noValidate
+        onSubmit={usernameForm.handleSubmit(
+          async ({ username: nextUsername }) => {
+            setError(null);
+            setNotice(null);
+            setPending(true);
+            try {
+              await onChangeUsername(nextUsername);
+              setNotice("Имя пользователя обновлено.");
+            } catch (cause) {
+              const fieldError =
+                cause instanceof ApiError &&
+                Object.entries(cause.fields).find(([field]) =>
+                  field.toLowerCase().includes("username"),
+                );
+              if (fieldError) {
+                usernameForm.setError("username", { message: fieldError[1] });
+              } else {
+                setError(apiErrorMessage(cause));
+              }
+            } finally {
+              setPending(false);
+            }
+          },
+        )}
       >
-        <Field label="Имя пользователя">
+        <Field
+          label="Имя пользователя"
+          error={usernameForm.formState.errors.username?.message}
+        >
           <TextInput
-            name="username"
-            required
-            minLength={3}
-            maxLength={32}
-            defaultValue={username}
+            {...usernameForm.register("username")}
             autoCapitalize="none"
             spellCheck={false}
           />
@@ -75,54 +104,62 @@ export function AccountSettingsModal({
       </form>
       <form
         className="mt-6 grid gap-3 border-t border-[#E8E2D5] pt-5"
-        onSubmit={async (event) => {
-          event.preventDefault();
-          setError(null);
-          setNotice(null);
-          const data = new FormData(event.currentTarget);
-          const currentPassword = String(data.get("currentPassword") ?? "");
-          const newPassword = String(data.get("newPassword") ?? "");
-          if (newPassword !== String(data.get("confirmPassword") ?? "")) {
-            setError("Новые пароли не совпадают.");
-            return;
-          }
-          setPending(true);
-          try {
-            await onChangePassword({ currentPassword, newPassword });
-          } catch (cause) {
-            setError(apiErrorMessage(cause));
-            setPending(false);
-          }
-        }}
+        noValidate
+        onSubmit={passwordForm.handleSubmit(
+          async ({ currentPassword, newPassword }) => {
+            setError(null);
+            setNotice(null);
+            setPending(true);
+            try {
+              await onChangePassword({ currentPassword, newPassword });
+            } catch (cause) {
+              const fieldError =
+                cause instanceof ApiError &&
+                Object.entries(cause.fields).find(([field]) =>
+                  /current_password|new_password|password/i.test(field),
+                );
+              if (fieldError) {
+                const target = /current_password/i.test(fieldError[0])
+                  ? "currentPassword"
+                  : "newPassword";
+                passwordForm.setError(target, { message: fieldError[1] });
+              } else {
+                setError(apiErrorMessage(cause));
+              }
+            } finally {
+              setPending(false);
+            }
+          },
+        )}
       >
         <h3 className="font-extrabold">Сменить пароль</h3>
-        <Field label="Текущий пароль">
+        <Field
+          label="Текущий пароль"
+          error={passwordForm.formState.errors.currentPassword?.message}
+        >
           <TextInput
-            name="currentPassword"
+            {...passwordForm.register("currentPassword")}
             type="password"
-            minLength={8}
-            maxLength={128}
-            required
             autoComplete="current-password"
           />
         </Field>
-        <Field label="Новый пароль">
+        <Field
+          label="Новый пароль"
+          error={passwordForm.formState.errors.newPassword?.message}
+        >
           <TextInput
-            name="newPassword"
+            {...passwordForm.register("newPassword")}
             type="password"
-            minLength={8}
-            maxLength={128}
-            required
             autoComplete="new-password"
           />
         </Field>
-        <Field label="Повторите новый пароль">
+        <Field
+          label="Повторите новый пароль"
+          error={passwordForm.formState.errors.confirmPassword?.message}
+        >
           <TextInput
-            name="confirmPassword"
+            {...passwordForm.register("confirmPassword")}
             type="password"
-            minLength={8}
-            maxLength={128}
-            required
             autoComplete="new-password"
           />
         </Field>

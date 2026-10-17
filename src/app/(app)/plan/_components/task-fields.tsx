@@ -1,3 +1,10 @@
+import {
+  type Control,
+  Controller,
+  type FieldErrors,
+  type UseFormRegister,
+  useWatch,
+} from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
 import {
@@ -9,63 +16,75 @@ import {
 } from "@/components/ui/select";
 import { TextInput } from "@/components/ui/text-input";
 import { TASK_STAGE_OPTIONS } from "@/configs/consts/task-stages.const";
-import type { Task } from "@/configs/types/task.type";
+import {
+  getLocalDateInputMaxValue,
+  getLocalDateInputValue,
+  getLocalTimeInputValue,
+} from "@/lib/date-time";
+import type { TaskFormValues } from "@/lib/forms/project.schema";
 
 export function TaskFields({
-  task,
   members,
+  control,
+  register,
+  errors,
 }: {
-  task?: Task;
   members: string[];
+  control: Control<TaskFormValues>;
+  register: UseFormRegister<TaskFormValues>;
+  errors: FieldErrors<TaskFormValues>;
 }) {
+  const dueDate = useWatch({ control, name: "dueDate" });
+  const today = getLocalDateInputValue();
   return (
     <>
-      <Field label="Задача">
-        <TextInput
-          name="title"
-          required
-          defaultValue={task?.title}
-          placeholder="Заказать грузчиков"
-        />
+      <Field label="Задача" error={errors.title?.message}>
+        <TextInput {...register("title")} placeholder="Заказать грузчиков" />
       </Field>
       <Field label="Описание">
         <textarea
-          name="description"
-          defaultValue={task?.description}
+          {...register("description")}
           rows={3}
           className="w-full rounded-[7px] bg-[#EDF1E8] p-3 text-sm outline-none focus:ring-3 focus:ring-[#42664D]/30"
         />
       </Field>
       <Field label="Этап">
-        <Select
+        <Controller
+          control={control}
           name="stage"
-          defaultValue={task?.stage ?? TASK_STAGE_OPTIONS[0].value}
-          items={TASK_STAGE_OPTIONS}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {TASK_STAGE_OPTIONS.map((stage) => (
-              <SelectItem key={stage.value} value={stage.value}>
-                {stage.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </Field>
-      <Field label="Дата">
-        <TextInput
-          name="dueDate"
-          type="date"
-          defaultValue={task?.dueAt?.slice(0, 10)}
+          render={({ field }) => (
+            <Select
+              value={field.value}
+              onValueChange={field.onChange}
+              items={TASK_STAGE_OPTIONS}
+            >
+              <SelectTrigger onBlur={field.onBlur}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TASK_STAGE_OPTIONS.map((stage) => (
+                  <SelectItem key={stage.value} value={stage.value}>
+                    {stage.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         />
       </Field>
-      <Field label="Время (необязательно)">
+      <Field label="Дата" error={errors.dueDate?.message}>
         <TextInput
-          name="dueTime"
+          {...register("dueDate")}
+          type="date"
+          min={today}
+          max={getLocalDateInputMaxValue()}
+        />
+      </Field>
+      <Field label="Время (необязательно)" error={errors.dueTime?.message}>
+        <TextInput
+          {...register("dueTime")}
           type="time"
-          defaultValue={task?.dueAt?.slice(11, 16)}
+          min={dueDate === today ? getLocalTimeInputValue() : undefined}
         />
       </Field>
       <fieldset className="grid gap-2">
@@ -73,11 +92,23 @@ export function TaskFields({
         {members.length ? (
           members.map((member) => (
             <div key={member} className="flex items-center gap-2 text-sm">
-              <Checkbox
-                aria-label={`Назначить ${member}`}
+              <Controller
+                control={control}
                 name="assignees"
-                value={member}
-                defaultChecked={task?.assignees.includes(member)}
+                render={({ field }) => (
+                  <Checkbox
+                    aria-label={`Назначить ${member}`}
+                    checked={field.value.includes(member)}
+                    onBlur={field.onBlur}
+                    onCheckedChange={(checked) =>
+                      field.onChange(
+                        checked
+                          ? [...field.value, member]
+                          : field.value.filter((value) => value !== member),
+                      )
+                    }
+                  />
+                )}
               />
               {member}
             </div>

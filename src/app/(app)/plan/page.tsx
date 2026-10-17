@@ -43,7 +43,7 @@ export default function PlanPage() {
       )}
       {showTemplates && (
         <Modal
-          className="max-w-md"
+          className="max-w-xl"
           label="Шаблоны задач"
           onClose={() => setShowTemplates(false)}
         >

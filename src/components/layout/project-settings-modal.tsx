@@ -1,6 +1,11 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { z } from "zod";
+import { ApiError } from "@/api/request";
 import { Button } from "@/components/ui/button";
+import { ChipInput } from "@/components/ui/chip-input";
 import { Field } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import {
@@ -10,10 +15,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { TextInput } from "@/components/ui/text-input";
-import { QR_STRATEGY_OPTIONS } from "@/configs/consts/qr-strategies.const";
 import type { QrStrategy } from "@/configs/types/box.type";
 import type { Project } from "@/configs/types/project.type";
+import { apiErrorMessage } from "@/lib/api-error";
+import {
+  getLocalDateInputMaxValue,
+  getLocalDateInputValue,
+} from "@/lib/date-time";
+import {
+  memberNameSchema,
+  type ProjectSettingsFormValues,
+  projectSettingsSchema,
+  roomNameSchema,
+} from "@/lib/forms/project.schema";
 
 export function ProjectSettingsModal({
   project,
@@ -22,85 +38,174 @@ export function ProjectSettingsModal({
   onSave,
   onDelete,
   onUpdateProject,
-  ownerUsername,
+  onAddMember,
+  onRemoveMember,
 }: {
   project: Project;
   canDelete: boolean;
   onClose: () => void;
   onSave: (
-    values: Pick<Project, "name" | "date" | "from" | "to" | "qrCodeStrategy">,
-  ) => void;
-  onDelete: () => void;
+    values: Pick<
+      Project,
+      "name" | "date" | "from" | "to" | "qrCodeStrategy"
+    > & { reminderOffsetsDays: number[] },
+  ) => Promise<void>;
+  onDelete: () => Promise<void>;
   onUpdateProject: (apply: (project: Project) => Project) => void;
-  ownerUsername: string;
+  onAddMember: (username: string) => Promise<void>;
+  onRemoveMember: (userId: string, username: string) => Promise<void>;
 }) {
-  const [roomName, setRoomName] = useState("");
-  const [memberName, setMemberName] = useState("");
-  const [roomKind, setRoomKind] = useState<"sourceRooms" | "destinationRooms">(
-    "sourceRooms",
-  );
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [memberRequestPending, setMemberRequestPending] = useState(false);
+  const [deletePending, setDeletePending] = useState(false);
+  const projectForm = useForm<ProjectSettingsFormValues>({
+    resolver: zodResolver(projectSettingsSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues: {
+      name: project.name,
+      date: project.date,
+      from: project.from,
+      to: project.to,
+      qrCodeStrategy: project.qrCodeStrategy,
+      reminderOffsets: project.reminderOffsetsDays.map(String),
+    },
+  });
+  const roomForm = useForm<{
+    name: string;
+    kind: "sourceRooms" | "destinationRooms";
+  }>({
+    resolver: zodResolver(
+      roomNameSchema.extend({
+        kind: z.enum(["sourceRooms", "destinationRooms"]),
+      }),
+    ),
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues: { name: "", kind: "sourceRooms" },
+  });
+  const memberForm = useForm<{ name: string }>({
+    resolver: zodResolver(memberNameSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues: { name: "" },
+  });
   return (
-    <Modal className="max-w-md" label="Настройки проекта" onClose={onClose}>
+    <Modal className="max-w-4xl" label="Настройки проекта" onClose={onClose}>
       <h2 className="text-2xl font-extrabold tracking-[-0.04em]">
         Настройки проекта
       </h2>
       <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          const data = new FormData(event.currentTarget);
-          const name = String(data.get("name") ?? "").trim();
-          const date = String(data.get("date") ?? "").trim();
-          if (!name || !date) return;
-          onSave({
-            name,
-            date,
-            from: String(data.get("from") ?? "").trim(),
-            to: String(data.get("to") ?? "").trim(),
-            qrCodeStrategy:
-              (data.get("qrCodeStrategy") as QrStrategy) ?? "protected",
-          });
-        }}
+        noValidate
+        onSubmit={projectForm.handleSubmit(async (values) => {
+          setActionError(null);
+          const reminderOffsetsDays = [
+            ...new Set(values.reminderOffsets.map(Number)),
+          ].sort((a, b) => b - a);
+          try {
+            await onSave({
+              name: values.name.trim(),
+              date: values.date,
+              from: values.from.trim(),
+              to: values.to.trim(),
+              qrCodeStrategy: values.qrCodeStrategy as QrStrategy,
+              reminderOffsetsDays: [...new Set(reminderOffsetsDays)].sort(
+                (a, b) => b - a,
+              ),
+            });
+          } catch (error) {
+            setActionError(apiErrorMessage(error));
+          }
+        })}
         className="mt-6 grid gap-4"
       >
-        <Field label="Название">
-          <TextInput name="name" required defaultValue={project.name} />
+        <Field
+          label="Название"
+          error={projectForm.formState.errors.name?.message}
+        >
+          <TextInput {...projectForm.register("name")} />
         </Field>
-        <Field label="Дата переезда">
+        <Field
+          label="Дата переезда"
+          error={projectForm.formState.errors.date?.message}
+        >
           <TextInput
-            name="date"
+            {...projectForm.register("date")}
             type="date"
-            required
-            defaultValue={project.date}
+            min={getLocalDateInputValue()}
+            max={getLocalDateInputMaxValue()}
           />
         </Field>
         <Field label="Откуда">
-          <TextInput name="from" defaultValue={project.from} />
+          <TextInput {...projectForm.register("from")} />
         </Field>
         <Field label="Куда">
-          <TextInput name="to" defaultValue={project.to} />
+          <TextInput {...projectForm.register("to")} />
         </Field>
-        <Field label="Доступ по QR-коду">
-          <Select
+        <div className="grid gap-1.5">
+          <span className="text-xs font-bold text-[#42664D]">
+            Доступ по QR-коду
+          </span>
+          <Controller
+            control={projectForm.control}
             name="qrCodeStrategy"
-            defaultValue={project.qrCodeStrategy}
-            items={QR_STRATEGY_OPTIONS}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {QR_STRATEGY_OPTIONS.map((strategy) => (
-                <SelectItem key={strategy.value} value={strategy.value}>
-                  {strategy.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            render={({ field }) => (
+              <div className="flex items-center gap-3">
+                <Switch
+                  checked={field.value === "open"}
+                  onCheckedChange={(checked) =>
+                    field.onChange(checked ? "open" : "protected")
+                  }
+                  onBlur={field.onBlur}
+                  aria-label="Разрешить просмотр по QR-коду всем, у кого есть ссылка"
+                />
+                <span className="text-sm text-[#68716C]">
+                  {field.value === "open"
+                    ? "Любой со ссылкой может посмотреть"
+                    : "Только участники проекта"}
+                </span>
+              </div>
+            )}
+          />
+        </div>
+        <Field label="Напоминать за, дней">
+          <Controller
+            control={projectForm.control}
+            name="reminderOffsets"
+            render={({ field, fieldState }) => (
+              <>
+                <ChipInput
+                  ariaLabel="Дни до переезда для напоминаний"
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  onBlur={field.onBlur}
+                  placeholder="Число, пробел или Enter"
+                  inputMode="numeric"
+                  ariaInvalid={fieldState.invalid}
+                  ariaDescribedBy={
+                    fieldState.error ? "reminder-offsets-error" : undefined
+                  }
+                  className="[&_input]:tabular-nums"
+                />
+                {fieldState.error && (
+                  <p
+                    id="reminder-offsets-error"
+                    role="alert"
+                    className="mt-1 text-xs text-[#A84D3C]"
+                  >
+                    {fieldState.error.message}
+                  </p>
+                )}
+              </>
+            )}
+          />
         </Field>
-        <p className="text-xs text-[#68716C]">
-          Данные проекта хранятся в браузере: QR пока работает только на этом
-          устройстве; для защищённого QR участник должен войти в аккаунт.
-        </p>
+        {actionError && (
+          <p role="alert" className="text-sm text-[#A84D3C]">
+            {actionError}
+          </p>
+        )}
         <div className="mt-2 flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>
             Отмена
@@ -170,49 +275,66 @@ export function ProjectSettingsModal({
         ))}
         <form
           className="mt-3 flex flex-wrap gap-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const name = roomName.trim();
+          noValidate
+          onSubmit={roomForm.handleSubmit(({ name: rawName, kind }) => {
+            const name = rawName.trim();
             if (
-              !name ||
-              project[roomKind].some(
+              project[kind].some(
                 (room) =>
                   room.toLocaleLowerCase("ru") === name.toLocaleLowerCase("ru"),
               )
-            )
+            ) {
+              roomForm.setError("name", { message: "Такая комната уже есть." });
               return;
+            }
             onUpdateProject((current) => ({
               ...current,
-              [roomKind]: [...current[roomKind], name],
+              [kind]: [...current[kind], name],
             }));
-            setRoomName("");
-          }}
+            roomForm.reset({ name: "", kind });
+          })}
         >
-          <Select
-            value={roomKind}
-            onValueChange={(value) =>
-              value && setRoomKind(value as typeof roomKind)
-            }
-            items={[
-              { label: "Откуда", value: "sourceRooms" },
-              { label: "Куда", value: "destinationRooms" },
-            ]}
-          >
-            <SelectTrigger aria-label="Тип комнаты">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="sourceRooms">Откуда</SelectItem>
-              <SelectItem value="destinationRooms">Куда</SelectItem>
-            </SelectContent>
-          </Select>
+          <Controller
+            control={roomForm.control}
+            name="kind"
+            render={({ field }) => (
+              <Select
+                value={field.value}
+                onValueChange={field.onChange}
+                items={[
+                  { label: "Откуда", value: "sourceRooms" },
+                  { label: "Куда", value: "destinationRooms" },
+                ]}
+              >
+                <SelectTrigger aria-label="Тип комнаты" onBlur={field.onBlur}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sourceRooms">Откуда</SelectItem>
+                  <SelectItem value="destinationRooms">Куда</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
           <TextInput
+            {...roomForm.register("name")}
             aria-label="Название комнаты"
-            value={roomName}
-            onChange={(event) => setRoomName(event.target.value)}
+            aria-invalid={roomForm.formState.errors.name ? true : undefined}
+            aria-describedby={
+              roomForm.formState.errors.name ? "room-name-error" : undefined
+            }
             placeholder="Новая комната"
             className="min-w-0 flex-1"
           />
+          {roomForm.formState.errors.name && (
+            <p
+              id="room-name-error"
+              role="alert"
+              className="w-full text-xs text-[#A84D3C]"
+            >
+              {roomForm.formState.errors.name.message}
+            </p>
+          )}
           <Button type="submit" aria-label="Добавить комнату">
             <Plus />
           </Button>
@@ -221,8 +343,7 @@ export function ProjectSettingsModal({
       <section className="mt-6 border-t border-[#E8E2D5] pt-5">
         <h3 className="font-extrabold">Участники</h3>
         <p className="mt-1 text-xs text-[#68716C]">
-          Список хранится локально. Добавленные имена пока не проверяются на
-          сервере.
+          Участники проекта управляются на сервере.
         </p>
         <div className="mt-3 grid gap-2">
           {project.members.map((member) => (
@@ -232,29 +353,35 @@ export function ProjectSettingsModal({
             >
               <span>
                 {member}
-                {member === ownerUsername && (
+                {project.collaborators.find(
+                  (entry) => entry.username === member,
+                )?.isOwner && (
                   <span className="ml-2 text-xs text-[#68716C]">Владелец</span>
                 )}
               </span>
-              {member !== ownerUsername && (
+              {!project.collaborators.find((entry) => entry.username === member)
+                ?.isOwner && (
                 <Button
                   variant="ghost"
                   size="icon-sm"
                   aria-label={`Удалить участника ${member}`}
-                  onClick={() =>
-                    onUpdateProject((current) => ({
-                      ...current,
-                      members: current.members.filter(
-                        (name) => name !== member,
-                      ),
-                      tasks: current.tasks.map((task) => ({
-                        ...task,
-                        assignees: task.assignees.filter(
-                          (name) => name !== member,
-                        ),
-                      })),
-                    }))
-                  }
+                  onClick={async () => {
+                    if (memberRequestPending) return;
+                    setActionError(null);
+                    const collaborator = project.collaborators.find(
+                      (entry) => entry.username === member,
+                    );
+                    if (!collaborator) return;
+                    setMemberRequestPending(true);
+                    try {
+                      await onRemoveMember(collaborator.userId, member);
+                    } catch (error) {
+                      setActionError(apiErrorMessage(error));
+                    } finally {
+                      setMemberRequestPending(false);
+                    }
+                  }}
+                  disabled={memberRequestPending}
                 >
                   <Trash2 className="size-3" />
                 </Button>
@@ -264,46 +391,99 @@ export function ProjectSettingsModal({
         </div>
         <form
           className="mt-3 flex gap-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const name = memberName.trim().toLowerCase();
-            if (!name || project.members.includes(name)) return;
-            onUpdateProject((current) => ({
-              ...current,
-              members: [...current.members, name],
-            }));
-            setMemberName("");
-          }}
+          noValidate
+          onSubmit={memberForm.handleSubmit(async ({ name: rawName }) => {
+            if (memberRequestPending) return;
+            const name = rawName.trim().toLowerCase();
+            if (project.members.includes(name)) {
+              memberForm.setError("name", {
+                message: "Этот участник уже добавлен.",
+              });
+              return;
+            }
+            setActionError(null);
+            setMemberRequestPending(true);
+            try {
+              await onAddMember(name);
+              memberForm.reset({ name: "" });
+            } catch (error) {
+              if (
+                error instanceof ApiError &&
+                Object.values(error.fields).length
+              )
+                memberForm.setError("name", {
+                  message: Object.values(error.fields)[0],
+                });
+              else setActionError(apiErrorMessage(error));
+            } finally {
+              setMemberRequestPending(false);
+            }
+          })}
         >
-          <TextInput
-            aria-label="Имя участника"
-            value={memberName}
-            onChange={(event) => setMemberName(event.target.value)}
-            placeholder="Имя пользователя"
-            className="min-w-0 flex-1"
-          />
-          <Button type="submit" aria-label="Добавить участника">
+          <div className="grid min-w-0 flex-1 gap-1.5">
+            <TextInput
+              {...memberForm.register("name")}
+              aria-label="Имя участника"
+              aria-invalid={memberForm.formState.errors.name ? true : undefined}
+              aria-describedby={
+                memberForm.formState.errors.name
+                  ? "member-name-error"
+                  : undefined
+              }
+              placeholder="Имя пользователя"
+            />
+            {memberForm.formState.errors.name && (
+              <p
+                id="member-name-error"
+                role="alert"
+                className="text-xs text-[#A84D3C]"
+              >
+                {memberForm.formState.errors.name.message}
+              </p>
+            )}
+          </div>
+          <Button
+            type="submit"
+            aria-label="Добавить участника"
+            disabled={memberRequestPending}
+          >
             <Plus />
           </Button>
         </form>
       </section>
       {canDelete && (
-        <div className="mt-6 rounded-[8px] bg-[#F9E8E2] p-4">
-          <p className="text-sm font-bold text-[#A84D3C]">
+        <div className="mt-6 border-t border-[#E8E2D5] pt-5">
+          <h3 className="font-extrabold text-[#A84D3C]">Удалить проект</h3>
+          <p className="mt-2 text-sm text-[#68716C]">
             Удаление проекта необратимо: коробки, задачи и отметки будут
             потеряны.
           </p>
+          {deleteError && (
+            <p
+              role="alert"
+              className="mt-4 rounded-md bg-[#F9E8E2] p-3 text-sm text-[#A84D3C]"
+            >
+              {deleteError}
+            </p>
+          )}
           <Button
             variant="destructive"
             className="mt-3"
             onClick={() => {
+              if (deletePending) return;
               if (
-                window.confirm(
+                !window.confirm(
                   `Удалить проект «${project.name}» без возможности восстановления?`,
                 )
               )
-                onDelete();
+                return;
+              setDeleteError(null);
+              setDeletePending(true);
+              void onDelete()
+                .catch((error) => setDeleteError(apiErrorMessage(error)))
+                .finally(() => setDeletePending(false));
             }}
+            disabled={deletePending}
           >
             <Trash2 />
             Удалить проект
