@@ -107,11 +107,19 @@ export const taskSchema = z
     }
   });
 
+const itemEntrySchema = z.object({
+  name: z.string().trim().min(1, "Введите название вещи."),
+  quantity: z
+    .number({ error: "Укажите количество." })
+    .int("Укажите целое число.")
+    .min(1, "Количество должно быть не меньше 1."),
+});
+
 export const boxSchema = z.object({
   title: z.string().trim().min(1, "Введите описание коробки."),
   room: z.string().min(1, "Выберите комнату."),
   sourceRoom: z.string().min(1, "Выберите исходную комнату."),
-  items: z.array(z.string()),
+  items: z.array(itemEntrySchema),
   fragile: z.boolean(),
 });
 
@@ -120,6 +128,16 @@ export const packingItemSchema = z.object({
   room: z.string().min(1, "Выберите исходную комнату."),
   priority: z.enum(["NORMAL", "FIRST_NECESSITY"]),
   quantity: z.number().int().min(1, "Количество должно быть не меньше 1."),
+});
+
+export const itemScanSchema = z.object({
+  items: z.array(itemEntrySchema).min(1, "Оставьте хотя бы одну вещь."),
+  room: z.string(),
+  priority: z.enum(["NORMAL", "FIRST_NECESSITY"]),
+});
+
+export const itemScanPlacementSchema = itemScanSchema.extend({
+  room: z.string().min(1, "Выберите исходную комнату."),
 });
 
 export const roomItemSchema = z.object({
@@ -144,3 +162,5 @@ export type ProjectSettingsFormValues = z.infer<typeof projectSettingsSchema>;
 export type TaskFormValues = z.infer<typeof taskSchema>;
 export type BoxFormValues = z.infer<typeof boxSchema>;
 export type PackingItemFormValues = z.infer<typeof packingItemSchema>;
+export type ItemEntry = z.infer<typeof itemEntrySchema>;
+export type ItemScanFormValues = z.infer<typeof itemScanSchema>;

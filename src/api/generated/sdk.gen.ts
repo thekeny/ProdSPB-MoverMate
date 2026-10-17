@@ -12,15 +12,36 @@ import type {
   AddCollaboratorData,
   AddCollaboratorErrors,
   AddCollaboratorResponses,
+  CancelBoxContentsReminderData,
+  CancelBoxContentsReminderErrors,
+  CancelBoxContentsReminderResponses,
   ChangePasswordApiV1UsersMePasswordPutData,
   ChangePasswordApiV1UsersMePasswordPutErrors,
   ChangePasswordApiV1UsersMePasswordPutResponses,
   ChangeUsernameApiV1UsersMeUsernamePutData,
   ChangeUsernameApiV1UsersMeUsernamePutErrors,
   ChangeUsernameApiV1UsersMeUsernamePutResponses,
+  CreateBoxData,
+  CreateBoxErrors,
+  CreateBoxResponses,
+  CreateItemData,
+  CreateItemErrors,
+  CreateItemResponses,
+  CreateItemsData,
+  CreateItemsErrors,
+  CreateItemsResponses,
   CreateProjectData,
   CreateProjectErrors,
   CreateProjectResponses,
+  CreateRoomData,
+  CreateRoomErrors,
+  CreateRoomResponses,
+  DeleteBoxData,
+  DeleteBoxErrors,
+  DeleteBoxResponses,
+  DeleteItemData,
+  DeleteItemErrors,
+  DeleteItemResponses,
   DeleteMeApiV1UsersMeDeleteData,
   DeleteMeApiV1UsersMeDeleteErrors,
   DeleteMeApiV1UsersMeDeleteResponses,
@@ -30,21 +51,57 @@ import type {
   DeletePushSubscriptionData,
   DeletePushSubscriptionErrors,
   DeletePushSubscriptionResponses,
+  DeleteRoomData,
+  DeleteRoomErrors,
+  DeleteRoomResponses,
+  GetBoxByQrData,
+  GetBoxByQrErrors,
+  GetBoxByQrResponses,
+  GetBoxData,
+  GetBoxErrors,
+  GetBoxLabelsData,
+  GetBoxLabelsErrors,
+  GetBoxLabelsResponses,
+  GetBoxResponses,
+  GetItemData,
+  GetItemErrors,
+  GetItemResponses,
+  GetItemSuggestionsData,
+  GetItemSuggestionsErrors,
+  GetItemSuggestionsResponses,
+  GetLoadingChecklistData,
+  GetLoadingChecklistErrors,
+  GetLoadingChecklistResponses,
   GetMeApiV1UsersMeGetData,
   GetMeApiV1UsersMeGetErrors,
   GetMeApiV1UsersMeGetResponses,
   GetProjectData,
   GetProjectErrors,
   GetProjectResponses,
+  GetProjectSummaryData,
+  GetProjectSummaryErrors,
+  GetProjectSummaryResponses,
+  GetUnpackingProgressData,
+  GetUnpackingProgressErrors,
+  GetUnpackingProgressResponses,
   GetVapidPublicKeyData,
   GetVapidPublicKeyErrors,
   GetVapidPublicKeyResponses,
+  ListBoxesData,
+  ListBoxesErrors,
+  ListBoxesResponses,
   ListCollaboratorsData,
   ListCollaboratorsErrors,
   ListCollaboratorsResponses,
+  ListItemsData,
+  ListItemsErrors,
+  ListItemsResponses,
   ListProjectsData,
   ListProjectsErrors,
   ListProjectsResponses,
+  ListRoomsData,
+  ListRoomsErrors,
+  ListRoomsResponses,
   LiveHealthLiveGetData,
   LiveHealthLiveGetResponses,
   LoginApiV1AuthLoginPostData,
@@ -65,12 +122,36 @@ import type {
   RemoveCollaboratorData,
   RemoveCollaboratorErrors,
   RemoveCollaboratorResponses,
+  ScanItemsData,
+  ScanItemsErrors,
+  ScanItemsResponses,
+  SearchItemsData,
+  SearchItemsErrors,
+  SearchItemsResponses,
+  SetBoxContentsReminderData,
+  SetBoxContentsReminderErrors,
+  SetBoxContentsReminderResponses,
+  SetBoxStatusData,
+  SetBoxStatusErrors,
+  SetBoxStatusResponses,
+  SetItemStateData,
+  SetItemStateErrors,
+  SetItemStateResponses,
   SetProjectRemindersData,
   SetProjectRemindersErrors,
   SetProjectRemindersResponses,
+  UpdateBoxData,
+  UpdateBoxErrors,
+  UpdateBoxResponses,
+  UpdateItemData,
+  UpdateItemErrors,
+  UpdateItemResponses,
   UpdateProjectData,
   UpdateProjectErrors,
   UpdateProjectResponses,
+  UpdateRoomData,
+  UpdateRoomErrors,
+  UpdateRoomResponses,
   UpsertPushSubscriptionData,
   UpsertPushSubscriptionErrors,
   UpsertPushSubscriptionResponses,
@@ -519,6 +600,543 @@ export const removeCollaborator = <ThrowOnError extends boolean = false>(
   >({
     security: [{ scheme: "bearer", type: "http" }],
     url: "/api/v1/projects/{project_id}/collaborators/{user_id}",
+    ...options,
+  });
+
+/**
+ * Get Project Summary
+ *
+ * Counters of active boxes, items and tasks, and the next task to do.
+ */
+export const getProjectSummary = <ThrowOnError extends boolean = false>(
+  options: Options<GetProjectSummaryData, ThrowOnError>,
+): RequestResult<
+  GetProjectSummaryResponses,
+  GetProjectSummaryErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetProjectSummaryResponses,
+    GetProjectSummaryErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}/summary",
+    ...options,
+  });
+
+/**
+ * Get Loading Checklist
+ *
+ * Every room of the old home, by name: what is left to pack, which boxes hold
+ * its items, and whether it is loaded. A room without items counts as loaded.
+ */
+export const getLoadingChecklist = <ThrowOnError extends boolean = false>(
+  options: Options<GetLoadingChecklistData, ThrowOnError>,
+): RequestResult<
+  GetLoadingChecklistResponses,
+  GetLoadingChecklistErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetLoadingChecklistResponses,
+    GetLoadingChecklistErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}/loading-checklist",
+    ...options,
+  });
+
+/**
+ * Get Unpacking Progress
+ *
+ * Every room of the new home, by name: unpacked boxes out of those headed for it.
+ */
+export const getUnpackingProgress = <ThrowOnError extends boolean = false>(
+  options: Options<GetUnpackingProgressData, ThrowOnError>,
+): RequestResult<
+  GetUnpackingProgressResponses,
+  GetUnpackingProgressErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetUnpackingProgressResponses,
+    GetUnpackingProgressErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}/unpacking-progress",
+    ...options,
+  });
+
+/**
+ * Get Box Labels
+ *
+ * Labels to print, by box number, in one request.
+ */
+export const getBoxLabels = <ThrowOnError extends boolean = false>(
+  options: Options<GetBoxLabelsData, ThrowOnError>,
+): RequestResult<GetBoxLabelsResponses, GetBoxLabelsErrors, ThrowOnError> =>
+  (options.client ?? client).get<
+    GetBoxLabelsResponses,
+    GetBoxLabelsErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}/labels",
+    ...options,
+  });
+
+/**
+ * List Rooms
+ *
+ * Active rooms of the project, by name.
+ */
+export const listRooms = <ThrowOnError extends boolean = false>(
+  options: Options<ListRoomsData, ThrowOnError>,
+): RequestResult<ListRoomsResponses, ListRoomsErrors, ThrowOnError> =>
+  (options.client ?? client).get<
+    ListRoomsResponses,
+    ListRoomsErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}/rooms",
+    ...options,
+  });
+
+/**
+ * Create Room
+ */
+export const createRoom = <ThrowOnError extends boolean = false>(
+  options: Options<CreateRoomData, ThrowOnError>,
+): RequestResult<CreateRoomResponses, CreateRoomErrors, ThrowOnError> =>
+  (options.client ?? client).post<
+    CreateRoomResponses,
+    CreateRoomErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}/rooms",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Room
+ */
+export const deleteRoom = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteRoomData, ThrowOnError>,
+): RequestResult<DeleteRoomResponses, DeleteRoomErrors, ThrowOnError> =>
+  (options.client ?? client).delete<
+    DeleteRoomResponses,
+    DeleteRoomErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/rooms/{room_id}",
+    ...options,
+  });
+
+/**
+ * Update Room
+ */
+export const updateRoom = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateRoomData, ThrowOnError>,
+): RequestResult<UpdateRoomResponses, UpdateRoomErrors, ThrowOnError> =>
+  (options.client ?? client).patch<
+    UpdateRoomResponses,
+    UpdateRoomErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/rooms/{room_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List Boxes
+ *
+ * Active boxes of the project, by number.
+ */
+export const listBoxes = <ThrowOnError extends boolean = false>(
+  options: Options<ListBoxesData, ThrowOnError>,
+): RequestResult<ListBoxesResponses, ListBoxesErrors, ThrowOnError> =>
+  (options.client ?? client).get<
+    ListBoxesResponses,
+    ListBoxesErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}/boxes",
+    ...options,
+  });
+
+/**
+ * Create Box
+ *
+ * A new box in PACKING with the lowest free number; `items` are packed into it
+ * in the same transaction.
+ */
+export const createBox = <ThrowOnError extends boolean = false>(
+  options: Options<CreateBoxData, ThrowOnError>,
+): RequestResult<CreateBoxResponses, CreateBoxErrors, ThrowOnError> =>
+  (options.client ?? client).post<
+    CreateBoxResponses,
+    CreateBoxErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}/boxes",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get Box By Qr
+ *
+ * Open a box card by the token of its QR label.
+ *
+ * PROTECTED project: members get WRITE, anonymous callers 401, other users 404.
+ * OPEN project: members get WRITE, everyone else READ. A deleted box is 404.
+ */
+export const getBoxByQr = <ThrowOnError extends boolean = false>(
+  options: Options<GetBoxByQrData, ThrowOnError>,
+): RequestResult<GetBoxByQrResponses, GetBoxByQrErrors, ThrowOnError> =>
+  (options.client ?? client).get<
+    GetBoxByQrResponses,
+    GetBoxByQrErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/boxes/by-qr/{qr_token}",
+    ...options,
+  });
+
+/**
+ * Delete Box
+ *
+ * Items in the box are deleted with it; its number becomes free.
+ */
+export const deleteBox = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteBoxData, ThrowOnError>,
+): RequestResult<DeleteBoxResponses, DeleteBoxErrors, ThrowOnError> =>
+  (options.client ?? client).delete<
+    DeleteBoxResponses,
+    DeleteBoxErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/boxes/{box_id}",
+    ...options,
+  });
+
+/**
+ * Get Box
+ */
+export const getBox = <ThrowOnError extends boolean = false>(
+  options: Options<GetBoxData, ThrowOnError>,
+): RequestResult<GetBoxResponses, GetBoxErrors, ThrowOnError> =>
+  (options.client ?? client).get<GetBoxResponses, GetBoxErrors, ThrowOnError>({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/boxes/{box_id}",
+    ...options,
+  });
+
+/**
+ * Update Box
+ */
+export const updateBox = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateBoxData, ThrowOnError>,
+): RequestResult<UpdateBoxResponses, UpdateBoxErrors, ThrowOnError> =>
+  (options.client ?? client).patch<
+    UpdateBoxResponses,
+    UpdateBoxErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/boxes/{box_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Set Box Status
+ *
+ * One step forward or back. The current status again is 200 without changes.
+ */
+export const setBoxStatus = <ThrowOnError extends boolean = false>(
+  options: Options<SetBoxStatusData, ThrowOnError>,
+): RequestResult<SetBoxStatusResponses, SetBoxStatusErrors, ThrowOnError> =>
+  (options.client ?? client).put<
+    SetBoxStatusResponses,
+    SetBoxStatusErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/boxes/{box_id}/status",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Cancel Box Contents Reminder
+ */
+export const cancelBoxContentsReminder = <ThrowOnError extends boolean = false>(
+  options: Options<CancelBoxContentsReminderData, ThrowOnError>,
+): RequestResult<
+  CancelBoxContentsReminderResponses,
+  CancelBoxContentsReminderErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    CancelBoxContentsReminderResponses,
+    CancelBoxContentsReminderErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/boxes/{box_id}/contents-reminder",
+    ...options,
+  });
+
+/**
+ * Set Box Contents Reminder
+ *
+ * Remind the creator of the box to fill in its contents at `remind_at`.
+ */
+export const setBoxContentsReminder = <ThrowOnError extends boolean = false>(
+  options: Options<SetBoxContentsReminderData, ThrowOnError>,
+): RequestResult<
+  SetBoxContentsReminderResponses,
+  SetBoxContentsReminderErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    SetBoxContentsReminderResponses,
+    SetBoxContentsReminderErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/boxes/{box_id}/contents-reminder",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List Items
+ *
+ * Active items in packing order: priority, then name, then id.
+ */
+export const listItems = <ThrowOnError extends boolean = false>(
+  options: Options<ListItemsData, ThrowOnError>,
+): RequestResult<ListItemsResponses, ListItemsErrors, ThrowOnError> =>
+  (options.client ?? client).get<
+    ListItemsResponses,
+    ListItemsErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}/items",
+    ...options,
+  });
+
+/**
+ * Create Item
+ */
+export const createItem = <ThrowOnError extends boolean = false>(
+  options: Options<CreateItemData, ThrowOnError>,
+): RequestResult<CreateItemResponses, CreateItemErrors, ThrowOnError> =>
+  (options.client ?? client).post<
+    CreateItemResponses,
+    CreateItemErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}/items",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Create Items
+ *
+ * Several items from one room at once: all of them or none.
+ */
+export const createItems = <ThrowOnError extends boolean = false>(
+  options: Options<CreateItemsData, ThrowOnError>,
+): RequestResult<CreateItemsResponses, CreateItemsErrors, ThrowOnError> =>
+  (options.client ?? client).post<
+    CreateItemsResponses,
+    CreateItemsErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}/items/batch",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Scan Items
+ *
+ * Names and quantities of the items in a photo, recognized by a vision model.
+ *
+ * Nothing is saved: show the list, let the user fix it and send it to createItems.
+ */
+export const scanItems = <ThrowOnError extends boolean = false>(
+  options: Options<ScanItemsData, ThrowOnError>,
+): RequestResult<ScanItemsResponses, ScanItemsErrors, ThrowOnError> =>
+  (options.client ?? client).post<
+    ScanItemsResponses,
+    ScanItemsErrors,
+    ThrowOnError
+  >({
+    bodySerializer: null,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}/items/scan",
+    ...options,
+    headers: {
+      "Content-Type": "image/gif",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Search Items
+ *
+ * Full-text search by item name, ranked by relevance.
+ */
+export const searchItems = <ThrowOnError extends boolean = false>(
+  options: Options<SearchItemsData, ThrowOnError>,
+): RequestResult<SearchItemsResponses, SearchItemsErrors, ThrowOnError> =>
+  (options.client ?? client).get<
+    SearchItemsResponses,
+    SearchItemsErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}/items/search",
+    ...options,
+  });
+
+/**
+ * Delete Item
+ */
+export const deleteItem = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteItemData, ThrowOnError>,
+): RequestResult<DeleteItemResponses, DeleteItemErrors, ThrowOnError> =>
+  (options.client ?? client).delete<
+    DeleteItemResponses,
+    DeleteItemErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/items/{item_id}",
+    ...options,
+  });
+
+/**
+ * Get Item
+ */
+export const getItem = <ThrowOnError extends boolean = false>(
+  options: Options<GetItemData, ThrowOnError>,
+): RequestResult<GetItemResponses, GetItemErrors, ThrowOnError> =>
+  (options.client ?? client).get<GetItemResponses, GetItemErrors, ThrowOnError>(
+    {
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/api/v1/items/{item_id}",
+      ...options,
+    },
+  );
+
+/**
+ * Update Item
+ */
+export const updateItem = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateItemData, ThrowOnError>,
+): RequestResult<UpdateItemResponses, UpdateItemErrors, ThrowOnError> =>
+  (options.client ?? client).patch<
+    UpdateItemResponses,
+    UpdateItemErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/items/{item_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Set Item State
+ *
+ * The current state again (the same box for IN_BOX) is 200 without changes.
+ */
+export const setItemState = <ThrowOnError extends boolean = false>(
+  options: Options<SetItemStateData, ThrowOnError>,
+): RequestResult<SetItemStateResponses, SetItemStateErrors, ThrowOnError> =>
+  (options.client ?? client).put<
+    SetItemStateResponses,
+    SetItemStateErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/items/{item_id}/state",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get Item Suggestions
+ *
+ * Boxes not yet unpacked that hold other items from the same source room,
+ * most matches first.
+ */
+export const getItemSuggestions = <ThrowOnError extends boolean = false>(
+  options: Options<GetItemSuggestionsData, ThrowOnError>,
+): RequestResult<
+  GetItemSuggestionsResponses,
+  GetItemSuggestionsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetItemSuggestionsResponses,
+    GetItemSuggestionsErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/items/{item_id}/suggestions",
     ...options,
   });
 

@@ -1,6 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Trash2 } from "lucide-react";
+import { Camera, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { ItemScanModal } from "@/app/(app)/boxes/_components/item-scan-modal";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -10,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TextInput } from "@/components/ui/text-input";
+import { ITEM_PRIORITY_OPTIONS } from "@/configs/consts/item-priorities.const";
 import type { Project } from "@/configs/types/project.type";
 import {
   type PackingItemFormValues,
@@ -24,6 +27,7 @@ export function PackingList({
   project: Project;
   updateProject: (apply: (project: Project) => Project) => void;
 }) {
+  const [scanOpen, setScanOpen] = useState(false);
   const {
     register,
     control,
@@ -52,7 +56,42 @@ export function PackingList({
     );
   return (
     <section className="mt-6 rounded-lg bg-white p-5">
-      <h2 className="text-lg font-extrabold">Упаковать</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-extrabold">Упаковать</h2>
+        <Button variant="outline" onClick={() => setScanOpen(true)}>
+          <Camera />
+          Добавить по фото
+        </Button>
+      </div>
+      {scanOpen && (
+        <ItemScanModal
+          projectId={project.id}
+          submitLabel="Добавить в список"
+          placement={{
+            sourceRooms: project.sourceRooms,
+            defaultRoom: project.lastSourceRoom || project.sourceRooms[0] || "",
+          }}
+          onClose={() => setScanOpen(false)}
+          onSubmit={({ room, priority, items }) =>
+            updateProject((current) => ({
+              ...current,
+              lastSourceRoom: room,
+              items: [
+                ...current.items,
+                ...items.map(({ name, quantity }) => ({
+                  id: uid("item"),
+                  name,
+                  state: "TO_PACK" as const,
+                  sourceRoom: room,
+                  boxId: null,
+                  quantity,
+                  priority,
+                })),
+              ],
+            }))
+          }
+        />
+      )}
       <form
         className="mt-4 grid gap-2 lg:grid-cols-[minmax(0,1fr)_8rem_9rem_5rem_auto]"
         noValidate
@@ -127,17 +166,17 @@ export function PackingList({
             <Select
               value={field.value}
               onValueChange={field.onChange}
-              items={[
-                { label: "Обычная", value: "NORMAL" },
-                { label: "Первый день", value: "FIRST_NECESSITY" },
-              ]}
+              items={ITEM_PRIORITY_OPTIONS}
             >
               <SelectTrigger aria-label="Приоритет" onBlur={field.onBlur}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="NORMAL">Обычная</SelectItem>
-                <SelectItem value="FIRST_NECESSITY">Первый день</SelectItem>
+                {ITEM_PRIORITY_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           )}

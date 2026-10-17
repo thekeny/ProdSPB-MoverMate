@@ -142,6 +142,7 @@ export default function BoxesPage() {
       <PackingList project={currentProject} updateProject={updateProject} />
       {showForm && (
         <BoxForm
+          projectId={project.id}
           destinationRooms={project.destinationRooms}
           sourceRooms={project.sourceRooms}
           lastSourceRoom={project.lastSourceRoom}

@@ -355,7 +355,9 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
   };
 
   const addBox = (values: BoxFormValues) => {
-    const items = values.items.map((item) => item.trim()).filter(Boolean);
+    const items = values.items
+      .map((item) => ({ ...item, name: item.name.trim() }))
+      .filter((item) => item.name);
     const title = values.title.trim();
     updateProject((current) => {
       const id = uid("box");
@@ -379,13 +381,13 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         ],
         items: [
           ...current.items,
-          ...items.map((name) => ({
+          ...items.map(({ name, quantity }) => ({
             id: uid("item"),
             name,
             state: "IN_BOX" as const,
             sourceRoom,
             boxId: id,
-            quantity: 1,
+            quantity,
             priority: "NORMAL" as const,
           })),
         ],

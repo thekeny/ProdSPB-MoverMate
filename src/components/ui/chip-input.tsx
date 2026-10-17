@@ -22,6 +22,7 @@ export function ChipInput({
   inputMode = "text",
   ariaInvalid,
   ariaDescribedBy,
+  formatToken = (token) => token,
 }: {
   value: string[];
   onValueChange: (value: string[]) => void;
@@ -41,6 +42,7 @@ export function ChipInput({
     | "url";
   ariaInvalid?: boolean;
   ariaDescribedBy?: string;
+  formatToken?: (token: string) => string;
 }) {
   const [draft, setDraft] = useState("");
 
@@ -90,7 +92,7 @@ export function ChipInput({
           key={token}
           className="inline-flex max-w-full items-center gap-1 rounded-md bg-[#DDE7D6] pl-2 text-xs font-medium text-[#1D2923]"
         >
-          <span className="truncate">{token}</span>
+          <span className="truncate">{formatToken(token)}</span>
           <Button
             type="button"
             variant="ghost"

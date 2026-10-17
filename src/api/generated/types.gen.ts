@@ -17,6 +17,207 @@ export type AddCollaboratorRequest = {
 };
 
 /**
+ * Box
+ */
+export type Box = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Number
+   */
+  number: number;
+  /**
+   * Title
+   */
+  title: string | null;
+  /**
+   * Is Fragile
+   */
+  is_fragile: boolean;
+  destination_room: RoomRef;
+  status: BoxStatus;
+  /**
+   * Status Changed At
+   */
+  status_changed_at: string;
+  created_by: UserRef;
+  /**
+   * Qr Token
+   */
+  qr_token: string;
+  /**
+   * Item Count
+   *
+   * Active items IN_BOX
+   */
+  item_count: number;
+  /**
+   * Items Preview
+   *
+   * Up to 3 item names for the list card
+   */
+  items_preview: Array<string>;
+  /**
+   * Contents Reminder At
+   *
+   * Only for the creator of the box; null for everyone else
+   */
+  contents_reminder_at: string | null;
+  /**
+   * Created At
+   */
+  created_at: string;
+  /**
+   * Updated At
+   */
+  updated_at: string;
+};
+
+/**
+ * BoxByQr
+ */
+export type BoxByQr = {
+  access: QrAccessLevel;
+  project: ProjectRef;
+  box: QrBox;
+};
+
+/**
+ * BoxItemsRequest
+ *
+ * Items packed into a new box in the same transaction: created IN_BOX.
+ */
+export type BoxItemsRequest = {
+  /**
+   * Source Room Id
+   */
+  source_room_id: string;
+  priority?: ItemPriority;
+  /**
+   * Entries
+   */
+  entries: Array<ItemEntry>;
+};
+
+/**
+ * BoxLabel
+ */
+export type BoxLabel = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Number
+   */
+  number: number;
+  /**
+   * Title
+   */
+  title: string | null;
+  /**
+   * Is Fragile
+   */
+  is_fragile: boolean;
+  destination_room: RoomRef;
+  /**
+   * Qr Token
+   *
+   * Encode `{frontend origin}/b/{qr_token}` in the QR code
+   */
+  qr_token: string;
+  /**
+   * Item Names
+   *
+   * In packing order: priority, then name
+   */
+  item_names: Array<string>;
+};
+
+/**
+ * BoxPage
+ */
+export type BoxPage = {
+  /**
+   * Results
+   */
+  results: Array<Box>;
+  /**
+   * Next Cursor
+   *
+   * Opaque; null on the last page
+   */
+  next_cursor: string | null;
+};
+
+/**
+ * BoxRef
+ */
+export type BoxRef = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Number
+   */
+  number: number;
+  status: BoxStatus;
+  destination_room: RoomRef;
+};
+
+/**
+ * BoxStatus
+ *
+ * Lifecycle of a box, in order: PACKING -> PACKED -> LOADED -> DELIVERED -> UNPACKED.
+ */
+export type BoxStatus =
+  | "PACKING"
+  | "PACKED"
+  | "LOADED"
+  | "DELIVERED"
+  | "UNPACKED";
+
+/**
+ * BoxStatusCounts
+ */
+export type BoxStatusCounts = {
+  /**
+   * Packing
+   */
+  PACKING: number;
+  /**
+   * Packed
+   */
+  PACKED: number;
+  /**
+   * Loaded
+   */
+  LOADED: number;
+  /**
+   * Delivered
+   */
+  DELIVERED: number;
+  /**
+   * Unpacked
+   */
+  UNPACKED: number;
+};
+
+/**
+ * BoxesSummary
+ */
+export type BoxesSummary = {
+  /**
+   * Total
+   */
+  total: number;
+  by_status: BoxStatusCounts;
+};
+
+/**
  * ChangePasswordRequest
  */
 export type ChangePasswordRequest = {
@@ -58,6 +259,71 @@ export type CollaboratorResponse = {
 };
 
 /**
+ * CreateBoxRequest
+ */
+export type CreateBoxRequest = {
+  /**
+   * Destination Room Id
+   */
+  destination_room_id: string;
+  /**
+   * Title
+   */
+  title?: string | null;
+  /**
+   * Is Fragile
+   */
+  is_fragile?: boolean;
+  items?: BoxItemsRequest | null;
+};
+
+/**
+ * CreateItemRequest
+ *
+ * Created IN_BOX when box_id is given, TO_PACK otherwise.
+ */
+export type CreateItemRequest = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Source Room Id
+   */
+  source_room_id: string;
+  /**
+   * Quantity
+   */
+  quantity?: number;
+  priority?: ItemPriority;
+  /**
+   * Box Id
+   */
+  box_id?: string | null;
+};
+
+/**
+ * CreateItemsRequest
+ *
+ * All items or none.
+ */
+export type CreateItemsRequest = {
+  /**
+   * Source Room Id
+   */
+  source_room_id: string;
+  priority?: ItemPriority;
+  /**
+   * Box Id
+   */
+  box_id?: string | null;
+  /**
+   * Entries
+   */
+  entries: Array<ItemEntry>;
+};
+
+/**
  * CreateProjectRequest
  */
 export type CreateProjectRequest = {
@@ -89,6 +355,31 @@ export type CreateProjectRequest = {
    */
   reminder_offsets_days?: Array<number>;
   rooms?: ProjectRoomsRequest;
+};
+
+/**
+ * CreateRoomRequest
+ */
+export type CreateRoomRequest = {
+  kind: RoomKind;
+  /**
+   * Name
+   */
+  name: string;
+};
+
+/**
+ * DoneCount
+ */
+export type DoneCount = {
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Done
+   */
+  done: number;
 };
 
 /**
@@ -143,6 +434,173 @@ export type ErrorResponse = {
 };
 
 /**
+ * FirstNecessitySummary
+ */
+export type FirstNecessitySummary = {
+  /**
+   * Total
+   *
+   * Items with priority FIRST_NECESSITY
+   */
+  total: number;
+  /**
+   * Taken Out
+   *
+   * Of them, already TAKEN_OUT at the new home
+   */
+  taken_out: number;
+};
+
+/**
+ * Item
+ */
+export type Item = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Quantity
+   */
+  quantity: number;
+  priority: ItemPriority;
+  state: ItemState;
+  source_room: RoomRef;
+  /**
+   * Set only when the item is IN_BOX
+   */
+  box: BoxRef | null;
+  /**
+   * Created At
+   */
+  created_at: string;
+  /**
+   * Updated At
+   */
+  updated_at: string;
+};
+
+/**
+ * ItemEntry
+ */
+export type ItemEntry = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Quantity
+   */
+  quantity?: number;
+};
+
+/**
+ * ItemPage
+ */
+export type ItemPage = {
+  /**
+   * Results
+   */
+  results: Array<Item>;
+  /**
+   * Next Cursor
+   *
+   * Opaque; null on the last page
+   */
+  next_cursor: string | null;
+};
+
+/**
+ * ItemPriority
+ *
+ * Item priority by name: stored as a number, published as a string.
+ */
+export type ItemPriority = "FIRST_NECESSITY" | "HIGH" | "MEDIUM" | "LOW";
+
+/**
+ * ItemScan
+ *
+ * Suggestions from a photo, in the order the model listed them; may be empty.
+ */
+export type ItemScan = {
+  /**
+   * Items
+   */
+  items: Array<ScannedItem>;
+};
+
+/**
+ * ItemSearchResult
+ *
+ * Ranked by relevance, so paged by limit/offset rather than by cursor.
+ */
+export type ItemSearchResult = {
+  /**
+   * Results
+   */
+  results: Array<Item>;
+  /**
+   * Has More
+   */
+  has_more: boolean;
+};
+
+/**
+ * ItemState
+ */
+export type ItemState = "TO_PACK" | "IN_BOX" | "TAKEN_OUT" | "LOST";
+
+/**
+ * ItemStateCounts
+ */
+export type ItemStateCounts = {
+  /**
+   * To Pack
+   */
+  TO_PACK: number;
+  /**
+   * In Box
+   */
+  IN_BOX: number;
+  /**
+   * Taken Out
+   */
+  TAKEN_OUT: number;
+  /**
+   * Lost
+   */
+  LOST: number;
+};
+
+/**
+ * ItemSuggestion
+ *
+ * A box that holds other items from the lost item's source room.
+ */
+export type ItemSuggestion = {
+  box: BoxRef;
+  /**
+   * Matches
+   */
+  matches: number;
+};
+
+/**
+ * ItemsSummary
+ */
+export type ItemsSummary = {
+  /**
+   * Total
+   */
+  total: number;
+  by_state: ItemStateCounts;
+};
+
+/**
  * LiveResponse
  */
 export type LiveResponse = {
@@ -153,6 +611,34 @@ export type LiveResponse = {
 };
 
 /**
+ * LoadingChecklistRoom
+ */
+export type LoadingChecklistRoom = {
+  /**
+   * A room of the old home (SOURCE)
+   */
+  room: RoomRef;
+  /**
+   * To Pack Count
+   *
+   * Items of the room still waiting to be packed
+   */
+  to_pack_count: number;
+  /**
+   * Boxes
+   *
+   * Boxes holding items of the room, by number
+   */
+  boxes: Array<BoxRef>;
+  /**
+   * Is Loaded
+   *
+   * Nothing left to pack and every such box is LOADED or further
+   */
+  is_loaded: boolean;
+};
+
+/**
  * LoginRequest
  */
 export type LoginRequest = {
@@ -160,6 +646,20 @@ export type LoginRequest = {
    * Username
    */
   username: string;
+};
+
+/**
+ * ProjectRef
+ */
+export type ProjectRef = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
 };
 
 /**
@@ -235,6 +735,20 @@ export type ProjectRoomsRequest = {
 };
 
 /**
+ * ProjectSummary
+ */
+export type ProjectSummary = {
+  boxes: BoxesSummary;
+  tasks: TasksSummary;
+  items: ItemsSummary;
+  first_necessity: FirstNecessitySummary;
+  /**
+   * The first task not done: by phase, then due_at (none last), then id
+   */
+  next_task: Task | null;
+};
+
+/**
  * PushKeysRequest
  */
 export type PushKeysRequest = {
@@ -265,6 +779,57 @@ export type PushSubscriptionRequest = {
    * Sent by browsers; ignored: push services report expired endpoints
    */
   expirationTime?: number | null;
+};
+
+/**
+ * QrAccessLevel
+ */
+export type QrAccessLevel = "READ" | "WRITE";
+
+/**
+ * QrBox
+ */
+export type QrBox = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Number
+   */
+  number: number;
+  /**
+   * Title
+   */
+  title: string | null;
+  /**
+   * Is Fragile
+   */
+  is_fragile: boolean;
+  destination_room: RoomRef;
+  status: BoxStatus;
+  /**
+   * Items
+   */
+  items: Array<QrBoxItem>;
+};
+
+/**
+ * QrBoxItem
+ */
+export type QrBoxItem = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Quantity
+   */
+  quantity: number;
 };
 
 /**
@@ -317,6 +882,86 @@ export type RegisterRequest = {
 };
 
 /**
+ * Room
+ */
+export type Room = {
+  /**
+   * Id
+   */
+  id: string;
+  kind: RoomKind;
+  /**
+   * Name
+   */
+  name: string;
+};
+
+/**
+ * RoomKind
+ */
+export type RoomKind = "SOURCE" | "DESTINATION";
+
+/**
+ * RoomRef
+ */
+export type RoomRef = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+};
+
+/**
+ * ScannedItem
+ *
+ * The same shape as an ItemEntry of createItems.
+ */
+export type ScannedItem = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Quantity
+   */
+  quantity: number;
+};
+
+/**
+ * SetBoxStatusRequest
+ */
+export type SetBoxStatusRequest = {
+  status: BoxStatus;
+};
+
+/**
+ * SetContentsReminderRequest
+ */
+export type SetContentsReminderRequest = {
+  /**
+   * Remind At
+   */
+  remind_at: string;
+};
+
+/**
+ * SetItemStateRequest
+ *
+ * `box_id` is required for IN_BOX and must be absent otherwise.
+ */
+export type SetItemStateRequest = {
+  state: ItemState;
+  /**
+   * Box Id
+   */
+  box_id?: string | null;
+};
+
+/**
  * SetProjectRemindersRequest
  */
 export type SetProjectRemindersRequest = {
@@ -326,6 +971,88 @@ export type SetProjectRemindersRequest = {
    * Days before the move, 0 (the moving day) to 365; replaces the current set
    */
   offsets_days: Array<number>;
+};
+
+/**
+ * Task
+ */
+export type Task = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Description
+   */
+  description: string | null;
+  phase: TaskPhase;
+  /**
+   * Due At
+   */
+  due_at: string | null;
+  /**
+   * Is Done
+   */
+  is_done: boolean;
+  /**
+   * Done At
+   */
+  done_at: string | null;
+  /**
+   * Assignees
+   *
+   * By username
+   */
+  assignees: Array<UserRef>;
+  /**
+   * Reminder Offsets Hours
+   *
+   * Hours before due_at when the assignees are reminded, ascending
+   */
+  reminder_offsets_hours: Array<number>;
+  /**
+   * Created At
+   */
+  created_at: string;
+  /**
+   * Updated At
+   */
+  updated_at: string;
+};
+
+/**
+ * TaskPhase
+ *
+ * When in the move a task belongs: the plan is shown in these three columns.
+ */
+export type TaskPhase = "BEFORE" | "DURING" | "AFTER";
+
+/**
+ * TaskPhaseCounts
+ */
+export type TaskPhaseCounts = {
+  BEFORE: DoneCount;
+  DURING: DoneCount;
+  AFTER: DoneCount;
+};
+
+/**
+ * TasksSummary
+ */
+export type TasksSummary = {
+  /**
+   * Total
+   */
+  total: number;
+  /**
+   * Done
+   */
+  done: number;
+  by_phase: TaskPhaseCounts;
 };
 
 /**
@@ -355,6 +1082,69 @@ export type TokenPairResponse = {
 };
 
 /**
+ * UnpackingProgressRoom
+ */
+export type UnpackingProgressRoom = {
+  /**
+   * A room of the new home (DESTINATION)
+   */
+  room: RoomRef;
+  /**
+   * Total
+   *
+   * Boxes headed for the room
+   */
+  total: number;
+  /**
+   * Unpacked
+   *
+   * Of them, UNPACKED
+   */
+  unpacked: number;
+};
+
+/**
+ * UpdateBoxRequest
+ *
+ * Partial update: absent fields stay; null clears `title` and is rejected elsewhere.
+ */
+export type UpdateBoxRequest = {
+  /**
+   * Title
+   */
+  title?: string | null;
+  /**
+   * Is Fragile
+   */
+  is_fragile?: boolean | null;
+  /**
+   * Destination Room Id
+   */
+  destination_room_id?: string | null;
+};
+
+/**
+ * UpdateItemRequest
+ *
+ * Partial update: absent fields stay as they are; none of them may be null.
+ */
+export type UpdateItemRequest = {
+  /**
+   * Name
+   */
+  name?: string | null;
+  /**
+   * Quantity
+   */
+  quantity?: number | null;
+  priority?: ItemPriority | null;
+  /**
+   * Source Room Id
+   */
+  source_room_id?: string | null;
+};
+
+/**
  * UpdateProjectRequest
  *
  * Partial update: omitted fields stay as they are, null clears an address.
@@ -372,6 +1162,32 @@ export type UpdateProjectRequest = {
    * Destination Address
    */
   destination_address?: string | null;
+};
+
+/**
+ * UpdateRoomRequest
+ *
+ * The kind of a room never changes: boxes and items rely on it.
+ */
+export type UpdateRoomRequest = {
+  /**
+   * Name
+   */
+  name: string;
+};
+
+/**
+ * UserRef
+ */
+export type UserRef = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Username
+   */
+  username: string;
 };
 
 /**
@@ -1249,6 +2065,1409 @@ export type RemoveCollaboratorResponses = {
 
 export type RemoveCollaboratorResponse =
   RemoveCollaboratorResponses[keyof RemoveCollaboratorResponses];
+
+export type GetProjectSummaryData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/api/v1/projects/{project_id}/summary";
+};
+
+export type GetProjectSummaryErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type GetProjectSummaryError =
+  GetProjectSummaryErrors[keyof GetProjectSummaryErrors];
+
+export type GetProjectSummaryResponses = {
+  /**
+   * Successful Response
+   */
+  200: ProjectSummary;
+};
+
+export type GetProjectSummaryResponse =
+  GetProjectSummaryResponses[keyof GetProjectSummaryResponses];
+
+export type GetLoadingChecklistData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/api/v1/projects/{project_id}/loading-checklist";
+};
+
+export type GetLoadingChecklistErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type GetLoadingChecklistError =
+  GetLoadingChecklistErrors[keyof GetLoadingChecklistErrors];
+
+export type GetLoadingChecklistResponses = {
+  /**
+   * Response Getloadingchecklist
+   *
+   * Successful Response
+   */
+  200: Array<LoadingChecklistRoom>;
+};
+
+export type GetLoadingChecklistResponse =
+  GetLoadingChecklistResponses[keyof GetLoadingChecklistResponses];
+
+export type GetUnpackingProgressData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/api/v1/projects/{project_id}/unpacking-progress";
+};
+
+export type GetUnpackingProgressErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type GetUnpackingProgressError =
+  GetUnpackingProgressErrors[keyof GetUnpackingProgressErrors];
+
+export type GetUnpackingProgressResponses = {
+  /**
+   * Response Getunpackingprogress
+   *
+   * Successful Response
+   */
+  200: Array<UnpackingProgressRoom>;
+};
+
+export type GetUnpackingProgressResponse =
+  GetUnpackingProgressResponses[keyof GetUnpackingProgressResponses];
+
+export type GetBoxLabelsData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: {
+    /**
+     * Box Ids
+     *
+     * Repeat to print chosen boxes (`?box_ids=…&box_ids=…`); omit for every box. Ids that are not active boxes of the project are skipped.
+     */
+    box_ids?: Array<string> | null;
+  };
+  url: "/api/v1/projects/{project_id}/labels";
+};
+
+export type GetBoxLabelsErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type GetBoxLabelsError = GetBoxLabelsErrors[keyof GetBoxLabelsErrors];
+
+export type GetBoxLabelsResponses = {
+  /**
+   * Response Getboxlabels
+   *
+   * Successful Response
+   */
+  200: Array<BoxLabel>;
+};
+
+export type GetBoxLabelsResponse =
+  GetBoxLabelsResponses[keyof GetBoxLabelsResponses];
+
+export type ListRoomsData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: {
+    /**
+     * Kind
+     *
+     * Both kinds when absent
+     */
+    kind?: RoomKind | null;
+  };
+  url: "/api/v1/projects/{project_id}/rooms";
+};
+
+export type ListRoomsErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type ListRoomsError = ListRoomsErrors[keyof ListRoomsErrors];
+
+export type ListRoomsResponses = {
+  /**
+   * Response Listrooms
+   *
+   * Successful Response
+   */
+  200: Array<Room>;
+};
+
+export type ListRoomsResponse = ListRoomsResponses[keyof ListRoomsResponses];
+
+export type CreateRoomData = {
+  body: CreateRoomRequest;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/api/v1/projects/{project_id}/rooms";
+};
+
+export type CreateRoomErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * An active room of this kind has this name
+   */
+  409: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type CreateRoomError = CreateRoomErrors[keyof CreateRoomErrors];
+
+export type CreateRoomResponses = {
+  /**
+   * Successful Response
+   */
+  201: Room;
+};
+
+export type CreateRoomResponse = CreateRoomResponses[keyof CreateRoomResponses];
+
+export type DeleteRoomData = {
+  body?: never;
+  path: {
+    /**
+     * Room Id
+     */
+    room_id: string;
+  };
+  query?: never;
+  url: "/api/v1/rooms/{room_id}";
+};
+
+export type DeleteRoomErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Active boxes or items refer to the room
+   */
+  409: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type DeleteRoomError = DeleteRoomErrors[keyof DeleteRoomErrors];
+
+export type DeleteRoomResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteRoomResponse = DeleteRoomResponses[keyof DeleteRoomResponses];
+
+export type UpdateRoomData = {
+  body: UpdateRoomRequest;
+  path: {
+    /**
+     * Room Id
+     */
+    room_id: string;
+  };
+  query?: never;
+  url: "/api/v1/rooms/{room_id}";
+};
+
+export type UpdateRoomErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * An active room of this kind has this name
+   */
+  409: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type UpdateRoomError = UpdateRoomErrors[keyof UpdateRoomErrors];
+
+export type UpdateRoomResponses = {
+  /**
+   * Successful Response
+   */
+  200: Room;
+};
+
+export type UpdateRoomResponse = UpdateRoomResponses[keyof UpdateRoomResponses];
+
+export type ListBoxesData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: {
+    /**
+     * Status
+     *
+     * Repeat to match several
+     */
+    status?: Array<BoxStatus> | null;
+    /**
+     * Destination Room Id
+     */
+    destination_room_id?: string | null;
+    /**
+     * Number
+     *
+     * Exact number, UNPACKED boxes included
+     */
+    number?: number | null;
+    /**
+     * Limit
+     */
+    limit?: number;
+    /**
+     * After
+     *
+     * next_cursor of the previous page
+     */
+    after?: string | null;
+  };
+  url: "/api/v1/projects/{project_id}/boxes";
+};
+
+export type ListBoxesErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, box or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type ListBoxesError = ListBoxesErrors[keyof ListBoxesErrors];
+
+export type ListBoxesResponses = {
+  /**
+   * Successful Response
+   */
+  200: BoxPage;
+};
+
+export type ListBoxesResponse = ListBoxesResponses[keyof ListBoxesResponses];
+
+export type CreateBoxData = {
+  body: CreateBoxRequest;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/api/v1/projects/{project_id}/boxes";
+};
+
+export type CreateBoxErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, box or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type CreateBoxError = CreateBoxErrors[keyof CreateBoxErrors];
+
+export type CreateBoxResponses = {
+  /**
+   * Successful Response
+   */
+  201: Box;
+};
+
+export type CreateBoxResponse = CreateBoxResponses[keyof CreateBoxResponses];
+
+export type GetBoxByQrData = {
+  body?: never;
+  path: {
+    /**
+     * Qr Token
+     */
+    qr_token: string;
+  };
+  query?: never;
+  url: "/api/v1/boxes/by-qr/{qr_token}";
+};
+
+export type GetBoxByQrErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, box or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type GetBoxByQrError = GetBoxByQrErrors[keyof GetBoxByQrErrors];
+
+export type GetBoxByQrResponses = {
+  /**
+   * Successful Response
+   */
+  200: BoxByQr;
+};
+
+export type GetBoxByQrResponse = GetBoxByQrResponses[keyof GetBoxByQrResponses];
+
+export type DeleteBoxData = {
+  body?: never;
+  path: {
+    /**
+     * Box Id
+     */
+    box_id: string;
+  };
+  query?: never;
+  url: "/api/v1/boxes/{box_id}";
+};
+
+export type DeleteBoxErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, box or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type DeleteBoxError = DeleteBoxErrors[keyof DeleteBoxErrors];
+
+export type DeleteBoxResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteBoxResponse = DeleteBoxResponses[keyof DeleteBoxResponses];
+
+export type GetBoxData = {
+  body?: never;
+  path: {
+    /**
+     * Box Id
+     */
+    box_id: string;
+  };
+  query?: never;
+  url: "/api/v1/boxes/{box_id}";
+};
+
+export type GetBoxErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, box or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type GetBoxError = GetBoxErrors[keyof GetBoxErrors];
+
+export type GetBoxResponses = {
+  /**
+   * Successful Response
+   */
+  200: Box;
+};
+
+export type GetBoxResponse = GetBoxResponses[keyof GetBoxResponses];
+
+export type UpdateBoxData = {
+  body: UpdateBoxRequest;
+  path: {
+    /**
+     * Box Id
+     */
+    box_id: string;
+  };
+  query?: never;
+  url: "/api/v1/boxes/{box_id}";
+};
+
+export type UpdateBoxErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, box or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type UpdateBoxError = UpdateBoxErrors[keyof UpdateBoxErrors];
+
+export type UpdateBoxResponses = {
+  /**
+   * Successful Response
+   */
+  200: Box;
+};
+
+export type UpdateBoxResponse = UpdateBoxResponses[keyof UpdateBoxResponses];
+
+export type SetBoxStatusData = {
+  body: SetBoxStatusRequest;
+  path: {
+    /**
+     * Box Id
+     */
+    box_id: string;
+  };
+  query?: never;
+  url: "/api/v1/boxes/{box_id}/status";
+};
+
+export type SetBoxStatusErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, box or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Not a single step, or changed concurrently
+   */
+  409: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type SetBoxStatusError = SetBoxStatusErrors[keyof SetBoxStatusErrors];
+
+export type SetBoxStatusResponses = {
+  /**
+   * Successful Response
+   */
+  200: Box;
+};
+
+export type SetBoxStatusResponse =
+  SetBoxStatusResponses[keyof SetBoxStatusResponses];
+
+export type CancelBoxContentsReminderData = {
+  body?: never;
+  path: {
+    /**
+     * Box Id
+     */
+    box_id: string;
+  };
+  query?: never;
+  url: "/api/v1/boxes/{box_id}/contents-reminder";
+};
+
+export type CancelBoxContentsReminderErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * Only the creator of the box
+   */
+  403: ErrorResponse;
+  /**
+   * No such project, box or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type CancelBoxContentsReminderError =
+  CancelBoxContentsReminderErrors[keyof CancelBoxContentsReminderErrors];
+
+export type CancelBoxContentsReminderResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type CancelBoxContentsReminderResponse =
+  CancelBoxContentsReminderResponses[keyof CancelBoxContentsReminderResponses];
+
+export type SetBoxContentsReminderData = {
+  body: SetContentsReminderRequest;
+  path: {
+    /**
+     * Box Id
+     */
+    box_id: string;
+  };
+  query?: never;
+  url: "/api/v1/boxes/{box_id}/contents-reminder";
+};
+
+export type SetBoxContentsReminderErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * Only the creator of the box
+   */
+  403: ErrorResponse;
+  /**
+   * No such project, box or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * The box is not PACKING
+   */
+  409: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type SetBoxContentsReminderError =
+  SetBoxContentsReminderErrors[keyof SetBoxContentsReminderErrors];
+
+export type SetBoxContentsReminderResponses = {
+  /**
+   * Successful Response
+   */
+  200: Box;
+};
+
+export type SetBoxContentsReminderResponse =
+  SetBoxContentsReminderResponses[keyof SetBoxContentsReminderResponses];
+
+export type ListItemsData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: {
+    /**
+     * State
+     *
+     * Repeat to match several
+     */
+    state?: Array<ItemState> | null;
+    /**
+     * Priority
+     */
+    priority?: ItemPriority | null;
+    /**
+     * Box Id
+     */
+    box_id?: string | null;
+    /**
+     * Source Room Id
+     */
+    source_room_id?: string | null;
+    /**
+     * Limit
+     */
+    limit?: number;
+    /**
+     * After
+     *
+     * next_cursor of the previous page
+     */
+    after?: string | null;
+  };
+  url: "/api/v1/projects/{project_id}/items";
+};
+
+export type ListItemsErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, item, box or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type ListItemsError = ListItemsErrors[keyof ListItemsErrors];
+
+export type ListItemsResponses = {
+  /**
+   * Successful Response
+   */
+  200: ItemPage;
+};
+
+export type ListItemsResponse = ListItemsResponses[keyof ListItemsResponses];
+
+export type CreateItemData = {
+  body: CreateItemRequest;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/api/v1/projects/{project_id}/items";
+};
+
+export type CreateItemErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, item, box or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type CreateItemError = CreateItemErrors[keyof CreateItemErrors];
+
+export type CreateItemResponses = {
+  /**
+   * Successful Response
+   */
+  201: Item;
+};
+
+export type CreateItemResponse = CreateItemResponses[keyof CreateItemResponses];
+
+export type CreateItemsData = {
+  body: CreateItemsRequest;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/api/v1/projects/{project_id}/items/batch";
+};
+
+export type CreateItemsErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, item, box or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type CreateItemsError = CreateItemsErrors[keyof CreateItemsErrors];
+
+export type CreateItemsResponses = {
+  /**
+   * Response Createitems
+   *
+   * Successful Response
+   */
+  201: Array<Item>;
+};
+
+export type CreateItemsResponse =
+  CreateItemsResponses[keyof CreateItemsResponses];
+
+export type ScanItemsData = {
+  /**
+   * The image itself, with its Content-Type
+   */
+  body: Blob | File;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/api/v1/projects/{project_id}/items/scan";
+};
+
+export type ScanItemsErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, item, box or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Larger than 5242880 bytes
+   */
+  413: ErrorResponse;
+  /**
+   * Content-Type is not a supported image
+   */
+  415: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+  /**
+   * The model did not answer (retry after Retry-After) or scanning is not configured
+   */
+  503: ErrorResponse;
+};
+
+export type ScanItemsError = ScanItemsErrors[keyof ScanItemsErrors];
+
+export type ScanItemsResponses = {
+  /**
+   * Successful Response
+   */
+  200: ItemScan;
+};
+
+export type ScanItemsResponse = ScanItemsResponses[keyof ScanItemsResponses];
+
+export type SearchItemsData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query: {
+    /**
+     * Q
+     *
+     * Words matched by prefix; empty finds nothing
+     */
+    q: string;
+    /**
+     * Limit
+     */
+    limit?: number;
+    /**
+     * Offset
+     */
+    offset?: number;
+  };
+  url: "/api/v1/projects/{project_id}/items/search";
+};
+
+export type SearchItemsErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, item, box or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type SearchItemsError = SearchItemsErrors[keyof SearchItemsErrors];
+
+export type SearchItemsResponses = {
+  /**
+   * Successful Response
+   */
+  200: ItemSearchResult;
+};
+
+export type SearchItemsResponse =
+  SearchItemsResponses[keyof SearchItemsResponses];
+
+export type DeleteItemData = {
+  body?: never;
+  path: {
+    /**
+     * Item Id
+     */
+    item_id: string;
+  };
+  query?: never;
+  url: "/api/v1/items/{item_id}";
+};
+
+export type DeleteItemErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, item, box or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type DeleteItemError = DeleteItemErrors[keyof DeleteItemErrors];
+
+export type DeleteItemResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteItemResponse = DeleteItemResponses[keyof DeleteItemResponses];
+
+export type GetItemData = {
+  body?: never;
+  path: {
+    /**
+     * Item Id
+     */
+    item_id: string;
+  };
+  query?: never;
+  url: "/api/v1/items/{item_id}";
+};
+
+export type GetItemErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, item, box or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type GetItemError = GetItemErrors[keyof GetItemErrors];
+
+export type GetItemResponses = {
+  /**
+   * Successful Response
+   */
+  200: Item;
+};
+
+export type GetItemResponse = GetItemResponses[keyof GetItemResponses];
+
+export type UpdateItemData = {
+  body: UpdateItemRequest;
+  path: {
+    /**
+     * Item Id
+     */
+    item_id: string;
+  };
+  query?: never;
+  url: "/api/v1/items/{item_id}";
+};
+
+export type UpdateItemErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, item, box or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type UpdateItemError = UpdateItemErrors[keyof UpdateItemErrors];
+
+export type UpdateItemResponses = {
+  /**
+   * Successful Response
+   */
+  200: Item;
+};
+
+export type UpdateItemResponse = UpdateItemResponses[keyof UpdateItemResponses];
+
+export type SetItemStateData = {
+  body: SetItemStateRequest;
+  path: {
+    /**
+     * Item Id
+     */
+    item_id: string;
+  };
+  query?: never;
+  url: "/api/v1/items/{item_id}/state";
+};
+
+export type SetItemStateErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, item, box or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Not allowed by the item state matrix
+   */
+  409: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type SetItemStateError = SetItemStateErrors[keyof SetItemStateErrors];
+
+export type SetItemStateResponses = {
+  /**
+   * Successful Response
+   */
+  200: Item;
+};
+
+export type SetItemStateResponse =
+  SetItemStateResponses[keyof SetItemStateResponses];
+
+export type GetItemSuggestionsData = {
+  body?: never;
+  path: {
+    /**
+     * Item Id
+     */
+    item_id: string;
+  };
+  query?: never;
+  url: "/api/v1/items/{item_id}/suggestions";
+};
+
+export type GetItemSuggestionsErrors = {
+  /**
+   * Not authenticated
+   */
+  401: ErrorResponse;
+  /**
+   * No such project, item, box or room, or not a member
+   */
+  404: ErrorResponse;
+  /**
+   * Invalid request
+   */
+  422: ErrorResponse;
+  /**
+   * Rate limited
+   */
+  429: ErrorResponse;
+  /**
+   * Internal error
+   */
+  500: ErrorResponse;
+};
+
+export type GetItemSuggestionsError =
+  GetItemSuggestionsErrors[keyof GetItemSuggestionsErrors];
+
+export type GetItemSuggestionsResponses = {
+  /**
+   * Response Getitemsuggestions
+   *
+   * Successful Response
+   */
+  200: Array<ItemSuggestion>;
+};
+
+export type GetItemSuggestionsResponse =
+  GetItemSuggestionsResponses[keyof GetItemSuggestionsResponses];
 
 export type GetVapidPublicKeyData = {
   body?: never;
