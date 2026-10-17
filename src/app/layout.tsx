@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
-import { MoverMateLayout } from "@/components/movermate/layout";
-import { MoverMateProvider } from "@/components/movermate/store";
+import { APP } from "@/configs/consts/app.const";
+import { images } from "@/configs/paths/images.path";
+import { AuthProvider } from "@/providers/auth-provider";
+import { ProjectsProvider } from "@/providers/projects-provider";
+import { QueryProvider } from "@/providers/query-provider";
 import "./globals.css";
 
 const interSans = localFont({
@@ -20,12 +23,22 @@ const interSans = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "MoverMate - Переезд без хаоса",
-  description: "Планирование переезда и учет коробок.",
+  title: APP.TITLE,
+  description: APP.DESCRIPTION,
+  applicationName: APP.NAME,
+  appleWebApp: {
+    capable: true,
+    title: APP.NAME,
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: images.FAVICON,
+    apple: images.FAVICON,
+  },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#F5F3EE",
+  themeColor: APP.THEME_COLOR,
 };
 
 export default function RootLayout({
@@ -36,9 +49,11 @@ export default function RootLayout({
   return (
     <html lang="ru" className={interSans.variable}>
       <body className={`${interSans.className} antialiased`}>
-        <MoverMateProvider>
-          <MoverMateLayout>{children}</MoverMateLayout>
-        </MoverMateProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <ProjectsProvider>{children}</ProjectsProvider>
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );

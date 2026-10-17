@@ -2,12 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useMoverMate } from "@/components/movermate/store";
+import { LoadingScreen } from "@/components/layout/loading-screen";
 import { pages } from "@/configs/paths/pages.path";
+import { useAuth } from "@/providers/auth-provider";
+import { useProjects } from "@/providers/projects-provider";
 
 export default function HomePage() {
   const router = useRouter();
-  const { ready, account, project } = useMoverMate();
+  const { account, ready: authReady } = useAuth();
+  const { project, ready: projectsReady } = useProjects();
+  const ready = authReady && projectsReady;
 
   useEffect(() => {
     if (!ready) return;
@@ -16,11 +20,5 @@ export default function HomePage() {
     );
   }, [account, project, ready, router]);
 
-  return (
-    <main className="grid min-h-screen place-items-center bg-background p-6">
-      <output className="text-sm font-bold text-foreground" aria-live="polite">
-        Загрузка…
-      </output>
-    </main>
-  );
+  return <LoadingScreen />;
 }

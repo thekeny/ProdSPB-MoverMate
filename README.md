@@ -1,4 +1,15 @@
-# Next Template
+# MoverMate
+
+![Next.js](https://img.shields.io/badge/Next.js-15.5-000000?logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-19.1-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
+![TanStack Query](https://img.shields.io/badge/TanStack_Query-5-FF4154?logo=reactquery&logoColor=white)
+![Base UI](https://img.shields.io/badge/Base_UI-1.8-000000)
+![Biome](https://img.shields.io/badge/Biome-2.2-60A5FA?logo=biome&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-5-6E9F18?logo=vitest&logoColor=white)
+
+Веб-приложение для планирования переезда: проекты, комнаты, коробки, вещи и задачи.
 
 ## Быстрый старт
 
@@ -32,11 +43,11 @@ src/
 
 ### Описание основных директорий
 
-- **`src/configs`** — выносятся ссылки, роуты, статические пути и константы. Нужно для быстрого изменения в одном месте, масштабирования и чтобы не хардкодить/дублировать строки по всему проекту.
-- **`src/components`** — под каждую страницу создаётся своя папка с её компонентами (например, `landing/`, `dashboard/`), а переиспользуемые атомарные элементы хранятся в `ui/`.
-- **`src/api`** — слой работы с сетевыми запросами.
-- **`src/hooks`** — переиспользуемые кастомные React-хуки.
-- **`src/lib`** — утилиты общего назначения (хелперы, `utils.ts` с `cn` и т.д.).
+- **`src/configs`** — единый источник правды для маршрутов, путей к изображениям, API URL и констант. Меняется в одном месте, без дублирования строк по приложению.
+- **`src/components`** — компоненты по страницам (например, `landing/`, `dashboard/`), а переиспользуемые примитивы лежат в `ui/`.
+- **`src/api`** — слой запросов к бэкенду. Авторизация работает с бэкендом; остальные разделы пока хранятся локально в `localStorage`.
+- **`src/hooks`** — переиспользуемые React-хуки.
+- **`src/lib`** — общие утилиты (`cn`, форматтеры и т.д.).
 
 ---
 
@@ -80,8 +91,6 @@ npm test          # однократный прогон
 npm run test:watch # режим наблюдения
 ```
 
-Пример: `src/tests/lib/utils.test.ts`. Конфиг — `vitest.config.ts`.
-
 ---
 
 ## Полезные утилиты
@@ -119,7 +128,7 @@ npm run test:watch # режим наблюдения
 | `DOCKER_ARTIFACTORY_REGISTRY` | адрес registry Spirit |
 | `DEPLOY_SSH_USER`, `DEPLOY_VM` | пользователь и имя VM в Teleport |
 | `DEPLOY_DIR` | каталог стеков на VM; фронтенд живёт в `$DEPLOY_DIR/frontend` |
-| `NEXT_PUBLIC_API_URL` | URL бэкенда, вшивается в клиентский бандл при сборке |
+| `NEXT_PUBLIC_API_URL` | URL бэкенда: нужен при `npm run build` (адрес проксирования `/api/v1/*` в `next.config.ts`) и при `npm run openapi`; в клиентский код не попадает |
 | `FRONTEND_PORT` | опционально: порт на VM, по умолчанию `3000` |
 
 Локальная проверка образа:

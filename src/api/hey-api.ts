@@ -1,9 +1,11 @@
 import type { CreateClientConfig } from "@/api/generated/client.gen";
-import { API, API_URL } from "@/configs/consts/api.const";
+import { getAccessToken } from "@/api/session";
+import { API } from "@/configs/consts/api.const";
 
 export const createClientConfig: CreateClientConfig = (config) => ({
   ...config,
-  baseUrl: API_URL,
+  baseUrl: "",
+  auth: () => getAccessToken(),
   timeout: API.TIMEOUT,
   retry: {
     limit: API.LIMIT,

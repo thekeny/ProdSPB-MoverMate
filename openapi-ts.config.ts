@@ -14,6 +14,7 @@ export default defineConfig({
   plugins: [
     {
       name: "@hey-api/client-ky",
+      baseUrl: false,
       runtimeConfigPath: "./src/api/hey-api",
     },
     "@hey-api/typescript",

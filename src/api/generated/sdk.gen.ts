@@ -9,10 +9,35 @@ import type {
 } from "./client";
 import { client } from "./client.gen";
 import type {
-  CreateUserData,
-  CreateUserResponses,
-  GetUsersData,
-  GetUsersResponses,
+  ChangePasswordApiV1UsersMePasswordPutData,
+  ChangePasswordApiV1UsersMePasswordPutErrors,
+  ChangePasswordApiV1UsersMePasswordPutResponses,
+  ChangeUsernameApiV1UsersMeUsernamePutData,
+  ChangeUsernameApiV1UsersMeUsernamePutErrors,
+  ChangeUsernameApiV1UsersMeUsernamePutResponses,
+  DeleteMeApiV1UsersMeDeleteData,
+  DeleteMeApiV1UsersMeDeleteErrors,
+  DeleteMeApiV1UsersMeDeleteResponses,
+  GetMeApiV1UsersMeGetData,
+  GetMeApiV1UsersMeGetErrors,
+  GetMeApiV1UsersMeGetResponses,
+  LiveHealthLiveGetData,
+  LiveHealthLiveGetResponses,
+  LoginApiV1AuthLoginPostData,
+  LoginApiV1AuthLoginPostErrors,
+  LoginApiV1AuthLoginPostResponses,
+  LogoutApiV1AuthLogoutPostData,
+  LogoutApiV1AuthLogoutPostErrors,
+  LogoutApiV1AuthLogoutPostResponses,
+  ReadyHealthReadyGetData,
+  ReadyHealthReadyGetErrors,
+  ReadyHealthReadyGetResponses,
+  RefreshApiV1AuthRefreshPostData,
+  RefreshApiV1AuthRefreshPostErrors,
+  RefreshApiV1AuthRefreshPostResponses,
+  RegisterApiV1AuthRegisterPostData,
+  RegisterApiV1AuthRegisterPostErrors,
+  RegisterApiV1AuthRegisterPostResponses,
 } from "./types.gen";
 
 export type Options<
@@ -33,22 +58,236 @@ export type Options<
   meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
 
-export const getUsers = <ThrowOnError extends boolean = false>(
-  options?: Options<GetUsersData, ThrowOnError>,
-): RequestResult<GetUsersResponses, unknown, ThrowOnError> =>
-  (options?.client ?? client).get<GetUsersResponses, unknown, ThrowOnError>({
-    url: "/users",
-    ...options,
-  });
+/**
+ * Live
+ *
+ * The process is up. Touches no dependency: restarting would not fix them.
+ */
+export const liveHealthLiveGet = <ThrowOnError extends boolean = false>(
+  options?: Options<LiveHealthLiveGetData, ThrowOnError>,
+): RequestResult<LiveHealthLiveGetResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<
+    LiveHealthLiveGetResponses,
+    unknown,
+    ThrowOnError
+  >({ url: "/health/live", ...options });
 
-export const createUser = <ThrowOnError extends boolean = false>(
-  options?: Options<CreateUserData, ThrowOnError>,
-): RequestResult<CreateUserResponses, unknown, ThrowOnError> =>
-  (options?.client ?? client).post<CreateUserResponses, unknown, ThrowOnError>({
-    url: "/users",
+/**
+ * Ready
+ *
+ * `degraded` (200) when only Redis is down: the instance still serves traffic,
+ * so it must not be taken out of rotation. `unavailable` (503) without Postgres.
+ */
+export const readyHealthReadyGet = <ThrowOnError extends boolean = false>(
+  options?: Options<ReadyHealthReadyGetData, ThrowOnError>,
+): RequestResult<
+  ReadyHealthReadyGetResponses,
+  ReadyHealthReadyGetErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    ReadyHealthReadyGetResponses,
+    ReadyHealthReadyGetErrors,
+    ThrowOnError
+  >({ url: "/health/ready", ...options });
+
+/**
+ * Register
+ */
+export const registerApiV1AuthRegisterPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<RegisterApiV1AuthRegisterPostData, ThrowOnError>,
+): RequestResult<
+  RegisterApiV1AuthRegisterPostResponses,
+  RegisterApiV1AuthRegisterPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    RegisterApiV1AuthRegisterPostResponses,
+    RegisterApiV1AuthRegisterPostErrors,
+    ThrowOnError
+  >({
+    url: "/api/v1/auth/register",
     ...options,
     headers: {
       "Content-Type": "application/json",
-      ...options?.headers,
+      ...options.headers,
+    },
+  });
+
+/**
+ * Login
+ */
+export const loginApiV1AuthLoginPost = <ThrowOnError extends boolean = false>(
+  options: Options<LoginApiV1AuthLoginPostData, ThrowOnError>,
+): RequestResult<
+  LoginApiV1AuthLoginPostResponses,
+  LoginApiV1AuthLoginPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    LoginApiV1AuthLoginPostResponses,
+    LoginApiV1AuthLoginPostErrors,
+    ThrowOnError
+  >({
+    url: "/api/v1/auth/login",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Refresh
+ *
+ * Exchange a refresh token for a new pair; the old one stops working.
+ *
+ * Presenting an already used refresh token ends every session of the user.
+ */
+export const refreshApiV1AuthRefreshPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<RefreshApiV1AuthRefreshPostData, ThrowOnError>,
+): RequestResult<
+  RefreshApiV1AuthRefreshPostResponses,
+  RefreshApiV1AuthRefreshPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    RefreshApiV1AuthRefreshPostResponses,
+    RefreshApiV1AuthRefreshPostErrors,
+    ThrowOnError
+  >({
+    url: "/api/v1/auth/refresh",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Logout
+ *
+ * Revoke the refresh token. The access token works until it expires.
+ */
+export const logoutApiV1AuthLogoutPost = <ThrowOnError extends boolean = false>(
+  options: Options<LogoutApiV1AuthLogoutPostData, ThrowOnError>,
+): RequestResult<
+  LogoutApiV1AuthLogoutPostResponses,
+  LogoutApiV1AuthLogoutPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    LogoutApiV1AuthLogoutPostResponses,
+    LogoutApiV1AuthLogoutPostErrors,
+    ThrowOnError
+  >({
+    url: "/api/v1/auth/logout",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Me
+ *
+ * Soft-delete the account and end every session; the username
+ * becomes free at once.
+ */
+export const deleteMeApiV1UsersMeDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<DeleteMeApiV1UsersMeDeleteData, ThrowOnError>,
+): RequestResult<
+  DeleteMeApiV1UsersMeDeleteResponses,
+  DeleteMeApiV1UsersMeDeleteErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).delete<
+    DeleteMeApiV1UsersMeDeleteResponses,
+    DeleteMeApiV1UsersMeDeleteErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/users/me",
+    ...options,
+  });
+
+/**
+ * Get Me
+ */
+export const getMeApiV1UsersMeGet = <ThrowOnError extends boolean = false>(
+  options?: Options<GetMeApiV1UsersMeGetData, ThrowOnError>,
+): RequestResult<
+  GetMeApiV1UsersMeGetResponses,
+  GetMeApiV1UsersMeGetErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    GetMeApiV1UsersMeGetResponses,
+    GetMeApiV1UsersMeGetErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/users/me",
+    ...options,
+  });
+
+/**
+ * Change Password
+ *
+ * Ends every session: log in again with the new password.
+ */
+export const changePasswordApiV1UsersMePasswordPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ChangePasswordApiV1UsersMePasswordPutData, ThrowOnError>,
+): RequestResult<
+  ChangePasswordApiV1UsersMePasswordPutResponses,
+  ChangePasswordApiV1UsersMePasswordPutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    ChangePasswordApiV1UsersMePasswordPutResponses,
+    ChangePasswordApiV1UsersMePasswordPutErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/users/me/password",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Change Username
+ */
+export const changeUsernameApiV1UsersMeUsernamePut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ChangeUsernameApiV1UsersMeUsernamePutData, ThrowOnError>,
+): RequestResult<
+  ChangeUsernameApiV1UsersMeUsernamePutResponses,
+  ChangeUsernameApiV1UsersMeUsernamePutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    ChangeUsernameApiV1UsersMeUsernamePutResponses,
+    ChangeUsernameApiV1UsersMeUsernamePutErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/users/me/username",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
     },
   });
