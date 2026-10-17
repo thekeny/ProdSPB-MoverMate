@@ -1,5 +1,10 @@
 import { CircleAlert } from "lucide-react";
 import { useState } from "react";
+import type {
+  BoxStatusCounts,
+  LoadingChecklistRoom,
+  UnpackingProgressRoom,
+} from "@/api/generated/types.gen";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
@@ -11,25 +16,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { LIST_PAGE_SIZE } from "@/configs/consts/lists.const";
 import { roomIcon } from "@/configs/consts/rooms.const";
 import { statuses } from "@/configs/consts/statuses.const";
 import type { Item } from "@/configs/types/box.type";
 import type { Project } from "@/configs/types/project.type";
 import { cn } from "@/lib/utils";
+import { FirstDayChecklist } from "./first-day-checklist";
+import { LostItemSuggestions } from "./lost-item-suggestions";
 
 export function ProgressView({
   project,
+  canEdit,
+  loadingChecklist,
+  unpackingProgress,
+  boxStatusCounts,
   updateProject,
 }: {
   project: Project;
-  updateProject: (apply: (project: Project) => Project) => void;
+  canEdit: boolean;
+  loadingChecklist?: LoadingChecklistRoom[];
+  unpackingProgress?: UnpackingProgressRoom[];
+  boxStatusCounts?: BoxStatusCounts;
+  updateProject: (apply: (project: Project) => Project) => Promise<boolean>;
 }) {
   const [foundItem, setFoundItem] = useState<Item | null>(null);
   const [foundPlace, setFoundPlace] = useState("source");
+  const [lostLimit, setLostLimit] = useState(LIST_PAGE_SIZE);
+  const [savingFound, setSavingFound] = useState(false);
   const lost = project.items.filter((item) => item.state === "LOST");
-  const firstDay = project.items.filter(
-    (item) => item.priority === "FIRST_NECESSITY",
-  );
   const boxesBySuggestion = foundItem
     ? [...project.boxes].sort(
         (a, b) =>
@@ -50,7 +65,12 @@ export function ProgressView({
           <div key={status.key} className="rounded-lg bg-white p-4">
             <p className="text-xs text-[#68716C]">{status.label}</p>
             <p className="tnum mt-2 text-3xl font-extrabold">
-              {project.boxes.filter((box) => box.status === status.key).length}
+              {boxStatusCounts
+                ? boxStatusCounts[
+                    status.key.toUpperCase() as keyof BoxStatusCounts
+                  ]
+                : project.boxes.filter((box) => box.status === status.key)
+                    .length}
             </p>
           </div>
         ))}
@@ -67,25 +87,44 @@ export function ProgressView({
             <h2 className="font-extrabold">Потерянные вещи</h2>
             {lost.length ? (
               <div className="mt-3 grid gap-2">
-                {lost.map((item) => (
+                {lost.slice(0, lostLimit).map((item) => (
                   <div
                     key={item.id}
                     className="flex flex-wrap items-center gap-3 rounded-md bg-[#F9E8E2] p-3 text-sm"
                   >
                     <span className="min-w-0 flex-1">
-                      <strong>{item.name}</strong> · {item.sourceRoom}
+                      <span className="[overflow-wrap:anywhere]">
+                        <strong>{item.name}</strong> · {item.sourceRoom}
+                      </span>
                     </span>
-                    <Button
-                      variant="ghost"
-                      onClick={() => {
-                        setFoundItem(item);
-                        setFoundPlace("source");
-                      }}
-                    >
-                      Нашлась
-                    </Button>
+                    {canEdit && (
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          setFoundItem(item);
+                          setFoundPlace("source");
+                        }}
+                      >
+                        Нашлась
+                      </Button>
+                    )}
+                    <LostItemSuggestions
+                      projectId={project.id}
+                      itemId={item.id}
+                      online={canEdit}
+                    />
                   </div>
                 ))}
+                {lost.length > lostLimit && (
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      setLostLimit((current) => current + LIST_PAGE_SIZE)
+                    }
+                  >
+                    Ещё потерянные вещи
+                  </Button>
+                )}
               </div>
             ) : (
               <p className="mt-1 text-sm text-[#68716C]">
@@ -99,12 +138,35 @@ export function ProgressView({
         <div className="rounded-lg bg-white p-5">
           <h2 className="font-extrabold">Погрузка по комнатам</h2>
           <div className="mt-4 grid gap-3">
-            {project.sourceRooms.map((name) => {
-              const boxes = project.boxes.filter((box) =>
-                box.sourceRooms.includes(name),
-              );
+            {(
+              loadingChecklist ??
+              project.sourceRooms.map((name) => ({
+                room: { id: name, name },
+                to_pack_count: 0,
+                boxes: project.boxes
+                  .filter((box) => box.sourceRooms.includes(name))
+                  .map((box) => ({
+                    id: box.id,
+                    number: box.number,
+                    status:
+                      box.status === "packing"
+                        ? ("PACKING" as const)
+                        : box.status === "packed"
+                          ? ("PACKED" as const)
+                          : box.status === "loaded"
+                            ? ("LOADED" as const)
+                            : box.status === "delivered"
+                              ? ("DELIVERED" as const)
+                              : ("UNPACKED" as const),
+                    destination_room: { id: box.room, name: box.room },
+                  })),
+                is_loaded: false,
+              }))
+            ).map((entry) => {
+              const name = entry.room.name;
+              const boxes = entry.boxes;
               const loaded = boxes.filter((box) =>
-                ["loaded", "delivered", "unpacked"].includes(box.status),
+                ["LOADED", "DELIVERED", "UNPACKED"].includes(box.status),
               ).length;
               const Icon = roomIcon(name);
               return (
@@ -114,12 +176,12 @@ export function ProgressView({
                 >
                   <Icon className="size-4 text-[#42664D]" />
                   <span className="min-w-0 flex-1 text-xs font-bold">
-                    {name}
+                    <span className="[overflow-wrap:anywhere]">{name}</span>
                   </span>
                   <span className="tnum text-xs text-[#68716C]">
-                    {boxes.length > 0 && loaded === boxes.length
+                    {entry.is_loaded
                       ? "Погружено"
-                      : `Погружено ${loaded} из ${boxes.length}`}
+                      : `Погружено ${loaded} из ${boxes.length}${entry.to_pack_count ? ` · осталось упаковать ${entry.to_pack_count}` : ""}`}
                   </span>
                 </div>
               );
@@ -129,19 +191,25 @@ export function ProgressView({
         <div className="rounded-lg bg-white p-5">
           <h2 className="font-extrabold">Распаковка по комнатам</h2>
           <div className="mt-4 grid gap-3">
-            {project.destinationRooms.map((name) => {
-              const boxes = project.boxes.filter((box) => box.room === name);
-              const unpacked = boxes.filter(
-                (box) => box.status === "unpacked",
-              ).length;
+            {(
+              unpackingProgress ??
+              project.destinationRooms.map((name) => ({
+                room: { id: name, name },
+                total: project.boxes.filter((box) => box.room === name).length,
+                unpacked: project.boxes.filter(
+                  (box) => box.room === name && box.status === "unpacked",
+                ).length,
+              }))
+            ).map((entry) => {
+              const name = entry.room.name;
               return (
                 <div
                   key={name}
                   className="flex justify-between rounded-md bg-[#F5F3EE] p-3 text-xs"
                 >
-                  <strong>{name}</strong>
+                  <strong className="[overflow-wrap:anywhere]">{name}</strong>
                   <span className="tnum">
-                    Распаковано {unpacked} из {boxes.length}
+                    Распаковано {entry.unpacked} из {entry.total}
                   </span>
                 </div>
               );
@@ -149,35 +217,13 @@ export function ProgressView({
           </div>
         </div>
       </section>
-      <section className="mt-5 rounded-lg bg-white p-5">
-        <h2 className="font-extrabold">Первый день</h2>
-        <div className="mt-4 grid gap-2">
-          {firstDay.length ? (
-            firstDay.map((item) => (
-              <div
-                key={item.id}
-                className="flex flex-wrap justify-between gap-2 rounded-md bg-[#F5F3EE] p-3 text-sm"
-              >
-                <strong>{item.name}</strong>
-                <span className="text-[#68716C]">
-                  {item.state === "TAKEN_OUT"
-                    ? "На месте"
-                    : item.state === "TO_PACK"
-                      ? "Не упакована — возьмите с собой"
-                      : item.state === "LOST"
-                        ? "Потерялась"
-                        : "В коробке"}
-                </span>
-              </div>
-            ))
-          ) : (
-            <p className="text-sm text-[#68716C]">
-              Отметьте нужные вещи как «Первая необходимость».
-            </p>
-          )}
-        </div>
-      </section>
-      {foundItem && (
+      <FirstDayChecklist
+        key={project.id}
+        project={project}
+        canEdit={canEdit}
+        updateProject={updateProject}
+      />
+      {foundItem && canEdit && (
         <Modal
           className="max-w-xl"
           label={`Где нашлась вещь ${foundItem.name}`}
@@ -224,42 +270,49 @@ export function ProgressView({
               Отмена
             </Button>
             <Button
-              onClick={() => {
+              disabled={savingFound}
+              loading={savingFound}
+              onClick={async () => {
                 const box = project.boxes.find(
                   (entry) => entry.id === foundPlace,
                 );
-                updateProject((current) => ({
-                  ...current,
-                  boxes: box
-                    ? current.boxes.map((entry) =>
-                        entry.id === box.id &&
-                        !entry.sourceRooms.includes(foundItem.sourceRoom)
-                          ? {
-                              ...entry,
-                              sourceRooms: [
-                                ...entry.sourceRooms,
-                                foundItem.sourceRoom,
-                              ],
-                            }
-                          : entry,
-                      )
-                    : current.boxes,
-                  items: current.items.map((entry) =>
-                    entry.id === foundItem.id
-                      ? {
-                          ...entry,
-                          state:
-                            foundPlace === "source"
-                              ? "TO_PACK"
-                              : foundPlace === "taken"
-                                ? "TAKEN_OUT"
-                                : "IN_BOX",
-                          boxId: box?.id ?? null,
-                        }
-                      : entry,
-                  ),
-                }));
-                setFoundItem(null);
+                setSavingFound(true);
+                try {
+                  const saved = await updateProject((current) => ({
+                    ...current,
+                    boxes: box
+                      ? current.boxes.map((entry) =>
+                          entry.id === box.id &&
+                          !entry.sourceRooms.includes(foundItem.sourceRoom)
+                            ? {
+                                ...entry,
+                                sourceRooms: [
+                                  ...entry.sourceRooms,
+                                  foundItem.sourceRoom,
+                                ],
+                              }
+                            : entry,
+                        )
+                      : current.boxes,
+                    items: current.items.map((entry) =>
+                      entry.id === foundItem.id
+                        ? {
+                            ...entry,
+                            state:
+                              foundPlace === "source"
+                                ? "TO_PACK"
+                                : foundPlace === "taken"
+                                  ? "TAKEN_OUT"
+                                  : "IN_BOX",
+                            boxId: box?.id ?? null,
+                          }
+                        : entry,
+                    ),
+                  }));
+                  if (saved) setFoundItem(null);
+                } finally {
+                  setSavingFound(false);
+                }
               }}
             >
               Сохранить место

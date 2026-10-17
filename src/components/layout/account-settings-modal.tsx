@@ -93,6 +93,7 @@ export function AccountSettingsModal({
         >
           <TextInput
             {...usernameForm.register("username")}
+            maxLength={32}
             autoCapitalize="none"
             spellCheck={false}
           />
@@ -141,6 +142,7 @@ export function AccountSettingsModal({
         >
           <TextInput
             {...passwordForm.register("currentPassword")}
+            maxLength={128}
             type="password"
             autoComplete="current-password"
           />
@@ -151,6 +153,7 @@ export function AccountSettingsModal({
         >
           <TextInput
             {...passwordForm.register("newPassword")}
+            maxLength={128}
             type="password"
             autoComplete="new-password"
           />
@@ -161,6 +164,7 @@ export function AccountSettingsModal({
         >
           <TextInput
             {...passwordForm.register("confirmPassword")}
+            maxLength={128}
             type="password"
             autoComplete="new-password"
           />

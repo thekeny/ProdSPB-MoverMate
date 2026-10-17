@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { LandingPage } from "@/app/_components/landing-page";
 import { LoadingScreen } from "@/components/layout/loading-screen";
 import { pages } from "@/configs/paths/pages.path";
 import { useAuth } from "@/providers/auth-provider";
@@ -14,11 +15,10 @@ export default function HomePage() {
   const ready = authReady && projectsReady;
 
   useEffect(() => {
-    if (!ready) return;
-    router.replace(
-      account ? (project ? pages.DASHBOARD : pages.PROJECTS) : pages.LOGIN,
-    );
+    if (!ready || !account) return;
+    router.replace(project ? pages.DASHBOARD : pages.PROJECTS);
   }, [account, project, ready, router]);
 
-  return <LoadingScreen />;
+  if (!ready || account) return <LoadingScreen />;
+  return <LandingPage />;
 }

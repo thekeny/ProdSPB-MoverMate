@@ -1,4 +1,5 @@
 import type { ErrorResponse } from "@/api/generated/types.gen";
+import { markConnected, markDisconnected } from "@/lib/connectivity";
 
 export class ApiError extends Error {
   readonly status: number;
@@ -36,9 +37,12 @@ export async function unwrap<T>(request: Promise<Result<T>>): Promise<T> {
   try {
     result = await request;
   } catch {
+    markDisconnected();
     throw new ApiError(0, undefined);
   }
   const { data, error, response } = result;
+  if (response) markConnected();
+  else markDisconnected();
   if (error !== undefined || !response?.ok)
     throw new ApiError(response?.status ?? 0, asErrorBody(error));
   return data as T;

@@ -9,6 +9,7 @@ import type { Project } from "@/configs/types/project.type";
 export function MobileHeader({
   project,
   projects,
+  canEdit,
   onSelectProject,
   onCreateProject,
   onOpenSettings,
@@ -17,6 +18,7 @@ export function MobileHeader({
 }: {
   project: Project;
   projects: Project[];
+  canEdit: boolean;
   onSelectProject: (id: string) => void;
   onCreateProject: () => void;
   onOpenSettings: () => void;
@@ -31,18 +33,21 @@ export function MobileHeader({
           compact
           project={project}
           projects={projects}
+          canEdit={canEdit}
           onSelect={onSelectProject}
           onCreate={onCreateProject}
           onSettings={onOpenSettings}
         />
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onOpenAccountSettings}
-          aria-label="Настройки аккаунта"
-        >
-          <Settings />
-        </Button>
+        {canEdit && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onOpenAccountSettings}
+            aria-label="Настройки аккаунта"
+          >
+            <Settings />
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"

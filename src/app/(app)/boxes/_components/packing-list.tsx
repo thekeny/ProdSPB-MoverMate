@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { TextInput } from "@/components/ui/text-input";
 import { ITEM_PRIORITY_OPTIONS } from "@/configs/consts/item-priorities.const";
+import { LIST_PAGE_SIZE } from "@/configs/consts/lists.const";
 import type { Item } from "@/configs/types/box.type";
 import type { Project } from "@/configs/types/project.type";
 import {
@@ -25,12 +26,15 @@ import { uid } from "@/lib/id";
 export function PackingList({
   project,
   updateProject,
+  canEdit,
 }: {
   project: Project;
+  canEdit: boolean;
   updateProject: (apply: (project: Project) => Project) => void;
 }) {
   const [removing, setRemoving] = useState<Item | null>(null);
   const [scanOpen, setScanOpen] = useState(false);
+  const [limit, setLimit] = useState(LIST_PAGE_SIZE);
   const {
     register,
     control,
@@ -61,12 +65,14 @@ export function PackingList({
     <section className="mt-6 rounded-lg bg-white p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-extrabold">Упаковать</h2>
-        <Button variant="outline" onClick={() => setScanOpen(true)}>
-          <Camera />
-          Добавить по фото
-        </Button>
+        {canEdit && (
+          <Button variant="outline" onClick={() => setScanOpen(true)}>
+            <Camera />
+            Добавить по фото
+          </Button>
+        )}
       </div>
-      {scanOpen && (
+      {scanOpen && canEdit && (
         <ItemScanModal
           projectId={project.id}
           submitLabel="Добавить в список"
@@ -95,187 +101,209 @@ export function PackingList({
           }
         />
       )}
-      <form
-        className="mt-4 grid gap-2 lg:grid-cols-[minmax(0,1fr)_8rem_9rem_5rem_auto]"
-        noValidate
-        onSubmit={handleSubmit(({ name, room, priority, quantity }) => {
-          updateProject((current) => ({
-            ...current,
-            lastSourceRoom: room,
-            items: [
-              ...current.items,
-              {
-                id: uid("item"),
-                name: name.trim(),
-                state: "TO_PACK",
-                sourceRoom: room,
-                boxId: null,
-                quantity,
-                priority,
-              },
-            ],
-          }));
-          reset({ name: "", room, priority, quantity: 1 });
-        })}
-      >
-        <TextInput
-          {...register("name")}
-          placeholder="Название вещи"
-          aria-label="Название вещи"
-          aria-invalid={errors.name ? true : undefined}
-          aria-describedby={errors.name ? "packing-name-error" : undefined}
-        />
-        {errors.name && (
-          <p
-            id="packing-name-error"
-            className="text-xs text-[#A84D3C] lg:col-span-full"
-            role="alert"
-          >
-            {errors.name.message}
-          </p>
-        )}
-        <Controller
-          control={control}
-          name="room"
-          render={({ field }) => (
-            <Select
-              value={field.value}
-              onValueChange={field.onChange}
-              items={project.sourceRooms.map((entry) => ({
-                label: entry,
-                value: entry,
-              }))}
+      {canEdit && (
+        <form
+          className="mt-4 grid gap-2 lg:grid-cols-[minmax(0,1fr)_8rem_9rem_5rem_auto]"
+          noValidate
+          onSubmit={handleSubmit(({ name, room, priority, quantity }) => {
+            updateProject((current) => ({
+              ...current,
+              lastSourceRoom: room,
+              items: [
+                ...current.items,
+                {
+                  id: uid("item"),
+                  name: name.trim(),
+                  state: "TO_PACK",
+                  sourceRoom: room,
+                  boxId: null,
+                  quantity,
+                  priority,
+                },
+              ],
+            }));
+            reset({ name: "", room, priority, quantity: 1 });
+          })}
+        >
+          <TextInput
+            {...register("name")}
+            maxLength={100}
+            placeholder="Название вещи"
+            aria-label="Название вещи"
+            aria-invalid={errors.name ? true : undefined}
+            aria-describedby={errors.name ? "packing-name-error" : undefined}
+          />
+          {errors.name && (
+            <p
+              id="packing-name-error"
+              className="text-xs text-[#A84D3C] lg:col-span-full"
+              role="alert"
             >
-              <SelectTrigger
-                aria-label="Исходная комната"
-                onBlur={field.onBlur}
+              {errors.name.message}
+            </p>
+          )}
+          <Controller
+            control={control}
+            name="room"
+            render={({ field }) => (
+              <Select
+                value={field.value}
+                onValueChange={field.onChange}
+                items={project.sourceRooms.map((entry) => ({
+                  label: entry,
+                  value: entry,
+                }))}
               >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {project.sourceRooms.map((entry) => (
-                  <SelectItem key={entry} value={entry}>
-                    {entry}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        <Controller
-          control={control}
-          name="priority"
-          render={({ field }) => (
-            <Select
-              value={field.value}
-              onValueChange={field.onChange}
-              items={ITEM_PRIORITY_OPTIONS}
+                <SelectTrigger
+                  aria-label="Исходная комната"
+                  onBlur={field.onBlur}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {project.sourceRooms.map((entry) => (
+                    <SelectItem key={entry} value={entry}>
+                      {entry}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          <Controller
+            control={control}
+            name="priority"
+            render={({ field }) => (
+              <Select
+                value={field.value}
+                onValueChange={field.onChange}
+                items={ITEM_PRIORITY_OPTIONS}
+              >
+                <SelectTrigger aria-label="Приоритет" onBlur={field.onBlur}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ITEM_PRIORITY_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          <TextInput
+            {...register("quantity", { valueAsNumber: true })}
+            type="number"
+            min={1}
+            max={9999}
+            step={1}
+            aria-label="Количество"
+            aria-invalid={errors.quantity ? true : undefined}
+            aria-describedby={
+              errors.quantity ? "packing-quantity-error" : undefined
+            }
+            className="w-full sm:col-span-1"
+          />
+          {errors.quantity && (
+            <p
+              id="packing-quantity-error"
+              className="text-xs text-[#A84D3C]"
+              role="alert"
             >
-              <SelectTrigger aria-label="Приоритет" onBlur={field.onBlur}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ITEM_PRIORITY_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {errors.quantity.message}
+            </p>
           )}
-        />
-        <TextInput
-          {...register("quantity", { valueAsNumber: true })}
-          type="number"
-          min={1}
-          step={1}
-          aria-label="Количество"
-          aria-invalid={errors.quantity ? true : undefined}
-          aria-describedby={
-            errors.quantity ? "packing-quantity-error" : undefined
-          }
-          className="w-full sm:col-span-1"
-        />
-        {errors.quantity && (
-          <p
-            id="packing-quantity-error"
-            className="text-xs text-[#A84D3C]"
-            role="alert"
-          >
-            {errors.quantity.message}
-          </p>
-        )}
-        <Button type="submit">Добавить</Button>
-      </form>
+          <Button type="submit">Добавить</Button>
+        </form>
+      )}
       <div className="mt-4 grid gap-2">
         {pending.length ? (
-          pending.map((item) => (
+          pending.slice(0, limit).map((item) => (
             <div
               key={item.id}
-              className="flex flex-wrap items-center gap-3 rounded-md bg-[#F5F3EE] p-3 text-sm"
+              className="flex flex-col items-start gap-2 rounded-md bg-[#F5F3EE] p-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-3"
             >
-              <span className="min-w-0 flex-1">
-                <strong>{item.name}</strong>
+              <span className="w-full min-w-0 sm:w-auto sm:flex-1">
+                <strong className="[overflow-wrap:anywhere]">
+                  {item.name}
+                </strong>
                 <span className="ml-2 text-[#68716C]">
                   {item.quantity > 1 ? `${item.quantity} шт. · ` : ""}
                   {item.sourceRoom}
                   {item.priority === "FIRST_NECESSITY" ? " · Первый день" : ""}
                 </span>
               </span>
-              <Select
-                aria-label={`Коробка для ${item.name}`}
-                value={null}
-                onValueChange={(boxId) => {
-                  if (!boxId) return;
-                  updateProject((current) => ({
-                    ...current,
-                    boxes: current.boxes.map((box) =>
-                      box.id === boxId &&
-                      !box.sourceRooms.includes(item.sourceRoom)
-                        ? {
-                            ...box,
-                            sourceRooms: [...box.sourceRooms, item.sourceRoom],
-                          }
-                        : box,
-                    ),
-                    items: current.items.map((entry) =>
-                      entry.id === item.id
-                        ? { ...entry, state: "IN_BOX", boxId }
-                        : entry,
-                    ),
-                  }));
-                }}
-                items={project.boxes.map((box) => ({
-                  label: `№ ${box.number} · ${box.title}`,
-                  value: box.id,
-                }))}
-              >
-                <SelectTrigger className="h-10 w-auto min-w-40 px-2 text-xs">
-                  <SelectValue placeholder="Положить в коробку" />
-                </SelectTrigger>
-                <SelectContent>
-                  {project.boxes.map((box) => (
-                    <SelectItem key={box.id} value={box.id}>
-                      № {box.number} · {box.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label={`Удалить ${item.name}`}
-                onClick={() => setRemoving(item)}
-              >
-                <Trash2 className="size-4" />
-              </Button>
+              {canEdit && (
+                <Select
+                  aria-label={`Коробка для ${item.name}`}
+                  value={null}
+                  onValueChange={(boxId) => {
+                    if (!boxId) return;
+                    updateProject((current) => ({
+                      ...current,
+                      boxes: current.boxes.map((box) =>
+                        box.id === boxId &&
+                        !box.sourceRooms.includes(item.sourceRoom)
+                          ? {
+                              ...box,
+                              sourceRooms: [
+                                ...box.sourceRooms,
+                                item.sourceRoom,
+                              ],
+                            }
+                          : box,
+                      ),
+                      items: current.items.map((entry) =>
+                        entry.id === item.id
+                          ? { ...entry, state: "IN_BOX", boxId }
+                          : entry,
+                      ),
+                    }));
+                  }}
+                  items={project.boxes.map((box) => ({
+                    label: `№ ${box.number} · ${box.title}`,
+                    value: box.id,
+                  }))}
+                >
+                  <SelectTrigger className="h-10 w-auto min-w-40 px-2 text-xs">
+                    <SelectValue placeholder="Положить в коробку" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {project.boxes.map((box) => (
+                      <SelectItem key={box.id} value={box.id}>
+                        № {box.number} · {box.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {canEdit && (
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Удалить ${item.name}`}
+                  onClick={() => setRemoving(item)}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              )}
             </div>
           ))
         ) : (
           <p className="text-sm text-[#68716C]">Вещей для упаковки пока нет.</p>
         )}
       </div>
-      {removing && (
+      {pending.length > limit && (
+        <Button
+          variant="outline"
+          className="mt-3"
+          onClick={() => setLimit((current) => current + LIST_PAGE_SIZE)}
+        >
+          Ещё вещи · показано {limit} из {pending.length}
+        </Button>
+      )}
+      {removing && canEdit && (
         <ConfirmDialog
           title={`Удалить вещь «${removing.name}»?`}
           onClose={() => setRemoving(null)}

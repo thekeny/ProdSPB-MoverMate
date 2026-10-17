@@ -6,10 +6,11 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { BoxTips } from "@/components/box/box-tips";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PageHeading } from "@/components/ui/page-heading";
 import { TextInput } from "@/components/ui/text-input";
+import { LIST_PAGE_SIZE } from "@/configs/consts/lists.const";
 import type { Item, MoveBox, Status } from "@/configs/types/box.type";
 import { plural } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -19,8 +20,13 @@ export function BoxesView({
   allBoxes,
   items,
   itemResults,
+  searching,
+  hasMoreResults,
+  loadingMore,
+  onMoreResults,
   rooms,
   totalCount,
+  canEdit,
   search,
   setSearch,
   searchRef,
@@ -37,8 +43,13 @@ export function BoxesView({
   allBoxes: MoveBox[];
   items: Item[];
   itemResults: Item[];
+  searching: boolean;
+  hasMoreResults: boolean;
+  loadingMore: boolean;
+  onMoreResults: () => void;
   rooms: string[];
   totalCount: number;
+  canEdit: boolean;
   search: string;
   setSearch: (value: string) => void;
   searchRef?: (element: HTMLElement | null) => void;
@@ -52,6 +63,23 @@ export function BoxesView({
   onResetFilters: () => void;
 }) {
   const isFiltered = Boolean(search) || roomFilter !== "all";
+  const listKey = `${search}:${roomFilter}`;
+  const [window, setWindow] = useState({ key: listKey, limit: LIST_PAGE_SIZE });
+  const limit = window.key === listKey ? window.limit : LIST_PAGE_SIZE;
+  const boxesById = useMemo(
+    () => new Map(allBoxes.map((box) => [box.id, box])),
+    [allBoxes],
+  );
+  const itemsByBox = useMemo(() => {
+    const grouped = new Map<string, Item[]>();
+    for (const item of items)
+      if (item.boxId && item.state === "IN_BOX") {
+        const contents = grouped.get(item.boxId) ?? [];
+        contents.push(item);
+        grouped.set(item.boxId, contents);
+      }
+    return grouped;
+  }, [items]);
   return (
     <>
       <PageHeading
@@ -59,10 +87,12 @@ export function BoxesView({
         title="Коробки и вещи"
         description="Записывайте, что лежит в каждой коробке, и находите нужное до, во время и после переезда."
         action={
-          <Button onClick={onAdd} className="h-11">
-            <Plus />
-            Новая коробка
-          </Button>
+          canEdit ? (
+            <Button onClick={onAdd} className="h-11">
+              <Plus />
+              Новая коробка
+            </Button>
+          ) : undefined
         }
       />
       <section className="no-print mt-6 rounded-lg bg-white p-5">
@@ -70,6 +100,7 @@ export function BoxesView({
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#68716C]" />
             <TextInput
+              maxLength={100}
               ref={searchRef}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
@@ -124,27 +155,39 @@ export function BoxesView({
               {itemResults.length}
             </span>
           </h2>
-          {itemResults.length ? (
+          {searching ? (
+            <output className="mt-3 block text-sm text-[#68716C]">
+              Ищем вещи…
+            </output>
+          ) : itemResults.length ? (
             <div className="mt-3 grid gap-2">
               {itemResults.map((item) => {
                 const relatedBox = item.boxId
-                  ? allBoxes.find((entry) => entry.id === item.boxId)
+                  ? boxesById.get(item.boxId)
                   : null;
                 const location = relatedBox
-                  ? `№ ${relatedBox.number} · ${status(relatedBox.status).label}`
+                  ? `№ ${relatedBox.number} · ${relatedBox.room} · ${status(relatedBox.status).label}`
                   : `${item.state === "LOST" ? "Потеряна" : item.state === "TAKEN_OUT" ? "На месте" : item.state === "TO_PACK" ? "Нужно упаковать" : "В коробке"} · ${item.sourceRoom}`;
                 return (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between gap-3 rounded-md bg-[#F5F3EE] p-3 text-sm"
+                    className="flex flex-col items-start gap-2 rounded-md bg-[#F5F3EE] p-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3"
                   >
-                    <span className="min-w-0 flex-1">
+                    <span className="w-full min-w-0 [overflow-wrap:anywhere] sm:w-auto sm:flex-1">
                       <strong>{item.name}</strong>
                       {item.quantity > 1 && ` · ${item.quantity} шт.`}
                     </span>
-                    <span className="shrink-0 text-right text-xs text-[#68716C]">
+                    <span className="text-xs text-[#68716C] [overflow-wrap:anywhere]">
                       {location}
                     </span>
+                    {relatedBox && (
+                      <Button
+                        variant="link"
+                        onClick={() => onSelect(relatedBox.id)}
+                      >
+                        Открыть коробку
+                      </Button>
+                    )}
                   </div>
                 );
               })}
@@ -153,6 +196,17 @@ export function BoxesView({
             <p className="mt-3 text-sm text-[#68716C]">
               Вещей с таким началом слова нет.
             </p>
+          )}
+          {hasMoreResults && (
+            <Button
+              className="mt-3"
+              variant="outline"
+              disabled={loadingMore || searching}
+              loading={loadingMore}
+              onClick={onMoreResults}
+            >
+              Ещё результаты
+            </Button>
           )}
         </section>
       )}
@@ -165,11 +219,9 @@ export function BoxesView({
       </section>
       <section className="mt-3 grid items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
         {boxes.length ? (
-          boxes.map((box) => {
+          boxes.slice(0, limit).map((box) => {
             const RoomIcon = roomIcon(box.room);
-            const contents = items.filter(
-              (item) => item.boxId === box.id && item.state === "IN_BOX",
-            );
+            const contents = itemsByBox.get(box.id) ?? [];
             return (
               <Button
                 variant="ghost"
@@ -177,12 +229,12 @@ export function BoxesView({
                 onClick={() => onSelect(box.id)}
                 className="group h-full w-full flex-col items-stretch justify-start self-stretch rounded-lg bg-white p-5 text-left whitespace-normal transition-colors duration-200 hover:bg-[#E2E9DD] hover:text-[#1D2923]"
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-start justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <span className="rounded-md bg-[#1D2923] px-2 py-1 font-mono text-xs font-bold text-[#F4F1E9]">
                       № {box.number}
                     </span>
-                    <span className="flex items-center gap-1 text-xs font-bold text-[#42664D]">
+                    <span className="flex min-w-0 items-center gap-1 text-xs font-bold text-[#42664D] [overflow-wrap:anywhere]">
                       <RoomIcon className="size-3.5" />
                       {box.room}
                     </span>
@@ -196,24 +248,24 @@ export function BoxesView({
                     {status(box.status).label}
                   </span>
                 </div>
-                <h2 className="mt-5 text-lg font-extrabold tracking-[-0.03em]">
+                <h2 className="mt-5 break-words text-lg font-extrabold tracking-[-0.03em] [overflow-wrap:anywhere]">
                   {box.title}
                 </h2>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {box.fragile && (
+                {box.fragile && (
+                  <div className="mt-3 flex flex-wrap gap-2">
                     <span className="rounded-full bg-[#F9E8E2] px-2 py-1 text-[10px] font-bold text-[#A84D3C]">
                       Хрупкое
                     </span>
-                  )}
-                </div>
-                <div className="mt-5 rounded-md bg-[#F5F3EE] p-3 text-xs text-[#68716C]">
+                  </div>
+                )}
+                <div className="mt-3 rounded-md bg-[#F5F3EE] p-3 text-xs text-[#68716C]">
                   <div className="flex flex-wrap gap-1.5">
                     {contents.length ? (
                       <>
                         {contents.slice(0, 2).map((item) => (
                           <span
                             key={item.id}
-                            className="max-w-full truncate rounded-md bg-[#E8E2D5] px-2 py-1"
+                            className="max-w-full break-words rounded-md bg-[#E8E2D5] px-2 py-1 [overflow-wrap:anywhere]"
                           >
                             {item.name}
                           </span>
@@ -266,7 +318,17 @@ export function BoxesView({
           </div>
         )}
       </section>
-      <BoxTips />
+      {boxes.length > limit && (
+        <Button
+          className="mt-4"
+          variant="outline"
+          onClick={() =>
+            setWindow({ key: listKey, limit: limit + LIST_PAGE_SIZE })
+          }
+        >
+          Ещё коробки · показано {limit} из {boxes.length}
+        </Button>
+      )}
     </>
   );
 }

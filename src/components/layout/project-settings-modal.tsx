@@ -127,7 +127,7 @@ export function ProjectSettingsModal({
           label="Название"
           error={projectForm.formState.errors.name?.message}
         >
-          <TextInput {...projectForm.register("name")} />
+          <TextInput {...projectForm.register("name")} maxLength={100} />
         </Field>
         <Field
           label="Дата переезда"
@@ -141,10 +141,10 @@ export function ProjectSettingsModal({
           />
         </Field>
         <Field label="Откуда">
-          <TextInput {...projectForm.register("from")} />
+          <TextInput {...projectForm.register("from")} maxLength={200} />
         </Field>
         <Field label="Куда">
-          <TextInput {...projectForm.register("to")} />
+          <TextInput {...projectForm.register("to")} maxLength={200} />
         </Field>
         <div className="grid gap-1.5">
           <span className="text-xs font-bold text-[#42664D]">
@@ -229,7 +229,7 @@ export function ProjectSettingsModal({
                   key={room}
                   className="inline-flex items-center gap-1 rounded-md bg-[#EDF1E8] px-2 py-1 text-xs"
                 >
-                  {room}
+                  <span className="[overflow-wrap:anywhere]">{room}</span>
                   <Button
                     variant="ghost"
                     size="icon-sm"
@@ -278,7 +278,7 @@ export function ProjectSettingsModal({
           </div>
         ))}
         <form
-          className="mt-3 flex flex-wrap gap-2"
+          className="mt-3 flex items-start gap-2"
           noValidate
           onSubmit={roomForm.handleSubmit(({ name: rawName, kind }) => {
             const name = rawName.trim();
@@ -310,7 +310,11 @@ export function ProjectSettingsModal({
                   { label: "Куда", value: "destinationRooms" },
                 ]}
               >
-                <SelectTrigger aria-label="Тип комнаты" onBlur={field.onBlur}>
+                <SelectTrigger
+                  aria-label="Тип комнаты"
+                  onBlur={field.onBlur}
+                  className="w-28 shrink-0"
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -320,26 +324,33 @@ export function ProjectSettingsModal({
               </Select>
             )}
           />
-          <TextInput
-            {...roomForm.register("name")}
-            aria-label="Название комнаты"
-            aria-invalid={roomForm.formState.errors.name ? true : undefined}
-            aria-describedby={
-              roomForm.formState.errors.name ? "room-name-error" : undefined
-            }
-            placeholder="Новая комната"
-            className="min-w-0 flex-1"
-          />
-          {roomForm.formState.errors.name && (
-            <p
-              id="room-name-error"
-              role="alert"
-              className="w-full text-xs text-[#A84D3C]"
-            >
-              {roomForm.formState.errors.name.message}
-            </p>
-          )}
-          <Button type="submit" aria-label="Добавить комнату">
+          <div className="min-w-0 flex-1">
+            <TextInput
+              {...roomForm.register("name")}
+              maxLength={50}
+              aria-label="Название комнаты"
+              aria-invalid={roomForm.formState.errors.name ? true : undefined}
+              aria-describedby={
+                roomForm.formState.errors.name ? "room-name-error" : undefined
+              }
+              placeholder="Новая комната"
+              className="w-full"
+            />
+            {roomForm.formState.errors.name && (
+              <p
+                id="room-name-error"
+                role="alert"
+                className="mt-1 text-xs text-[#A84D3C]"
+              >
+                {roomForm.formState.errors.name.message}
+              </p>
+            )}
+          </div>
+          <Button
+            type="submit"
+            aria-label="Добавить комнату"
+            className="shrink-0"
+          >
             <Plus />
           </Button>
         </form>
@@ -427,6 +438,7 @@ export function ProjectSettingsModal({
           <div className="grid min-w-0 flex-1 gap-1.5">
             <TextInput
               {...memberForm.register("name")}
+              maxLength={50}
               aria-label="Имя участника"
               aria-invalid={memberForm.formState.errors.name ? true : undefined}
               aria-describedby={

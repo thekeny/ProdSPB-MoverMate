@@ -70,6 +70,7 @@ export function AuthScreen({
           <Field label="Имя пользователя" error={errors.username?.message}>
             <TextInput
               {...register("username")}
+              maxLength={32}
               name="username"
               placeholder="mover"
               autoCapitalize="none"
@@ -83,6 +84,7 @@ export function AuthScreen({
           <Field label="Пароль" error={errors.password?.message}>
             <TextInput
               {...register("password")}
+              maxLength={128}
               name="password"
               type="password"
               placeholder="Минимум 8 символов"
@@ -98,6 +100,7 @@ export function AuthScreen({
             >
               <TextInput
                 {...register("confirmPassword")}
+                maxLength={128}
                 name="confirmPassword"
                 type="password"
                 placeholder="Повторите пароль"

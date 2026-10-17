@@ -14,6 +14,7 @@ export function Sidebar({
   account,
   project,
   projects,
+  canEdit,
   onSelectProject,
   onCreateProject,
   onOpenSettings,
@@ -23,6 +24,7 @@ export function Sidebar({
   account: Account;
   project: Project;
   projects: Project[];
+  canEdit: boolean;
   onSelectProject: (id: string) => void;
   onCreateProject: () => void;
   onOpenSettings: () => void;
@@ -37,6 +39,7 @@ export function Sidebar({
       <ProjectSwitcher
         project={project}
         projects={projects}
+        canEdit={canEdit}
         onSelect={onSelectProject}
         onCreate={onCreateProject}
         onSettings={onOpenSettings}
@@ -63,6 +66,7 @@ export function Sidebar({
         account={account}
         onLogout={onLogout}
         onOpenAccountSettings={onOpenAccountSettings}
+        canEdit={canEdit}
       />
     </aside>
   );

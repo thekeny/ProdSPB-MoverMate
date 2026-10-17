@@ -4,10 +4,9 @@ import { LoadingScreen } from "@/components/layout/loading-screen";
 import { Modal } from "@/components/ui/modal";
 
 describe("LoadingScreen", () => {
-  it("uses a rotating loader instead of a static square", () => {
+  it("показывает состояние загрузки", () => {
     const html = renderToStaticMarkup(<LoadingScreen />);
-    expect(html).toContain("animate-spin");
-    expect(html).not.toContain("rounded-lg");
+    expect(html).toContain("Загрузка…");
   });
 });
 

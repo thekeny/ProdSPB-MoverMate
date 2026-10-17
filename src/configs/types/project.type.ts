@@ -1,3 +1,4 @@
+import type { Room } from "@/api/generated/types.gen";
 import type { Item, MoveBox, QrStrategy } from "@/configs/types/box.type";
 import type { Task } from "@/configs/types/task.type";
 
@@ -18,6 +19,7 @@ export type ProjectLocalData = {
 };
 
 export type Project = ProjectLocalData & {
+  rooms: Room[];
   id: string;
   ownerId: string;
   isOwner: boolean;

@@ -17,7 +17,7 @@ export const loginSchema = z.object({
 });
 
 export const registrationSchema = loginSchema
-  .extend({ confirmPassword: z.string() })
+  .extend({ confirmPassword: passwordSchema })
   .refine((values) => values.password === values.confirmPassword, {
     path: ["confirmPassword"],
     message: "Пароли должны совпадать.",
@@ -27,7 +27,10 @@ export const authFormSchema = z
   .object({
     username: usernameSchema,
     password: passwordSchema,
-    confirmPassword: z.string().optional(),
+    confirmPassword: z
+      .string()
+      .max(128, "Пароль должен содержать не более 128 символов.")
+      .optional(),
   })
   .superRefine((values, context) => {
     if (
@@ -46,7 +49,9 @@ export const changePasswordSchema = z
   .object({
     currentPassword: passwordSchema,
     newPassword: passwordSchema,
-    confirmPassword: z.string(),
+    confirmPassword: z
+      .string()
+      .max(128, "Пароль должен содержать не более 128 символов."),
   })
   .refine((values) => values.newPassword === values.confirmPassword, {
     path: ["confirmPassword"],

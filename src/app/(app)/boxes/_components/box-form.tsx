@@ -29,7 +29,7 @@ export function BoxForm({
 }: {
   projectId: string;
   onClose: () => void;
-  onSubmit: (values: BoxFormValues) => void;
+  onSubmit: (values: BoxFormValues) => Promise<boolean>;
   destinationRooms: string[];
   sourceRooms: string[];
   lastSourceRoom: string;
@@ -42,7 +42,7 @@ export function BoxForm({
     handleSubmit,
     getValues,
     setValue,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<BoxFormValues>({
     resolver: zodResolver(boxSchema),
     mode: "onBlur",
@@ -62,13 +62,16 @@ export function BoxForm({
           Новая коробка
         </h2>
         <form
-          onSubmit={handleSubmit(onSubmit)}
+          onSubmit={handleSubmit(async (values) => {
+            if (await onSubmit(values)) onClose();
+          })}
           noValidate
           className="mt-6 grid gap-4"
         >
-          <Field label="Краткое описание" error={errors.title?.message}>
+          <Field label="Описание (необязательно)" error={errors.title?.message}>
             <TextInput
               {...register("title")}
+              maxLength={100}
               placeholder="Посуда на первое время"
             />
           </Field>
@@ -91,7 +94,7 @@ export function BoxForm({
                   <SelectContent>
                     {destinationRooms.map((room) => (
                       <SelectItem key={room} value={room}>
-                        {room}
+                        <span className="[overflow-wrap:anywhere]">{room}</span>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -118,7 +121,7 @@ export function BoxForm({
                   <SelectContent>
                     {sourceRooms.map((room) => (
                       <SelectItem key={room} value={room}>
-                        {room}
+                        <span className="[overflow-wrap:anywhere]">{room}</span>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -153,7 +156,9 @@ export function BoxForm({
                       return quantity > 1 ? `${name} · ${quantity} шт.` : name;
                     }}
                     onBlur={field.onBlur}
-                    placeholder="Вещь, пробел или Enter"
+                    placeholder="Вещь и нажмите Enter"
+                    enterOnly
+                    maxLength={100}
                   />
                 )}
               />
@@ -189,7 +194,13 @@ export function BoxForm({
             <Button variant="ghost" onClick={onClose}>
               Отмена
             </Button>
-            <Button type="submit">Создать</Button>
+            <Button
+              type="submit"
+              loading={isSubmitting}
+              disabled={isSubmitting}
+            >
+              Создать
+            </Button>
           </div>
         </form>
       </Modal>

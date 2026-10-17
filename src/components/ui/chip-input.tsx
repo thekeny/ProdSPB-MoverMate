@@ -23,6 +23,9 @@ export function ChipInput({
   ariaInvalid,
   ariaDescribedBy,
   formatToken = (token) => token,
+  enterOnly = false,
+  maxLength = 100,
+  minLength = 2,
 }: {
   value: string[];
   onValueChange: (value: string[]) => void;
@@ -43,14 +46,18 @@ export function ChipInput({
   ariaInvalid?: boolean;
   ariaDescribedBy?: string;
   formatToken?: (token: string) => string;
+  enterOnly?: boolean;
+  maxLength?: number;
+  minLength?: number;
 }) {
   const [draft, setDraft] = useState("");
 
   const addTokens = (raw: string) => {
-    const tokens = splitTokens(raw);
+    const tokens = enterOnly ? [raw.trim()].filter(Boolean) : splitTokens(raw);
     if (!tokens.length) return;
     const next = [...value];
     for (const token of tokens) {
+      if (token.length < minLength || token.length > maxLength) continue;
       if (
         !next.some(
           (current) =>
@@ -65,15 +72,24 @@ export function ChipInput({
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.nativeEvent.isComposing) return;
-    if (event.key === "Enter" || event.key === " " || event.key === ",") {
+    if (
+      event.key === "Enter" ||
+      (!enterOnly && (event.key === " " || event.key === ","))
+    ) {
       event.preventDefault();
-      addTokens(draft);
+      if (enterOnly) {
+        const token = draft.trim();
+        if (token) addTokens(token);
+      } else {
+        addTokens(draft);
+      }
     } else if (event.key === "Backspace" && !draft && value.length) {
       onValueChange(value.slice(0, -1));
     }
   };
 
   const handlePaste = (event: ClipboardEvent<HTMLInputElement>) => {
+    if (enterOnly) return;
     const pasted = event.clipboardData.getData("text");
     if (!/[\s,;]/u.test(pasted)) return;
     event.preventDefault();
@@ -114,13 +130,15 @@ export function ChipInput({
         aria-describedby={ariaDescribedBy}
         inputMode={inputMode}
         value={draft}
+        maxLength={maxLength}
+        minLength={minLength}
         disabled={disabled}
         placeholder={placeholder}
         onChange={(event) => setDraft(event.target.value)}
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
         onBlur={() => {
-          addTokens(draft);
+          if (!enterOnly) addTokens(draft);
           onBlur?.();
         }}
         className="h-10 min-w-[9rem] flex-1 rounded-none bg-transparent px-2 hover:bg-transparent focus:bg-transparent focus:ring-0"

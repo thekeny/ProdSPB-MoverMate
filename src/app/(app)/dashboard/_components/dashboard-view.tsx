@@ -7,8 +7,11 @@ import {
   Plus,
   Search,
 } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import type { ProjectSummary } from "@/api/generated/types.gen";
+import { mapTask } from "@/api/project-data";
 import { Button } from "@/components/ui/button";
 import { PageHeading } from "@/components/ui/page-heading";
 import { DATE_NOON_SUFFIX, MS_PER_DAY } from "@/configs/consts/date.const";
@@ -20,10 +23,14 @@ import { cn } from "@/lib/utils";
 
 export function DashboardView({
   project,
+  summary,
   updateProject,
+  canEdit,
 }: {
   project: Project;
+  summary?: ProjectSummary;
   updateProject: (apply: (project: Project) => Project) => void;
+  canEdit: boolean;
 }) {
   const router = useRouter();
   const [justDone, setJustDone] = useState<string | null>(null);
@@ -31,16 +38,20 @@ export function DashboardView({
   const daysLeft = Number.isNaN(moveDate.getTime())
     ? 0
     : Math.max(0, Math.ceil((moveDate.getTime() - Date.now()) / MS_PER_DAY));
-  const taskCount = project.tasks.length;
-  const doneTasks = project.tasks.filter((task) => task.done).length;
-  const packedBoxes = project.boxes.filter(
-    (box) => box.status !== "packing",
-  ).length;
-  const unpackedItems = project.items.filter(
-    (item) => item.state === "TAKEN_OUT",
-  ).length;
-  const itemCount = project.items.length;
-  const lostItems = project.items.filter((item) => item.state === "LOST");
+  const taskCount = summary?.tasks.total ?? project.tasks.length;
+  const doneTasks =
+    summary?.tasks.done ?? project.tasks.filter((task) => task.done).length;
+  const packedBoxes =
+    summary?.boxes.total != null
+      ? summary.boxes.total - summary.boxes.by_status.PACKING
+      : project.boxes.filter((box) => box.status !== "packing").length;
+  const unpackedItems =
+    summary?.items.by_state.TAKEN_OUT ??
+    project.items.filter((item) => item.state === "TAKEN_OUT").length;
+  const itemCount = summary?.items.total ?? project.items.length;
+  const lostCount =
+    summary?.items.by_state.LOST ??
+    project.items.filter((item) => item.state === "LOST").length;
   const boxesToFill = project.boxes.filter(
     (box) =>
       box.status === "packing" &&
@@ -48,7 +59,9 @@ export function DashboardView({
         (item) => item.boxId === box.id && item.state === "IN_BOX",
       ),
   );
-  const nextTask = project.tasks.find((task) => !task.done);
+  const nextTask = summary?.next_task
+    ? mapTask(summary.next_task)
+    : project.tasks.find((task) => !task.done);
 
   return (
     <>
@@ -57,13 +70,17 @@ export function DashboardView({
         title={project.name}
         description={`${project.from || "Текущий адрес"} → ${project.to || "Новый адрес"}. Переезд ${formatDate(project.date)}.`}
         action={
-          <Button
-            onClick={() => router.push(`${pages.BOXES}?${QUERY_PARAMS.NEW}=1`)}
-            className="h-11"
-          >
-            <Plus />
-            Новая коробка
-          </Button>
+          canEdit ? (
+            <Button
+              onClick={() =>
+                router.push(`${pages.BOXES}?${QUERY_PARAMS.NEW}=1`)
+              }
+              className="h-11"
+            >
+              <Plus />
+              Новая коробка
+            </Button>
+          ) : undefined
         }
       />
 
@@ -89,15 +106,21 @@ export function DashboardView({
                 onClick={() =>
                   router.push(`${pages.BOXES}?${QUERY_PARAMS.FIND}=1`)
                 }
-                className="text-[#F4F1E9] hover:bg-white/10 hover:text-white"
+                className="text-[#F4F1E9] bg-[#222d27] hover:bg-white/10 hover:text-white"
               >
                 <Search />
                 Найти вещь
               </Button>
             </div>
           </div>
-          <div className="absolute -right-10 -bottom-24 size-64 rounded-full border-[28px] border-[#42664D]/60" />
-          <div className="absolute right-16 -bottom-16 size-36 rounded-full border-[18px] border-[#D96B4C]/70" />
+          <Image
+            src="/images/box.png"
+            alt=""
+            aria-hidden="true"
+            width={480}
+            height={480}
+            className="pointer-events-none absolute -right-16 -bottom-16 object-contain sm:-right-20 sm:-bottom-20 sm:size-[24rem] opacity-50"
+          />
         </div>
 
         <div className="rounded-[24px] bg-[#E2E9DD] p-6 sm:p-8">
@@ -119,7 +142,9 @@ export function DashboardView({
                       key={assignee}
                       className="rounded-md bg-[#EDF1E8] px-2 py-1 text-xs text-[#42664D]"
                     >
-                      {assignee}
+                      <span className="[overflow-wrap:anywhere]">
+                        {assignee}
+                      </span>
                     </span>
                   ))
                 ) : (
@@ -128,21 +153,25 @@ export function DashboardView({
                   </span>
                 )}
               </div>
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  updateProject((current) => ({
-                    ...current,
-                    tasks: current.tasks.map((task) =>
-                      task.id === nextTask.id ? { ...task, done: true } : task,
-                    ),
-                  }));
-                  setJustDone(nextTask.title);
-                }}
-                className="mt-8 h-auto gap-2 p-0 text-sm font-extrabold text-[#1D2923] underline decoration-[#D96B4C] decoration-2 underline-offset-4 transition-colors hover:bg-transparent hover:text-[#42664D]"
-              >
-                Отметить сделанной <CheckCircle2 className="size-4" />
-              </Button>
+              {canEdit && (
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    updateProject((current) => ({
+                      ...current,
+                      tasks: current.tasks.map((task) =>
+                        task.id === nextTask.id
+                          ? { ...task, done: true }
+                          : task,
+                      ),
+                    }));
+                    setJustDone(nextTask.title);
+                  }}
+                  className="mt-8 h-auto gap-2 p-0 text-sm font-extrabold text-[#1D2923] underline decoration-[#D96B4C] decoration-2 underline-offset-4 transition-colors hover:bg-transparent hover:text-[#42664D]"
+                >
+                  Отметить сделанной <CheckCircle2 className="size-4" />
+                </Button>
+              )}
             </>
           ) : (
             <p className="mt-5 text-lg font-bold">
@@ -169,7 +198,9 @@ export function DashboardView({
                 }
                 className="h-auto justify-start rounded-md bg-white p-3 text-left whitespace-normal"
               >
-                № {box.number} · {box.title}
+                <span className="[overflow-wrap:anywhere]">
+                  № {box.number} · {box.title}
+                </span>
               </Button>
             ))}
           </div>
@@ -198,9 +229,9 @@ export function DashboardView({
           },
           {
             label: "Потеряшки",
-            value: String(lostItems.length),
+            value: String(lostCount),
             icon: CircleAlert,
-            tone: lostItems.length ? "bg-[#F9E8E2]" : "bg-white",
+            tone: lostCount ? "bg-[#F9E8E2]" : "bg-white",
           },
         ].map(({ label, value, icon: Icon, tone }) => (
           <div key={label} className={cn("rounded-lg p-5", tone)}>

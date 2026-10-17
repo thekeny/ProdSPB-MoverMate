@@ -8,10 +8,12 @@ export function UserCard({
   account,
   onLogout,
   onOpenAccountSettings,
+  canEdit,
 }: {
   account: Account;
   onLogout: () => void;
   onOpenAccountSettings: () => void;
+  canEdit: boolean;
 }) {
   return (
     <div className="mt-auto flex items-center justify-between rounded-lg bg-[#EDF1E8] p-3">
@@ -20,14 +22,16 @@ export function UserCard({
         {account.username}
       </span>
       <div className="flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={onOpenAccountSettings}
-          aria-label="Настройки аккаунта"
-        >
-          <Settings />
-        </Button>
+        {canEdit && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onOpenAccountSettings}
+            aria-label="Настройки аккаунта"
+          >
+            <Settings />
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon-sm"

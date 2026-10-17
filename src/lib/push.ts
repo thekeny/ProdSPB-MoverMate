@@ -5,6 +5,7 @@ import {
 } from "@/api/generated";
 import { unwrap } from "@/api/request";
 import { API } from "@/configs/consts/api.const";
+import { isConnected } from "@/lib/connectivity";
 
 function applicationServerKey(value: string) {
   const padded = value.replace(/-/g, "+").replace(/_/g, "/");
@@ -21,8 +22,16 @@ export function pushSupported() {
   );
 }
 
+export async function registerAppServiceWorker() {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator))
+    return;
+  await navigator.serviceWorker.register(API.PUSH_WORKER, {
+    updateViaCache: "none",
+  });
+}
+
 async function registration() {
-  await navigator.serviceWorker.register(API.PUSH_WORKER);
+  await registerAppServiceWorker();
   return navigator.serviceWorker.ready;
 }
 
@@ -63,8 +72,9 @@ export async function disablePush() {
   const worker = await navigator.serviceWorker.getRegistration(API.PUSH_WORKER);
   const subscription = await worker?.pushManager.getSubscription();
   if (!subscription) return;
-  await unwrap(
-    deletePushSubscription({ query: { endpoint: subscription.endpoint } }),
-  ).catch(() => undefined);
+  if (isConnected())
+    await unwrap(
+      deletePushSubscription({ query: { endpoint: subscription.endpoint } }),
+    ).catch(() => undefined);
   await subscription.unsubscribe();
 }

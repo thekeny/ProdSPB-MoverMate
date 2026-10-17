@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { Toaster } from "react-hot-toast";
 import { APP } from "@/configs/consts/app.const";
 import { images } from "@/configs/paths/images.path";
 import { AuthProvider } from "@/providers/auth-provider";
@@ -57,6 +58,19 @@ export default function RootLayout({
             </PushProvider>
           </AuthProvider>
         </QueryProvider>
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            style: { background: "#fff", color: "#1D2923" },
+            iconTheme: { primary: "#222d27", secondary: "#fff" },
+            success: {
+              iconTheme: { primary: "#47613f", secondary: "#fff" },
+            },
+            error: {
+              iconTheme: { primary: "#a64d3e", secondary: "#fff" },
+            },
+          }}
+        />
       </body>
     </html>
   );

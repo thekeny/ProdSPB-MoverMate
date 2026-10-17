@@ -51,5 +51,5 @@ template.html
 
 # Documentation
 BACKEND_INTEGRATION.md
-*.guide.md
+/docs
 repomix-output.xml

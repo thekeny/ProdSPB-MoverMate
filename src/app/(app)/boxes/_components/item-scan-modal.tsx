@@ -191,6 +191,7 @@ export function ItemScanModal({
                 >
                   <TextInput
                     {...register(`items.${index}.name`)}
+                    maxLength={100}
                     placeholder="Название вещи"
                     aria-label={`Название вещи ${index + 1}`}
                     aria-invalid={
@@ -204,6 +205,7 @@ export function ItemScanModal({
                     })}
                     type="number"
                     min={1}
+                    max={9999}
                     step={1}
                     inputMode="numeric"
                     aria-label={`Количество, вещь ${index + 1}`}
@@ -267,7 +269,9 @@ export function ItemScanModal({
                       <SelectContent>
                         {placement.sourceRooms.map((room) => (
                           <SelectItem key={room} value={room}>
-                            {room}
+                            <span className="[overflow-wrap:anywhere]">
+                              {room}
+                            </span>
                           </SelectItem>
                         ))}
                       </SelectContent>

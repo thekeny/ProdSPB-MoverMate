@@ -1,7 +1,5 @@
 import { ROOM_PRESETS } from "@/configs/consts/rooms.const";
-import { TASK_TEMPLATES } from "@/configs/consts/task-templates.const";
 import type { ProjectLocalData } from "@/configs/types/project.type";
-import { uid } from "@/lib/id";
 
 export function parseRoomList(value: string | string[]) {
   const rooms = (Array.isArray(value) ? value : value.split(/[;,\n]/u))
@@ -23,15 +21,7 @@ export function createProjectLocalData(
     boxes: [],
     nextBoxNumber: 1,
     items: [],
-    tasks: TASK_TEMPLATES.map((template) => ({
-      id: uid("task"),
-      title: template.title,
-      description: "",
-      stage: template.stage,
-      assignees: [],
-      dueAt: null,
-      done: false,
-    })),
+    tasks: [],
   };
 }
 

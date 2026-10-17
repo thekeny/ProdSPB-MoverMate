@@ -12,14 +12,15 @@ export function TaskForm({
   members,
 }: {
   onClose: () => void;
-  onSubmit: (values: TaskFormValues) => void;
+  onSubmit: (values: TaskFormValues) => Promise<boolean>;
   members: string[];
 }) {
   const {
     register,
     control,
     handleSubmit,
-    formState: { errors },
+    setValue,
+    formState: { errors, isSubmitting },
   } = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
     mode: "onBlur",
@@ -31,6 +32,7 @@ export function TaskForm({
       assignees: [],
       dueDate: "",
       dueTime: "",
+      reminderOffsets: [],
     },
   });
   return (
@@ -39,7 +41,9 @@ export function TaskForm({
         Новая задача
       </h2>
       <form
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(async (values) => {
+          if (await onSubmit(values)) onClose();
+        })}
         noValidate
         className="mt-6 grid gap-4"
       >
@@ -48,13 +52,16 @@ export function TaskForm({
           register={register}
           control={control}
           errors={errors}
+          setValue={setValue}
         />
         <FormError errors={errors} />
         <div className="mt-2 flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>
             Отмена
           </Button>
-          <Button type="submit">Добавить</Button>
+          <Button type="submit" loading={isSubmitting} disabled={isSubmitting}>
+            Добавить
+          </Button>
         </div>
       </form>
     </Modal>

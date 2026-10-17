@@ -1,10 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { AccountSettingsModal } from "@/components/layout/account-settings-modal";
 import { MobileHeader } from "@/components/layout/mobile-header";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { OfflineBanner } from "@/components/layout/offline-banner";
 import { ProjectSettingsModal } from "@/components/layout/project-settings-modal";
 import { PushPrompt } from "@/components/layout/push-prompt";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -31,6 +32,7 @@ export function AppShell({
   const { logout, changeUsername, changePassword, deleteAccount } = useAuth();
   const {
     projects,
+    canEdit,
     setActiveId,
     updateProjectMeta,
     updateProject,
@@ -41,39 +43,58 @@ export function AppShell({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
 
+  useEffect(() => {
+    [
+      pages.DASHBOARD,
+      pages.BOXES,
+      pages.PLAN,
+      pages.LABELS,
+      pages.PROGRESS,
+    ].forEach((path) => {
+      router.prefetch(path);
+    });
+  }, [router]);
+
   const selectProject = (id: string) => {
     setActiveId(id);
     router.push(pages.DASHBOARD);
   };
   const createProject = () => router.push(pages.PROJECTS_NEW);
+  const logoutAndGoHome = async () => {
+    await logout();
+    router.replace(pages.ROOT);
+  };
 
   return (
     <div className="min-h-screen bg-[#F5F3EE]">
+      <OfflineBanner />
       <Sidebar
         account={account}
         project={project}
         projects={projects}
+        canEdit={canEdit}
         onSelectProject={selectProject}
         onCreateProject={createProject}
         onOpenSettings={() => setSettingsOpen(true)}
-        onLogout={logout}
+        onLogout={logoutAndGoHome}
         onOpenAccountSettings={() => setAccountSettingsOpen(true)}
       />
       <main className="mx-auto min-w-0 max-w-[1240px] px-6 pb-24 pt-6 sm:px-8 lg:ml-72 lg:px-10 lg:py-10 xl:px-12">
         <MobileHeader
           project={project}
           projects={projects}
+          canEdit={canEdit}
           onSelectProject={selectProject}
           onCreateProject={createProject}
           onOpenSettings={() => setSettingsOpen(true)}
-          onLogout={logout}
+          onLogout={logoutAndGoHome}
           onOpenAccountSettings={() => setAccountSettingsOpen(true)}
         />
         <PushPrompt />
         {children}
       </main>
       <MobileNav />
-      {settingsOpen && (
+      {settingsOpen && canEdit && (
         <ProjectSettingsModal
           project={project}
           canDelete={project.ownerId === account.id}
@@ -91,7 +112,7 @@ export function AppShell({
           onRemoveMember={removeCollaborator}
         />
       )}
-      {accountSettingsOpen && (
+      {accountSettingsOpen && canEdit && (
         <AccountSettingsModal
           username={account.username}
           onClose={() => setAccountSettingsOpen(false)}
@@ -99,7 +120,7 @@ export function AppShell({
           onChangePassword={async (values) => {
             await changePassword(values);
             setAccountSettingsOpen(false);
-            router.replace(pages.LOGIN);
+            router.replace(pages.ROOT);
           }}
           onDeleteAccount={async () => {
             await deleteAccount();
@@ -114,7 +135,7 @@ export function AppShell({
               // Account deletion succeeded even if browser storage cannot be cleared.
             }
             setAccountSettingsOpen(false);
-            router.replace(pages.LOGIN);
+            router.replace(pages.ROOT);
           }}
         />
       )}

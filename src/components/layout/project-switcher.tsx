@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 export function ProjectSwitcher({
   project,
   projects,
+  canEdit,
   onSelect,
   onCreate,
   onSettings,
@@ -23,6 +24,7 @@ export function ProjectSwitcher({
 }: {
   project: Project;
   projects: Project[];
+  canEdit: boolean;
   onSelect: (id: string) => void;
   onCreate: () => void;
   onSettings: () => void;
@@ -56,7 +58,7 @@ export function ProjectSwitcher({
           >
             <span className="min-w-0 flex-1">
               <span className="block break-words text-sm font-bold">
-                {item.name}
+                <span className="[overflow-wrap:anywhere]">{item.name}</span>
               </span>
               <span className="mt-0.5 block text-xs text-[#68716C]">
                 {formatDate(item.date)}
@@ -67,21 +69,25 @@ export function ProjectSwitcher({
             )}
           </DropdownMenuItem>
         ))}
-        <DropdownMenuSeparator className="my-2 h-px bg-[#CFCABD]" />
-        <DropdownMenuItem
-          onClick={onCreate}
-          className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2.5 text-sm font-bold text-[#42664D] outline-none select-none data-highlighted:bg-[#EDF1E8]"
-        >
-          <Plus className="size-4" />
-          Создать проект
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={onSettings}
-          className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2.5 text-sm font-bold text-[#42664D] outline-none select-none data-highlighted:bg-[#EDF1E8]"
-        >
-          <Settings2 className="size-4" />
-          Настройки проекта
-        </DropdownMenuItem>
+        {canEdit && (
+          <>
+            <DropdownMenuSeparator className="my-2 h-px bg-[#CFCABD]" />
+            <DropdownMenuItem
+              onClick={onCreate}
+              className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2.5 text-sm font-bold text-[#42664D] outline-none select-none data-highlighted:bg-[#EDF1E8]"
+            >
+              <Plus className="size-4" />
+              Создать проект
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={onSettings}
+              className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2.5 text-sm font-bold text-[#42664D] outline-none select-none data-highlighted:bg-[#EDF1E8]"
+            >
+              <Settings2 className="size-4" />
+              Настройки проекта
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenuPositioner>
   );

@@ -1,21 +1,25 @@
 "use client";
 
 import { useEffect } from "react";
-import { enablePush, syncPushSubscription } from "@/lib/push";
+import {
+  pushSupported,
+  registerAppServiceWorker,
+  syncPushSubscription,
+} from "@/lib/push";
 import { useAuth } from "@/providers/auth-provider";
 
 export function PushProvider({ children }: { children: React.ReactNode }) {
   const { account } = useAuth();
 
   useEffect(() => {
-    if (!account) return;
+    void registerAppServiceWorker().catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    if (!account || !pushSupported()) return;
     const permission = Notification.permission;
     const task =
-      permission === "granted"
-        ? syncPushSubscription()
-        : permission === "default"
-          ? enablePush()
-          : Promise.resolve(false);
+      permission === "granted" ? syncPushSubscription() : Promise.resolve();
     void task.catch(() => undefined);
   }, [account]);
 

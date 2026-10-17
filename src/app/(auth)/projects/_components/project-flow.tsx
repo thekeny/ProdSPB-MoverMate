@@ -24,12 +24,14 @@ import {
 export function ProjectFlow({
   projects,
   mode,
+  canEdit,
   setMode,
   setActiveId,
   onCreate,
 }: {
   projects: Project[];
   mode: ProjectFlowMode;
+  canEdit: boolean;
   setMode: (value: ProjectFlowMode) => void;
   setActiveId: (id: string) => void;
   onCreate: (values: ProjectFormValues) => Promise<void>;
@@ -88,13 +90,15 @@ export function ProjectFlow({
                 ))}
               </div>
             )}
-            <Button
-              onClick={() => setMode("create")}
-              className="mt-6 h-11 w-full"
-            >
-              <Plus />
-              Создать проект
-            </Button>
+            {canEdit && (
+              <Button
+                onClick={() => setMode("create")}
+                className="mt-6 h-11 w-full"
+              >
+                <Plus />
+                Создать проект
+              </Button>
+            )}
           </>
         ) : (
           <>
@@ -127,6 +131,7 @@ export function ProjectFlow({
               <Field label="Название" error={errors.name?.message}>
                 <TextInput
                   {...register("name")}
+                  maxLength={100}
                   placeholder="Переезд в новую квартиру"
                 />
               </Field>
@@ -139,10 +144,18 @@ export function ProjectFlow({
                 />
               </Field>
               <Field label="Откуда (необязательно)">
-                <TextInput {...register("from")} placeholder="ул. Ленина, 14" />
+                <TextInput
+                  {...register("from")}
+                  maxLength={200}
+                  placeholder="ул. Ленина, 14"
+                />
               </Field>
               <Field label="Куда (необязательно)">
-                <TextInput {...register("to")} placeholder="ул. Садовая, 8" />
+                <TextInput
+                  {...register("to")}
+                  maxLength={200}
+                  placeholder="ул. Садовая, 8"
+                />
               </Field>
               <Field label="Комнаты откуда">
                 <Controller
@@ -154,7 +167,9 @@ export function ProjectFlow({
                       value={field.value}
                       onValueChange={field.onChange}
                       onBlur={field.onBlur}
-                      placeholder="Комната, пробел или Enter"
+                      placeholder="Введите комнату и нажмите Enter"
+                      enterOnly
+                      maxLength={50}
                     />
                   )}
                 />
@@ -169,7 +184,9 @@ export function ProjectFlow({
                       value={field.value}
                       onValueChange={field.onChange}
                       onBlur={field.onBlur}
-                      placeholder="Комната, пробел или Enter"
+                      placeholder="Введите комнату и нажмите Enter"
+                      enterOnly
+                      maxLength={50}
                     />
                   )}
                 />

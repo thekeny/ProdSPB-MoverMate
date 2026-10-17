@@ -1,7 +1,9 @@
 import { z } from "zod";
+import { MAX_TASK_REMINDER_HOURS } from "@/configs/consts/reminders.const";
 import {
   getLocalDateInputMaxValue,
   getLocalDateInputValue,
+  getLocalTimeInputValue,
 } from "@/lib/date-time";
 
 function validDate(value: string) {
@@ -23,7 +25,11 @@ function validTime(value: string) {
 }
 
 export const projectCreationSchema = z.object({
-  name: z.string().trim().min(1, "Введите название проекта."),
+  name: z
+    .string()
+    .trim()
+    .min(2, "Введите не менее 2 символов.")
+    .max(100, "Не более 100 символов."),
   date: z
     .string()
     .min(1, "Выберите дату переезда.")
@@ -36,10 +42,10 @@ export const projectCreationSchema = z.object({
       (date) => !date || date <= getLocalDateInputMaxValue(),
       "Дата переезда не может быть дальше чем через 10 лет.",
     ),
-  from: z.string(),
-  to: z.string(),
-  sourceRooms: z.array(z.string()),
-  destinationRooms: z.array(z.string()),
+  from: z.string().max(200, "Не более 200 символов."),
+  to: z.string().max(200, "Не более 200 символов."),
+  sourceRooms: z.array(z.string().trim().min(2).max(50)),
+  destinationRooms: z.array(z.string().trim().min(2).max(50)),
 });
 
 export const projectSettingsSchema = projectCreationSchema
@@ -60,63 +66,105 @@ export const projectSettingsSchema = projectCreationSchema
     }
   });
 
-export const taskSchema = z
-  .object({
-    title: z.string().trim().min(1, "Введите название задачи."),
-    description: z.string(),
-    stage: z.string(),
-    assignees: z.array(z.string()),
-    dueDate: z
-      .string()
-      .refine((date) => !date || validDate(date), "Укажите корректную дату."),
-    dueTime: z
-      .string()
-      .refine((time) => !time || validTime(time), "Укажите корректное время."),
-  })
-  .superRefine((values, context) => {
-    if (values.dueTime && !values.dueDate) {
-      context.addIssue({
-        code: "custom",
-        path: ["dueDate"],
-        message: "Сначала выберите дату.",
-      });
-      return;
-    }
-    if (!values.dueDate) return;
+export function createTaskSchema(previousDueAt?: string | null) {
+  return z
+    .object({
+      title: z
+        .string()
+        .trim()
+        .min(2, "Введите не менее 2 символов.")
+        .max(120, "Не более 120 символов."),
+      description: z
+        .string()
+        .max(2000, "Описание должно содержать не более 2000 символов."),
+      stage: z.string(),
+      assignees: z.array(z.string()),
+      dueDate: z
+        .string()
+        .refine((date) => !date || validDate(date), "Укажите корректную дату."),
+      dueTime: z
+        .string()
+        .refine(
+          (time) => !time || validTime(time),
+          "Укажите корректное время.",
+        ),
+      reminderOffsets: z
+        .array(z.string())
+        .refine(
+          (values) =>
+            values.every(
+              (value) =>
+                /^\d+$/.test(value) &&
+                Number(value) >= 1 &&
+                Number(value) <= MAX_TASK_REMINDER_HOURS,
+            ),
+          "Укажите целое число часов от 1 до 8760.",
+        ),
+    })
+    .superRefine((values, context) => {
+      if (values.dueTime && !values.dueDate) {
+        context.addIssue({
+          code: "custom",
+          path: ["dueDate"],
+          message: "Сначала выберите дату.",
+        });
+        return;
+      }
+      if (!values.dueDate) return;
 
-    const today = getLocalDateInputValue();
-    const isPastDate = values.dueDate < today;
-    const isTooFarDate = values.dueDate > getLocalDateInputMaxValue();
-    const isPastTime =
-      values.dueDate === today &&
-      Boolean(values.dueTime) &&
-      new Date(`${values.dueDate}T${values.dueTime}:00`).getTime() <=
-        Date.now();
-    if (isTooFarDate) {
-      context.addIssue({
-        code: "custom",
-        path: ["dueDate"],
-        message: "Срок не может быть дальше чем через 10 лет.",
-      });
-    } else if (isPastDate || isPastTime) {
-      context.addIssue({
-        code: "custom",
-        path: [values.dueTime ? "dueTime" : "dueDate"],
-        message: "Нельзя указать срок в прошлом.",
-      });
-    }
-  });
+      const previous = previousDueAt ? new Date(previousDueAt) : null;
+      if (
+        previous &&
+        Number.isFinite(previous.getTime()) &&
+        values.dueDate === getLocalDateInputValue(previous) &&
+        values.dueTime === getLocalTimeInputValue(previous)
+      )
+        return;
+
+      const today = getLocalDateInputValue();
+      const isPastDate = values.dueDate < today;
+      const isTooFarDate = values.dueDate > getLocalDateInputMaxValue();
+      const isPastTime =
+        values.dueDate === today &&
+        Boolean(values.dueTime) &&
+        new Date(`${values.dueDate}T${values.dueTime}:00`).getTime() <=
+          Date.now();
+      if (isTooFarDate) {
+        context.addIssue({
+          code: "custom",
+          path: ["dueDate"],
+          message: "Срок не может быть дальше чем через 10 лет.",
+        });
+      } else if (isPastDate || isPastTime) {
+        context.addIssue({
+          code: "custom",
+          path: [values.dueTime ? "dueTime" : "dueDate"],
+          message: "Нельзя указать срок в прошлом.",
+        });
+      }
+    });
+}
+
+export const taskSchema = createTaskSchema();
 
 const itemEntrySchema = z.object({
-  name: z.string().trim().min(1, "Введите название вещи."),
+  name: z
+    .string()
+    .trim()
+    .min(2, "Введите не менее 2 символов.")
+    .max(100, "Название должно содержать не более 100 символов."),
   quantity: z
     .number({ error: "Укажите количество." })
     .int("Укажите целое число.")
-    .min(1, "Количество должно быть не меньше 1."),
+    .min(1, "Количество должно быть не меньше 1.")
+    .max(9999, "Количество должно быть не больше 9999."),
 });
 
 export const boxSchema = z.object({
-  title: z.string().trim().min(1, "Введите описание коробки."),
+  title: z
+    .string()
+    .trim()
+    .max(100, "Название должно содержать не более 100 символов."),
   room: z.string().min(1, "Выберите комнату."),
   sourceRoom: z.string().min(1, "Выберите исходную комнату."),
   items: z.array(itemEntrySchema),
@@ -124,10 +172,18 @@ export const boxSchema = z.object({
 });
 
 export const packingItemSchema = z.object({
-  name: z.string().trim().min(1, "Введите название вещи."),
+  name: z
+    .string()
+    .trim()
+    .min(2, "Введите не менее 2 символов.")
+    .max(100, "Название должно содержать не более 100 символов."),
   room: z.string().min(1, "Выберите исходную комнату."),
   priority: z.enum(["NORMAL", "FIRST_NECESSITY"]),
-  quantity: z.number().int().min(1, "Количество должно быть не меньше 1."),
+  quantity: z
+    .number()
+    .int()
+    .min(1, "Количество должно быть не меньше 1.")
+    .max(9999, "Количество должно быть не больше 9999."),
 });
 
 export const itemScanSchema = z.object({
@@ -141,7 +197,11 @@ export const itemScanPlacementSchema = itemScanSchema.extend({
 });
 
 export const roomItemSchema = z.object({
-  name: z.string().trim().min(1, "Введите название вещи."),
+  name: z
+    .string()
+    .trim()
+    .min(2, "Введите не менее 2 символов.")
+    .max(100, "Название должно содержать не более 100 символов."),
   sourceRoom: z.string().min(1, "Выберите исходную комнату."),
 });
 export const boxEditSchema = boxSchema.pick({
@@ -150,10 +210,18 @@ export const boxEditSchema = boxSchema.pick({
   fragile: true,
 });
 export const roomNameSchema = z.object({
-  name: z.string().trim().min(1, "Введите название комнаты."),
+  name: z
+    .string()
+    .trim()
+    .min(2, "Введите не менее 2 символов.")
+    .max(50, "Название должно содержать не более 50 символов."),
 });
 export const memberNameSchema = z.object({
-  name: z.string().trim().min(1, "Введите имя участника."),
+  name: z
+    .string()
+    .trim()
+    .min(2, "Введите не менее 2 символов.")
+    .max(50, "Имя должно содержать не более 50 символов."),
 });
 
 export type ProjectFormValues = z.infer<typeof projectCreationSchema>;

@@ -21,6 +21,9 @@ import type {
   ChangeUsernameApiV1UsersMeUsernamePutData,
   ChangeUsernameApiV1UsersMeUsernamePutErrors,
   ChangeUsernameApiV1UsersMeUsernamePutResponses,
+  CompleteTaskData,
+  CompleteTaskErrors,
+  CompleteTaskResponses,
   CreateBoxData,
   CreateBoxErrors,
   CreateBoxResponses,
@@ -36,6 +39,12 @@ import type {
   CreateRoomData,
   CreateRoomErrors,
   CreateRoomResponses,
+  CreateTaskData,
+  CreateTaskErrors,
+  CreateTaskResponses,
+  CreateTasksFromTemplatesData,
+  CreateTasksFromTemplatesErrors,
+  CreateTasksFromTemplatesResponses,
   DeleteBoxData,
   DeleteBoxErrors,
   DeleteBoxResponses,
@@ -54,6 +63,9 @@ import type {
   DeleteRoomData,
   DeleteRoomErrors,
   DeleteRoomResponses,
+  DeleteTaskData,
+  DeleteTaskErrors,
+  DeleteTaskResponses,
   GetBoxByQrData,
   GetBoxByQrErrors,
   GetBoxByQrResponses,
@@ -81,6 +93,9 @@ import type {
   GetProjectSummaryData,
   GetProjectSummaryErrors,
   GetProjectSummaryResponses,
+  GetTaskData,
+  GetTaskErrors,
+  GetTaskResponses,
   GetUnpackingProgressData,
   GetUnpackingProgressErrors,
   GetUnpackingProgressResponses,
@@ -102,6 +117,12 @@ import type {
   ListRoomsData,
   ListRoomsErrors,
   ListRoomsResponses,
+  ListTasksData,
+  ListTasksErrors,
+  ListTasksResponses,
+  ListTaskTemplatesData,
+  ListTaskTemplatesErrors,
+  ListTaskTemplatesResponses,
   LiveHealthLiveGetData,
   LiveHealthLiveGetResponses,
   LoginApiV1AuthLoginPostData,
@@ -122,6 +143,9 @@ import type {
   RemoveCollaboratorData,
   RemoveCollaboratorErrors,
   RemoveCollaboratorResponses,
+  ReopenTaskData,
+  ReopenTaskErrors,
+  ReopenTaskResponses,
   ScanItemsData,
   ScanItemsErrors,
   ScanItemsResponses,
@@ -140,6 +164,12 @@ import type {
   SetProjectRemindersData,
   SetProjectRemindersErrors,
   SetProjectRemindersResponses,
+  SetTaskAssigneesData,
+  SetTaskAssigneesErrors,
+  SetTaskAssigneesResponses,
+  SetTaskRemindersData,
+  SetTaskRemindersErrors,
+  SetTaskRemindersResponses,
   UpdateBoxData,
   UpdateBoxErrors,
   UpdateBoxResponses,
@@ -152,6 +182,9 @@ import type {
   UpdateRoomData,
   UpdateRoomErrors,
   UpdateRoomResponses,
+  UpdateTaskData,
+  UpdateTaskErrors,
+  UpdateTaskResponses,
   UpsertPushSubscriptionData,
   UpsertPushSubscriptionErrors,
   UpsertPushSubscriptionResponses,
@@ -1138,6 +1171,242 @@ export const getItemSuggestions = <ThrowOnError extends boolean = false>(
     security: [{ scheme: "bearer", type: "http" }],
     url: "/api/v1/items/{item_id}/suggestions",
     ...options,
+  });
+
+/**
+ * List Task Templates
+ *
+ * Ready-made tasks to add to a plan, by phase of the move.
+ */
+export const listTaskTemplates = <ThrowOnError extends boolean = false>(
+  options?: Options<ListTaskTemplatesData, ThrowOnError>,
+): RequestResult<
+  ListTaskTemplatesResponses,
+  ListTaskTemplatesErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    ListTaskTemplatesResponses,
+    ListTaskTemplatesErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/task-templates",
+    ...options,
+  });
+
+/**
+ * Create Tasks From Templates
+ *
+ * Copy the chosen templates into tasks, all or none (422 `unknown_task_template`).
+ *
+ * The copies keep no link to their templates: choosing one again adds another task.
+ */
+export const createTasksFromTemplates = <ThrowOnError extends boolean = false>(
+  options: Options<CreateTasksFromTemplatesData, ThrowOnError>,
+): RequestResult<
+  CreateTasksFromTemplatesResponses,
+  CreateTasksFromTemplatesErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    CreateTasksFromTemplatesResponses,
+    CreateTasksFromTemplatesErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}/tasks/from-templates",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List Tasks
+ *
+ * Active tasks of the project by phase of the move, due time (none last) and id.
+ */
+export const listTasks = <ThrowOnError extends boolean = false>(
+  options: Options<ListTasksData, ThrowOnError>,
+): RequestResult<ListTasksResponses, ListTasksErrors, ThrowOnError> =>
+  (options.client ?? client).get<
+    ListTasksResponses,
+    ListTasksErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}/tasks",
+    ...options,
+  });
+
+/**
+ * Create Task
+ *
+ * A new task; assignees other than the creator get TASK_ASSIGNED.
+ *
+ * Assignees must be members of the project (422 `assignee_not_collaborator`).
+ */
+export const createTask = <ThrowOnError extends boolean = false>(
+  options: Options<CreateTaskData, ThrowOnError>,
+): RequestResult<CreateTaskResponses, CreateTaskErrors, ThrowOnError> =>
+  (options.client ?? client).post<
+    CreateTaskResponses,
+    CreateTaskErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/projects/{project_id}/tasks",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Task
+ *
+ * Pending notifications about the task are cancelled.
+ */
+export const deleteTask = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteTaskData, ThrowOnError>,
+): RequestResult<DeleteTaskResponses, DeleteTaskErrors, ThrowOnError> =>
+  (options.client ?? client).delete<
+    DeleteTaskResponses,
+    DeleteTaskErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/tasks/{task_id}",
+    ...options,
+  });
+
+/**
+ * Get Task
+ */
+export const getTask = <ThrowOnError extends boolean = false>(
+  options: Options<GetTaskData, ThrowOnError>,
+): RequestResult<GetTaskResponses, GetTaskErrors, ThrowOnError> =>
+  (options.client ?? client).get<GetTaskResponses, GetTaskErrors, ThrowOnError>(
+    {
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/api/v1/tasks/{task_id}",
+      ...options,
+    },
+  );
+
+/**
+ * Update Task
+ *
+ * A new `due_at` moves the pending reminders; `due_at: null` removes them.
+ */
+export const updateTask = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateTaskData, ThrowOnError>,
+): RequestResult<UpdateTaskResponses, UpdateTaskErrors, ThrowOnError> =>
+  (options.client ?? client).patch<
+    UpdateTaskResponses,
+    UpdateTaskErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/tasks/{task_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Complete Task
+ *
+ * Idempotent: a task already done keeps its first `done_at`.
+ */
+export const completeTask = <ThrowOnError extends boolean = false>(
+  options: Options<CompleteTaskData, ThrowOnError>,
+): RequestResult<CompleteTaskResponses, CompleteTaskErrors, ThrowOnError> =>
+  (options.client ?? client).post<
+    CompleteTaskResponses,
+    CompleteTaskErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/tasks/{task_id}/complete",
+    ...options,
+  });
+
+/**
+ * Reopen Task
+ *
+ * Idempotent: a task that is not done stays as it is.
+ */
+export const reopenTask = <ThrowOnError extends boolean = false>(
+  options: Options<ReopenTaskData, ThrowOnError>,
+): RequestResult<ReopenTaskResponses, ReopenTaskErrors, ThrowOnError> =>
+  (options.client ?? client).post<
+    ReopenTaskResponses,
+    ReopenTaskErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/tasks/{task_id}/reopen",
+    ...options,
+  });
+
+/**
+ * Set Task Assignees
+ *
+ * Replace the assignees; new ones other than the caller get TASK_ASSIGNED.
+ *
+ * Assignees must be members of the project (422 `assignee_not_collaborator`).
+ */
+export const setTaskAssignees = <ThrowOnError extends boolean = false>(
+  options: Options<SetTaskAssigneesData, ThrowOnError>,
+): RequestResult<
+  SetTaskAssigneesResponses,
+  SetTaskAssigneesErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    SetTaskAssigneesResponses,
+    SetTaskAssigneesErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/tasks/{task_id}/assignees",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Set Task Reminders
+ *
+ * Replace the reminders (hours before `due_at`); an empty list removes them all.
+ */
+export const setTaskReminders = <ThrowOnError extends boolean = false>(
+  options: Options<SetTaskRemindersData, ThrowOnError>,
+): RequestResult<
+  SetTaskRemindersResponses,
+  SetTaskRemindersErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    SetTaskRemindersResponses,
+    SetTaskRemindersErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/api/v1/tasks/{task_id}/reminders",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
   });
 
 /**

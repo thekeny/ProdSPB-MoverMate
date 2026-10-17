@@ -1,8 +1,12 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { getBoxByQr } from "@/api/generated";
+import { ApiError, unwrap } from "@/api/request";
 import { Button } from "@/components/ui/button";
+import { QUERY_KEYS } from "@/configs/consts/api.const";
 import { statuses } from "@/configs/consts/statuses.const";
 import { pages } from "@/configs/paths/pages.path";
 import { QUERY_PARAMS } from "@/configs/paths/query.path";
@@ -14,68 +18,88 @@ export default function TokenBoxPage() {
   const router = useRouter();
   const { account, ready: authReady } = useAuth();
   const { projects, ready: projectsReady, setActiveId } = useProjects();
-  const accountMatch = projects
-    .flatMap((project) => project.boxes.map((box) => ({ project, box })))
-    .find(({ box }) => box.qrToken === token);
-  const protectedMatch =
-    accountMatch?.project.qrCodeStrategy === "protected" &&
-    account &&
-    (accountMatch.project.ownerId === account.id ||
-      accountMatch.project.members.includes(account.username))
-      ? accountMatch
-      : null;
-  const match =
-    protectedMatch ??
-    (accountMatch?.project.qrCodeStrategy === "open" ? accountMatch : null);
+  const boxQuery = useQuery({
+    queryKey: [...QUERY_KEYS.BOX_BY_QR(token), account?.id ?? "anonymous"],
+    enabled: authReady && Boolean(token),
+    retry: false,
+    queryFn: () => unwrap(getBoxByQr({ path: { qr_token: token } })),
+  });
 
   useEffect(() => {
-    if (authReady && !account)
+    if (
+      boxQuery.error instanceof ApiError &&
+      boxQuery.error.status === 401 &&
+      !account
+    )
       router.replace(
         `${pages.LOGIN}?${QUERY_PARAMS.NEXT}=${encodeURIComponent(`${pages.BOX_TOKEN}/${token}`)}`,
       );
-  }, [account, authReady, router, token]);
+  }, [account, boxQuery.error, router, token]);
 
-  if (!authReady || !projectsReady || !account) return null;
-  if (!match)
+  if (
+    !authReady ||
+    (boxQuery.error instanceof ApiError &&
+      boxQuery.error.status === 401 &&
+      !account)
+  )
+    return null;
+  if (boxQuery.isPending)
+    return (
+      <main className="mx-auto max-w-xl p-6 text-sm text-[#68716C]">
+        Загружаем коробку…
+      </main>
+    );
+  if (boxQuery.error || !boxQuery.data)
     return (
       <main className="mx-auto max-w-xl p-6">
-        <h1 className="text-2xl font-extrabold">Коробка не найдена</h1>
+        <h1 className="text-2xl font-extrabold">
+          {boxQuery.error instanceof ApiError && boxQuery.error.status === 404
+            ? "Коробка не найдена"
+            : "Не удалось загрузить коробку"}
+        </h1>
         <p className="mt-3 text-sm text-[#68716C]">
-          Проект или коробка недоступны для этого аккаунта.
+          {boxQuery.error instanceof ApiError && boxQuery.error.status === 404
+            ? "Ссылка недействительна или у вас нет доступа."
+            : "Проверьте подключение и попробуйте ещё раз."}
         </p>
+        <Button className="mt-5 mr-2" onClick={() => void boxQuery.refetch()}>
+          Повторить
+        </Button>
         <Button className="mt-5" onClick={() => router.push(pages.PROJECTS)}>
           К проектам
         </Button>
       </main>
     );
-  const { project, box } = match;
-  const canWrite = project.members.includes(account.username);
-  const contents = project.items.filter(
-    (item) => item.boxId === box.id && item.state === "IN_BOX",
+
+  const { project, box, access } = boxQuery.data;
+  const canWrite = access === "WRITE";
+  const projectInAccount = projects.find((entry) => entry.id === project.id);
+  const status = statuses.find(
+    (entry) => entry.key.toUpperCase() === box.status,
   );
   return (
     <main className="mx-auto max-w-xl p-6">
       <p className="text-sm text-[#42664D]">{project.name}</p>
       <h1 className="mt-2 text-3xl font-extrabold">Коробка № {box.number}</h1>
       <p className="mt-2 text-[#68716C]">
-        {box.title} · {box.room}
+        {box.title || "Без названия"} · {box.destination_room.name}
       </p>
-      <p className="mt-2 text-sm font-bold text-[#42664D]">
-        {statuses.find((entry) => entry.key === box.status)?.label}
-      </p>
+      <p className="mt-2 text-sm font-bold text-[#42664D]">{status?.label}</p>
       {!canWrite && (
         <p className="mt-2 text-xs text-[#68716C]">
           Только просмотр по QR-ссылке.
         </p>
       )}
-      {box.fragile && <p className="mt-3 font-bold text-[#A84D3C]">Хрупкое</p>}
+      {box.is_fragile && (
+        <p className="mt-3 font-bold text-[#A84D3C]">Хрупкое</p>
+      )}
       <section className="mt-6 rounded-lg bg-white p-5">
         <h2 className="font-extrabold">Содержимое</h2>
-        {contents.length ? (
+        {box.items.length ? (
           <ul className="mt-3 list-inside list-disc text-sm">
-            {contents.map((item) => (
+            {box.items.map((item) => (
               <li key={item.id}>
-                {item.name}
+                <span className="[overflow-wrap:anywhere]">{item.name}</span>
                 {item.quantity > 1 ? ` — ${item.quantity} шт.` : ""}
               </li>
             ))}
@@ -87,6 +111,7 @@ export default function TokenBoxPage() {
       {canWrite && (
         <Button
           className="mt-5"
+          disabled={!projectsReady || !projectInAccount}
           onClick={() => {
             setActiveId(project.id);
             router.push(

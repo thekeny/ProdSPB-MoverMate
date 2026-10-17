@@ -22,4 +22,6 @@ export type MoveBox = {
   sourceRooms: string[];
   fragile: boolean;
   status: Status;
+  contentsReminderAt?: string | null;
+  createdById?: string;
 };

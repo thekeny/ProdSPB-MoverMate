@@ -2,14 +2,14 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Link2, Pencil, Plus, Trash2 } from "lucide-react";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
+import { BoxContentsReminder } from "@/components/box/box-contents-reminder";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Field } from "@/components/ui/field";
-import { FormError } from "@/components/ui/form-error";
 import { Modal } from "@/components/ui/modal";
 import {
   Select,
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { TextInput } from "@/components/ui/text-input";
 import { statuses } from "@/configs/consts/statuses.const";
-import type { Item, MoveBox } from "@/configs/types/box.type";
+import type { Item, MoveBox, Status } from "@/configs/types/box.type";
 import type { Project } from "@/configs/types/project.type";
 import { copyBoxLink } from "@/lib/box-link";
 import { plural } from "@/lib/format";
@@ -31,14 +31,18 @@ import { cn } from "@/lib/utils";
 export function BoxDetails({
   box,
   project,
+  canEdit,
   onClose,
   updateProject,
+  changeBoxStatus,
   onDelete,
 }: {
   box: MoveBox;
   project: Project;
+  canEdit: boolean;
   onClose: () => void;
-  updateProject: (apply: (project: Project) => Project) => void;
+  updateProject: (apply: (project: Project) => Project) => Promise<boolean>;
+  changeBoxStatus: (boxId: string, status: Status) => Promise<boolean>;
   onDelete?: () => void;
 }) {
   const fragileId = useId();
@@ -46,10 +50,18 @@ export function BoxDetails({
   const [confirmBox, setConfirmBox] = useState(false);
   const [removingItem, setRemovingItem] = useState<Item | null>(null);
   const [copied, setCopied] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<Status | null>(null);
+  const pendingStatusRef = useRef(false);
+  const [addingItem, setAddingItem] = useState(false);
+  const addingItemRef = useRef(false);
   const addItemForm = useForm<{ name: string }>({
     resolver: zodResolver(
       z.object({
-        name: z.string().trim().min(1, "Введите название вещи."),
+        name: z
+          .string()
+          .trim()
+          .min(2, "Введите не менее 2 символов.")
+          .max(100, "Название должно содержать не более 100 символов."),
       }),
     ),
     mode: "onBlur",
@@ -66,6 +78,10 @@ export function BoxDetails({
     (item) => item.boxId === box.id && item.state === "IN_BOX",
   );
   const currentIndex = statuses.findIndex((item) => item.key === box.status);
+  const availableStatuses = statuses
+    .filter((_, index) => Math.abs(currentIndex - index) === 1)
+    .map((item) => item.label)
+    .join(" или ");
   const updateBox = (apply: (box: MoveBox) => MoveBox) =>
     updateProject((current) => ({
       ...current,
@@ -92,8 +108,8 @@ export function BoxDetails({
           <span className="rounded-md bg-[#1D2923] px-2 py-1 font-mono text-xs font-bold text-[#F4F1E9]">
             № {box.number}
           </span>
-          <span className="rounded-full bg-[#EDF1E8] px-2 py-1 text-[10px] font-bold text-[#42664D]">
-            {box.room}
+          <span className="min-w-0 rounded-full bg-[#EDF1E8] px-2 py-1 text-[10px] font-bold text-[#42664D] [overflow-wrap:anywhere]">
+            <span className="[overflow-wrap:anywhere]">{box.room}</span>
           </span>
           {box.fragile && (
             <span className="rounded-full bg-[#F9E8E2] px-2 py-1 text-[10px] font-bold text-[#A84D3C]">
@@ -117,15 +133,17 @@ export function BoxDetails({
               <Link2 className="size-4" />
             )}
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setEditing(true)}
-            aria-label="Редактировать коробку"
-          >
-            <Pencil className="size-4" />
-          </Button>
-          {onDelete && (
+          {canEdit && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setEditing(true)}
+              aria-label="Редактировать коробку"
+            >
+              <Pencil className="size-4" />
+            </Button>
+          )}
+          {canEdit && onDelete && (
             <Button
               variant="ghost"
               size="icon"
@@ -136,7 +154,9 @@ export function BoxDetails({
             </Button>
           )}
         </div>
-        <h2 className="mt-4 text-2xl font-extrabold">{box.title}</h2>
+        <h2 className="mt-4 break-words text-2xl font-extrabold [overflow-wrap:anywhere]">
+          {box.title}
+        </h2>
       </div>
       <section className="mt-6 rounded-[10px] bg-[#EDF1E8] p-4">
         <p className="text-xs font-bold text-[#42664D]">Статус коробки</p>
@@ -145,10 +165,24 @@ export function BoxDetails({
             <Button
               variant="ghost"
               key={item.key}
-              disabled={Math.abs(currentIndex - index) > 1}
-              onClick={() =>
-                updateBox((current) => ({ ...current, status: item.key }))
+              disabled={
+                !canEdit ||
+                pendingStatus !== null ||
+                item.key === box.status ||
+                Math.abs(currentIndex - index) > 1
               }
+              loading={pendingStatus === item.key}
+              onClick={async () => {
+                if (pendingStatusRef.current) return;
+                pendingStatusRef.current = true;
+                setPendingStatus(item.key);
+                try {
+                  await changeBoxStatus(box.id, item.key);
+                } finally {
+                  pendingStatusRef.current = false;
+                  setPendingStatus(null);
+                }
+              }}
               className={cn(
                 "h-auto min-w-0 rounded-md px-1 py-2.5 text-[9px] font-extrabold whitespace-normal sm:text-[10px]",
                 item.key === box.status
@@ -160,103 +194,154 @@ export function BoxDetails({
             </Button>
           ))}
         </div>
+        {pendingStatus === null && (
+          <p className="mt-2 text-xs text-[#68716C]">
+            Статус меняется по одному шагу. Сейчас доступны: {availableStatuses}
+          </p>
+        )}
       </section>
+      <BoxContentsReminder
+        key={box.id}
+        box={box}
+        projectId={project.id}
+        canEdit={canEdit}
+      />
       <section className="mt-6">
         <h3 className="font-extrabold">
           В коробке {contents.length}{" "}
           {plural(contents.length, ["вещь", "вещи", "вещей"])}
         </h3>
-        <form
-          className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]"
-          noValidate
-          onSubmit={addItemForm.handleSubmit(({ name }) => {
-            updateProject((current) => ({
-              ...current,
-              items: [
-                ...current.items,
-                {
-                  id: uid("item"),
-                  name: name.trim(),
-                  state: "IN_BOX",
-                  sourceRoom: box.room,
-                  boxId: box.id,
-                  quantity: 1,
-                  priority: "NORMAL",
-                },
-              ],
-            }));
-            addItemForm.reset({ name: "" });
-          })}
-        >
-          <TextInput
-            {...addItemForm.register("name")}
-            placeholder="Добавить вещь"
-            aria-label="Название вещи"
-            aria-invalid={addItemForm.formState.errors.name ? true : undefined}
-            aria-describedby={
-              addItemForm.formState.errors.name ? "box-item-error" : undefined
-            }
-          />
-          <FormError errors={addItemForm.formState.errors} />
-          <Button type="submit" variant="outline">
-            <Plus />
-            Добавить
-          </Button>
-        </form>
+        {canEdit && (
+          <form
+            className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]"
+            noValidate
+            onSubmit={addItemForm.handleSubmit(async ({ name }) => {
+              if (addingItemRef.current) return;
+              addingItemRef.current = true;
+              setAddingItem(true);
+              try {
+                const saved = await updateProject((current) => ({
+                  ...current,
+                  items: [
+                    ...current.items,
+                    {
+                      id: uid("item"),
+                      name: name.trim(),
+                      state: "IN_BOX",
+                      sourceRoom:
+                        project.lastSourceRoom || project.sourceRooms[0] || "",
+                      boxId: box.id,
+                      quantity: 1,
+                      priority: "NORMAL",
+                    },
+                  ],
+                }));
+                if (saved) addItemForm.reset({ name: "" });
+              } finally {
+                addingItemRef.current = false;
+                setAddingItem(false);
+              }
+            })}
+          >
+            <div className="grid gap-2">
+              <TextInput
+                {...addItemForm.register("name")}
+                maxLength={100}
+                placeholder="Добавить вещь"
+                aria-label="Название вещи"
+                aria-invalid={
+                  addItemForm.formState.errors.name ? true : undefined
+                }
+                aria-describedby={
+                  addItemForm.formState.errors.name
+                    ? "box-item-error"
+                    : undefined
+                }
+              />
+              {addItemForm.formState.errors.name?.message && (
+                <p
+                  id="box-item-error"
+                  className="text-xs text-[#A84D3C]"
+                  role="alert"
+                >
+                  {addItemForm.formState.errors.name.message}
+                </p>
+              )}
+            </div>
+            <Button type="submit" variant="outline" disabled={addingItem}>
+              <Plus />
+              Добавить
+            </Button>
+          </form>
+        )}
         <div className="mt-3 grid gap-2">
           {contents.length ? (
             contents.map((item) => (
               <div
                 key={item.id}
-                className="flex flex-wrap items-center gap-2 rounded-md bg-[#F5F3EE] p-3"
+                className="grid w-full min-w-0 grid-cols-1 gap-2 rounded-md bg-[#F5F3EE] p-3"
               >
-                <span className="min-w-0 flex-1 text-sm font-medium">
+                <span
+                  className="block w-full min-w-0 text-sm font-medium"
+                  style={{ overflowWrap: "anywhere" }}
+                >
                   {item.name}
                   {item.quantity > 1 ? ` · ${item.quantity} шт.` : ""}
                 </span>
-                <Checkbox
-                  aria-label={`Первая необходимость: ${item.name}`}
-                  checked={item.priority === "FIRST_NECESSITY"}
-                  onCheckedChange={() =>
-                    updateProject((current) => ({
-                      ...current,
-                      items: current.items.map((entry) =>
-                        entry.id === item.id
-                          ? {
-                              ...entry,
-                              priority:
-                                entry.priority === "FIRST_NECESSITY"
-                                  ? "NORMAL"
-                                  : "FIRST_NECESSITY",
-                            }
-                          : entry,
-                      ),
-                    }))
-                  }
-                />
-                <span className="text-xs text-[#68716C]">Первый день</span>
-                <Button
-                  variant="ghost"
-                  className="text-xs"
-                  onClick={() => changeItem(item.id, "TAKEN_OUT")}
-                >
-                  Вынута
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="text-xs text-[#A84D3C]"
-                  onClick={() => changeItem(item.id, "LOST")}
-                >
-                  Потерялась
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Удалить ${item.name}`}
-                  onClick={() => setRemovingItem(item)}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
+                <div className="flex min-w-0 flex-wrap items-center justify-end gap-1">
+                  <Checkbox
+                    aria-label={`Первая необходимость: ${item.name}`}
+                    checked={item.priority === "FIRST_NECESSITY"}
+                    disabled={!canEdit}
+                    onCheckedChange={() =>
+                      updateProject((current) => ({
+                        ...current,
+                        items: current.items.map((entry) =>
+                          entry.id === item.id
+                            ? {
+                                ...entry,
+                                priority:
+                                  entry.priority === "FIRST_NECESSITY"
+                                    ? "NORMAL"
+                                    : "FIRST_NECESSITY",
+                              }
+                            : entry,
+                        ),
+                      }))
+                    }
+                  />
+                  <span className="text-xs text-[#68716C]">Первый день</span>
+                  {canEdit && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs hover:bg-[#E8E2D5] hover:text-[#4E5752]"
+                      onClick={() => changeItem(item.id, "TAKEN_OUT")}
+                    >
+                      Вынута
+                    </Button>
+                  )}
+                  {canEdit && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-[#A84D3C] hover:bg-[#F9E8E2] hover:text-[#A84D3C]"
+                      onClick={() => changeItem(item.id, "LOST")}
+                    >
+                      Потерялась
+                    </Button>
+                  )}
+                  {canEdit && (
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`Удалить ${item.name}`}
+                      onClick={() => setRemovingItem(item)}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             ))
           ) : (
@@ -271,7 +356,7 @@ export function BoxDetails({
           Готово <Check />
         </Button>
       </div>
-      {editing && (
+      {editing && canEdit && (
         <Modal
           className="max-w-xl"
           label="Редактировать коробку"
@@ -292,10 +377,10 @@ export function BoxDetails({
             })}
           >
             <Field
-              label="Краткое описание"
+              label="Описание (необязательно)"
               error={editForm.formState.errors.title?.message}
             >
-              <TextInput {...editForm.register("title")} />
+              <TextInput {...editForm.register("title")} maxLength={100} />
             </Field>
             <Field label="Куда">
               <Controller
@@ -351,7 +436,7 @@ export function BoxDetails({
           </form>
         </Modal>
       )}
-      {confirmBox && onDelete && (
+      {confirmBox && canEdit && onDelete && (
         <ConfirmDialog
           title={`Удалить коробку № ${box.number}?`}
           description={`Вместе с ней удалятся ${contents.length} ${plural(contents.length, ["вещь", "вещи", "вещей"])}.`}
@@ -359,7 +444,7 @@ export function BoxDetails({
           onConfirm={onDelete}
         />
       )}
-      {removingItem && (
+      {removingItem && canEdit && (
         <ConfirmDialog
           title={`Удалить вещь «${removingItem.name}»?`}
           onClose={() => setRemovingItem(null)}

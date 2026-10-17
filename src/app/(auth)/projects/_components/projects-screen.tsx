@@ -11,7 +11,7 @@ import { useProjects } from "@/providers/projects-provider";
 export function ProjectsScreen({ create = false }: { create?: boolean }) {
   const router = useRouter();
   const { ready, account } = useAuth();
-  const { projects, setActiveId, createProject } = useProjects();
+  const { projects, setActiveId, createProject, canEdit } = useProjects();
   const [mode, setMode] = useState<ProjectFlowMode>(
     create ? "create" : "select",
   );
@@ -20,11 +20,16 @@ export function ProjectsScreen({ create = false }: { create?: boolean }) {
     if (ready && !account) router.replace(pages.LOGIN);
   }, [account, ready, router]);
 
+  useEffect(() => {
+    if (!canEdit) setMode("select");
+  }, [canEdit]);
+
   if (!ready || !account) return null;
   return (
     <ProjectFlow
       projects={projects}
-      mode={mode}
+      mode={canEdit ? mode : "select"}
+      canEdit={canEdit}
       setMode={setMode}
       setActiveId={(id) => {
         setActiveId(id);

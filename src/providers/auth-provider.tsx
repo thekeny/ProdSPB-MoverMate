@@ -23,6 +23,13 @@ import {
 import { QUERY_KEYS } from "@/configs/consts/api.const";
 import type { Account } from "@/configs/types/account.type";
 import type { AuthMode } from "@/configs/types/auth.type";
+import { isConnected } from "@/lib/connectivity";
+import {
+  clearOfflineCache,
+  readCachedAccount,
+  restoreOfflineCache,
+  writeCachedAccount,
+} from "@/lib/offline-cache";
 import { disablePush } from "@/lib/push";
 
 type AuthContextValue = {
@@ -62,14 +69,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: QUERY_KEYS.ME,
     enabled: hydrated && signedIn,
     queryFn: async (): Promise<Account | null> => {
+      const cachedAccount = readCachedAccount();
+      if (cachedAccount)
+        await restoreOfflineCache(queryClient, cachedAccount.id);
+      if (cachedAccount && !isConnected()) return cachedAccount;
       try {
         const user = await unwrap(getMeApiV1UsersMeGet());
-        return { id: user.id, username: user.username };
+        const account = { id: user.id, username: user.username };
+        if (cachedAccount && cachedAccount.id !== account.id)
+          await clearOfflineCache(cachedAccount.id);
+        writeCachedAccount(account);
+        return account;
       } catch (error) {
         if (error instanceof ApiError && error.status === 401) {
           clearSession();
+          await clearOfflineCache(cachedAccount?.id);
+          queryClient.removeQueries({
+            predicate: (query) => query.queryKey[0] !== QUERY_KEYS.ME[0],
+          });
           return null;
         }
+        if (
+          cachedAccount &&
+          error instanceof ApiError &&
+          (error.status === 0 || error.status >= 500)
+        )
+          return cachedAccount;
         throw error;
       }
     },
@@ -104,6 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     const refreshToken = getRefreshToken();
     await disablePush();
+    await clearOfflineCache(account?.id);
     clearSession();
     queryClient.clear();
     if (refreshToken)
@@ -138,6 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }),
     );
     await disablePush();
+    await clearOfflineCache(account?.id);
     clearSession();
     queryClient.clear();
   };
@@ -145,6 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const deleteAccount = async () => {
     await unwrap(deleteMeApiV1UsersMeDelete());
     await disablePush();
+    await clearOfflineCache(account?.id);
     clearSession();
     queryClient.clear();
   };

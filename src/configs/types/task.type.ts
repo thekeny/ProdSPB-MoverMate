@@ -7,5 +7,6 @@ export type Task = {
   stage: TaskStage;
   assignees: string[];
   dueAt: string | null;
+  reminderOffsetsHours?: number[];
   done: boolean;
 };

@@ -12,6 +12,7 @@
 - `src/components/layout/` — app shell pieces (`app-shell`, `sidebar`, `mobile-nav`, `mobile-header`, `user-card`, `project-switcher`, `project-settings-modal`, `logo`, `loading-screen`)
 - `src/components/box/` — box components shared by several pages (`box-details`, `qr`)
 - `src/providers/` — `query-provider`, `auth-provider` (`useAuth`), `projects-provider` (`useProjects`, local per-account project state)
+- Offline read-only mode persists successful TanStack Query data in IndexedDB per account, restores the cached account when the backend is unreachable, and clears that cache on logout. The service worker caches app route documents and Next.js route payloads with network-first behavior, caches static assets cache-first, and bypasses API responses; keep edits disabled while offline.
 - `src/configs/` — single source of truth: routes and URLs (`paths/`: `pages`, `images`, `query` params), constants (`consts/`), and domain/config types (`types/`); components import from here, never hardcode paths, query keys, or domain types
 - `src/api/generated/` — auto-generated Hey API SDK + types from the backend OpenAPI spec (never edit by hand; regenerate with `npm run openapi`)
 - `src/api/hey-api.ts` — runtime config for the generated Ky client (relative baseUrl, bearer `auth` callback, timeout, retries)
@@ -43,6 +44,11 @@
 
 ## Backend status
 - Auth, projects, project collaborators and moving-date reminders use the backend API. The generated SDK is in `src/api/generated/`; regenerate with `npm run openapi` when the backend OpenAPI spec changes.
-- Item scan (`scanItems`) uses the backend: "Добавить по фото" (`boxes/_components/item-scan-modal.tsx`) sends a photo and lets the user fix the recognized names/quantities. In the packing list it adds local `TO_PACK` items (with room and priority); in the new-box form it merges them into the box contents (`lib/item-entries`; box form items are `{name, quantity}`). The scan saves nothing on the backend.
-- Rooms, boxes, items, tasks, labels and search remain local. They are stored under the signed-in user and keyed by the backend project ID; project metadata and collaborator identities come from the API.
+- Rooms, boxes, items and tasks use the backend and are loaded per active project through TanStack Query. API/domain conversion lives in `src/api/project-data.ts`; mutations invalidate project data, summary, progress, label and item-search queries. Keep generated files under `src/api/generated/` in sync with the OpenAPI spec; never edit them by hand.
+- The plan screen uses backend tasks and task templates. New projects copy the current backend templates; assignees are sent by collaborator ID. Existing local domain records are not migrated and are ignored by the UI; active-project selection and the last source-room preference remain local.
+- Item scan (`scanItems`) sends a photo to the backend and lets the user fix recognized names and quantities. Suggestions are not saved by scanning; confirmed packing-list items are created through the items API, and confirmed new-box contents are sent with box creation.
+- Dashboard summaries, loading checklist, unpacking progress, item search, printable box labels and QR box cards use their backend endpoints. Push subscription registration already uses the backend API.
+- Task reminder offsets and box contents reminders use existing SDK endpoints; update the task deadline before replacing reminders. Box reminders are available only to the creator while PACKING. Request push permission only from a user action.
+- Item search uses offset pagination through TanStack Query; offline search matches word prefixes in cached items. List rendering is incremental; the active project still loads all data for offline reads and mutation reconciliation. Lost-item suggestions use the backend endpoint and are invalidated after project mutations.
+- OPEN QR cards are requested anonymously; redirect to login only after a 401. Keep QR query caches separated by account identity.
 - There is no `middleware.ts`: tokens live in localStorage, so route guarding stays client-side (`src/app/(app)/layout.tsx`). Revisit if the backend moves refresh to an httpOnly cookie.
