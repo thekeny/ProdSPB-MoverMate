@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import { Logo } from "@/components/layout/logo";
 import { ProjectSwitcher } from "@/components/layout/project-switcher";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ export function MobileHeader({
   onCreateProject,
   onOpenSettings,
   onLogout,
+  onOpenAccountSettings,
 }: {
   project: Project;
   projects: Project[];
@@ -20,6 +21,7 @@ export function MobileHeader({
   onCreateProject: () => void;
   onOpenSettings: () => void;
   onLogout: () => void;
+  onOpenAccountSettings: () => void;
 }) {
   return (
     <header className="no-print mb-8 flex items-center justify-between lg:hidden">
@@ -33,6 +35,14 @@ export function MobileHeader({
           onCreate={onCreateProject}
           onSettings={onOpenSettings}
         />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onOpenAccountSettings}
+          aria-label="Настройки аккаунта"
+        >
+          <Settings />
+        </Button>
         <Button
           variant="ghost"
           size="icon"

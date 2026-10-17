@@ -1,108 +1,205 @@
-import { rooms } from "@/configs/consts/rooms.const";
-import { DEFAULT_TASK_DUE } from "@/configs/consts/tasks.const";
+import { ROOM_PRESETS } from "@/configs/consts/rooms.const";
 import type { Item, MoveBox, Status } from "@/configs/types/box.type";
 import type { Project } from "@/configs/types/project.type";
-import type { Room } from "@/configs/types/room.type";
 import type { Task, TaskStage } from "@/configs/types/task.type";
 import { uid } from "@/lib/id";
 
-const statusKeys: Status[] = ["packing", "packed", "loaded", "delivered"];
-const taskStages: TaskStage[] = ["before", "moving", "after"];
+const statusKeys: Status[] = [
+  "packing",
+  "packed",
+  "loaded",
+  "delivered",
+  "unpacked",
+];
+const taskStages: TaskStage[] = ["BEFORE", "DURING", "AFTER"];
 
-function isRecord(value: unknown): value is Record<string, unknown> {
+function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function stringValue(value: unknown, fallback = "") {
+function string(value: unknown, fallback = "") {
   return typeof value === "string" ? value : fallback;
 }
 
-function normalizeItem(raw: unknown): Item | null {
-  if (!isRecord(raw) || !stringValue(raw.id) || !stringValue(raw.name)) {
-    return null;
-  }
+function positiveInteger(value: unknown, fallback: number) {
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0
+    ? value
+    : fallback;
+}
+
+function names(value: unknown, fallback: readonly string[]) {
+  const entries = Array.isArray(value)
+    ? value.map((entry) => string(entry).trim()).filter(Boolean)
+    : [];
+  return [...new Set(entries.length ? entries : fallback)];
+}
+
+function normalizeBox(raw: unknown, number: number): MoveBox | null {
+  if (!record(raw) || !string(raw.id) || !string(raw.title)) return null;
+  const rawStatus = string(raw.status);
+  const status = rawStatus;
+  const safeStatus = statusKeys.includes(status as Status)
+    ? (status as Status)
+    : "packing";
   return {
-    id: stringValue(raw.id),
-    name: stringValue(raw.name),
-    unpacked: raw.unpacked === true,
-    lost: raw.lost === true,
+    id: string(raw.id),
+    number,
+    qrToken: string(raw.qrToken) || uid("qr"),
+    title: string(raw.title),
+    room: string(raw.room) || ROOM_PRESETS[0],
+    sourceRooms: names(raw.sourceRooms, [ROOM_PRESETS[0]]),
+    fragile: raw.fragile === true,
+    status: safeStatus,
   };
 }
 
-function normalizeBox(raw: unknown): MoveBox | null {
-  if (!isRecord(raw) || !stringValue(raw.id) || !stringValue(raw.title)) {
-    return null;
-  }
-  const room = stringValue(raw.room) as Room;
-  const rawStatus = stringValue(raw.status);
-  const status = (rawStatus === "unpacked" ? "delivered" : rawStatus) as Status;
-  const normalizedStatus = statusKeys.includes(status) ? status : "packing";
+function normalizeItem(
+  raw: unknown,
+  boxId: string | null,
+  sourceRoom: string,
+): Item | null {
+  if (!record(raw) || !string(raw.id) || !string(raw.name)) return null;
+  const rawState = string(raw.state);
+  const state = ["TO_PACK", "IN_BOX", "TAKEN_OUT", "LOST"].includes(rawState)
+    ? (rawState as Item["state"])
+    : raw.lost === true
+      ? "LOST"
+      : raw.unpacked === true
+        ? "TAKEN_OUT"
+        : boxId
+          ? "IN_BOX"
+          : "TO_PACK";
+  const storedBoxId = string(raw.boxId) || boxId;
   return {
-    id: stringValue(raw.id),
-    title: stringValue(raw.title),
-    room: rooms.some((entry) => entry.name === room) ? room : rooms[0].name,
-    fragile: raw.fragile === true,
-    deferred: raw.deferred === true && normalizedStatus === "packing",
-    status: normalizedStatus,
-    salt: stringValue(raw.salt) || uid("salt"),
-    items: Array.isArray(raw.items)
-      ? raw.items
-          .map(normalizeItem)
-          .filter((item): item is Item => item !== null)
-      : [],
+    id: string(raw.id),
+    name: string(raw.name),
+    state: state === "IN_BOX" && !storedBoxId ? "TO_PACK" : state,
+    sourceRoom: string(raw.sourceRoom) || sourceRoom,
+    boxId: state === "IN_BOX" ? storedBoxId : null,
+    quantity: positiveInteger(raw.quantity, 1),
+    priority: raw.priority === "FIRST_NECESSITY" ? "FIRST_NECESSITY" : "NORMAL",
   };
 }
 
 function normalizeTask(raw: unknown): Task | null {
-  if (!isRecord(raw) || !stringValue(raw.id) || !stringValue(raw.title)) {
-    return null;
-  }
-  const stage = stringValue(raw.stage) as TaskStage;
+  if (!record(raw) || !string(raw.id) || !string(raw.title)) return null;
+  const oldStage = string(raw.stage);
+  const stage =
+    oldStage === "moving"
+      ? "DURING"
+      : oldStage === "after"
+        ? "AFTER"
+        : oldStage === "before"
+          ? "BEFORE"
+          : oldStage;
+  const dueAt = string(raw.dueAt);
   return {
-    id: stringValue(raw.id),
-    title: stringValue(raw.title),
-    stage: taskStages.includes(stage) ? stage : "before",
-    assignee: stringValue(raw.assignee),
-    due: stringValue(raw.due) || DEFAULT_TASK_DUE,
+    id: string(raw.id),
+    title: string(raw.title),
+    description:
+      string(raw.description) ||
+      (string(raw.due) ? `Прежний срок: ${string(raw.due)}` : ""),
+    stage: taskStages.includes(stage as TaskStage)
+      ? (stage as TaskStage)
+      : "BEFORE",
+    assignees: names(
+      raw.assignees,
+      string(raw.assignee) ? [string(raw.assignee)] : [],
+    ),
+    dueAt: /^\d{4}-\d{2}-\d{2}/.test(dueAt) ? dueAt : null,
     done: raw.done === true,
   };
 }
 
-export function normalizeProject(raw: unknown): Project | null {
-  if (!isRecord(raw) || !stringValue(raw.id) || !stringValue(raw.name)) {
-    return null;
+export function normalizeProject(raw: unknown, ownerId = ""): Project | null {
+  if (!record(raw) || !string(raw.id) || !string(raw.name)) return null;
+  const oldBoxes = Array.isArray(raw.boxes)
+    ? raw.boxes.filter(
+        (entry) => record(entry) && string(entry.id) && string(entry.title),
+      )
+    : [];
+  const usedNumbers = new Set<number>();
+  let nextNumber = 1;
+  const boxes = oldBoxes
+    .map((entry) => {
+      const existing = record(entry) ? positiveInteger(entry.number, 0) : 0;
+      const number = existing && !usedNumbers.has(existing) ? existing : 0;
+      if (number) usedNumbers.add(number);
+      return { entry, number };
+    })
+    .reverse()
+    .map(({ entry, number }) => {
+      if (!number) {
+        while (usedNumbers.has(nextNumber)) nextNumber++;
+        number = nextNumber++;
+        usedNumbers.add(number);
+      }
+      return normalizeBox(entry, number);
+    })
+    .reverse()
+    .filter((box): box is MoveBox => box !== null);
+  const sourceRooms = names(raw.sourceRooms, ROOM_PRESETS);
+  const destinationRooms = names(raw.destinationRooms, [
+    ...ROOM_PRESETS,
+    ...boxes.map((box) => box.room),
+  ]);
+  const sourceRoom = sourceRooms[0] ?? ROOM_PRESETS[0];
+  const savedItems = Array.isArray(raw.items)
+    ? raw.items.map((entry) => normalizeItem(entry, null, sourceRoom))
+    : oldBoxes.flatMap((entry) =>
+        record(entry) && Array.isArray(entry.items)
+          ? entry.items.map((item) =>
+              normalizeItem(item, string(entry.id), sourceRoom),
+            )
+          : [],
+      );
+  const items = savedItems
+    .filter((item): item is Item => item !== null)
+    .map((item) =>
+      item.boxId && !boxes.some((box) => box.id === item.boxId)
+        ? { ...item, boxId: null, state: "TO_PACK" as const }
+        : item,
+    );
+  if (!Array.isArray(raw.items) && Array.isArray(raw.firstDay)) {
+    for (const entry of raw.firstDay) {
+      if (record(entry) && string(entry.title))
+        items.push({
+          id: string(entry.id) || uid("item"),
+          name: string(entry.title),
+          state: entry.done === true ? "TAKEN_OUT" : "TO_PACK",
+          sourceRoom,
+          boxId: null,
+          quantity: 1,
+          priority: "FIRST_NECESSITY",
+        });
+    }
   }
-  const rawRooms = isRecord(raw.roomsLoaded) ? raw.roomsLoaded : {};
-  const firstDay = Array.isArray(raw.firstDay)
-    ? raw.firstDay
-        .filter(isRecord)
-        .filter((item) => stringValue(item.id) && stringValue(item.title))
-        .map((item) => ({
-          id: stringValue(item.id),
-          title: stringValue(item.title),
-          done: item.done === true,
-        }))
+  const tasks = Array.isArray(raw.tasks)
+    ? raw.tasks.map(normalizeTask).filter((task): task is Task => task !== null)
     : [];
   return {
-    id: stringValue(raw.id),
-    name: stringValue(raw.name),
-    date: stringValue(raw.date),
-    from: stringValue(raw.from),
-    to: stringValue(raw.to),
+    id: string(raw.id),
+    ownerId: string(raw.ownerId) || ownerId,
+    name: string(raw.name),
+    date: string(raw.date),
+    from: string(raw.from),
+    to: string(raw.to),
     qrCodeStrategy: raw.qrCodeStrategy === "open" ? "open" : "protected",
-    boxes: Array.isArray(raw.boxes)
-      ? raw.boxes
-          .map(normalizeBox)
-          .filter((box): box is MoveBox => box !== null)
-      : [],
-    tasks: Array.isArray(raw.tasks)
-      ? raw.tasks
-          .map(normalizeTask)
-          .filter((task): task is Task => task !== null)
-      : [],
-    firstDay,
-    roomsLoaded: Object.fromEntries(
-      rooms.map(({ name }) => [name, rawRooms[name] === true]),
-    ) as Record<Room, boolean>,
+    sourceRooms,
+    lastSourceRoom: sourceRooms.includes(string(raw.lastSourceRoom))
+      ? string(raw.lastSourceRoom)
+      : sourceRoom,
+    destinationRooms,
+    members: names(
+      raw.members,
+      tasks.flatMap((task) => task.assignees),
+    ),
+    boxes,
+    nextBoxNumber: Math.max(
+      positiveInteger(raw.nextBoxNumber, 1),
+      ...boxes.map((box) => box.number + 1),
+    ),
+    items,
+    tasks,
   };
 }

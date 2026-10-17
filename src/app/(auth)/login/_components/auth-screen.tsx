@@ -61,6 +61,9 @@ export function AuthScreen({
               autoComplete="username"
             />
           </Field>
+          <p className="-mt-2 text-xs text-[#68716C]">
+            От 3 до 32 символов. Регистр букв не важен.
+          </p>
           <Field label="Пароль">
             <TextInput
               name="password"

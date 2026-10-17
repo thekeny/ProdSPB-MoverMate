@@ -9,4 +9,9 @@ export const statuses: { key: Status; label: string; color: string }[] = [
     label: "Доставлена",
     color: "bg-[#E4ECE7] text-[#3D6B4C]",
   },
+  {
+    key: "unpacked",
+    label: "Распакована",
+    color: "bg-[#DCEBDB] text-[#3D6B4C]",
+  },
 ];

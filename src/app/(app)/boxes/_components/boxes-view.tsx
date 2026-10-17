@@ -9,14 +9,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { PageHeading } from "@/components/ui/page-heading";
 import { TextInput } from "@/components/ui/text-input";
-import { rooms } from "@/configs/consts/rooms.const";
-import type { MoveBox, Status } from "@/configs/types/box.type";
-import type { Room } from "@/configs/types/room.type";
+import type { Item, MoveBox, Status } from "@/configs/types/box.type";
 import { plural } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export function BoxesView({
   boxes,
+  allBoxes,
+  items,
+  itemResults,
+  rooms,
   totalCount,
   search,
   setSearch,
@@ -31,13 +33,17 @@ export function BoxesView({
   onResetFilters,
 }: {
   boxes: MoveBox[];
+  allBoxes: MoveBox[];
+  items: Item[];
+  itemResults: Item[];
+  rooms: string[];
   totalCount: number;
   search: string;
   setSearch: (value: string) => void;
   searchRef?: (element: HTMLElement | null) => void;
-  roomFilter: Room | "all";
-  setRoomFilter: (value: Room | "all") => void;
-  roomIcon: (name: Room) => typeof Box;
+  roomFilter: string;
+  setRoomFilter: (value: string) => void;
+  roomIcon: (name: string) => typeof Box;
   status: (key: Status) => { key: Status; label: string; color: string };
   onAdd: () => void;
   onSelect: (id: string) => void;
@@ -66,7 +72,7 @@ export function BoxesView({
               ref={searchRef}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Найти коробку или вещь"
+              placeholder="По началу слова: «зар» найдёт «зарядка»"
               aria-label="Поиск по коробкам и вещам"
               className="w-full pl-10"
             />
@@ -84,7 +90,7 @@ export function BoxesView({
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
           {[
             { name: "Все", value: "all" as const },
-            ...rooms.map((room) => ({ name: room.name, value: room.name })),
+            ...rooms.map((room) => ({ name: room, value: room })),
           ].map((item) => (
             <Button
               variant="ghost"
@@ -109,22 +115,24 @@ export function BoxesView({
         </span>
         {search && <span>Поиск: «{search}»</span>}
       </section>
-      <section className="mt-3 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <section className="mt-3 grid items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
         {boxes.length ? (
           boxes.map((box) => {
             const RoomIcon = roomIcon(box.room);
-            const unpacked = box.items.filter((item) => item.unpacked).length;
+            const contents = items.filter(
+              (item) => item.boxId === box.id && item.state === "IN_BOX",
+            );
             return (
               <Button
                 variant="ghost"
                 key={box.id}
                 onClick={() => onSelect(box.id)}
-                className="group h-auto justify-start rounded-lg bg-white p-5 text-left whitespace-normal transition-colors duration-200 hover:bg-[#EDF1E8]"
+                className="group h-full w-full flex-col items-stretch justify-start self-stretch rounded-lg bg-white p-5 text-left whitespace-normal transition-colors duration-200 hover:bg-[#EDF1E8]"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <span className="rounded-md bg-[#1D2923] px-2 py-1 font-mono text-xs font-bold text-[#F4F1E9]">
-                      {box.id}
+                      № {box.number}
                     </span>
                     <span className="flex items-center gap-1 text-xs font-bold text-[#42664D]">
                       <RoomIcon className="size-3.5" />
@@ -149,27 +157,23 @@ export function BoxesView({
                       Хрупкое
                     </span>
                   )}
-                  {box.deferred && (
-                    <span className="rounded-full bg-[#E8E2D5] px-2 py-1 text-[10px] font-bold text-[#4E5752]">
-                      Заполнить позже
-                    </span>
-                  )}
                 </div>
                 <div className="mt-5 rounded-md bg-[#F5F3EE] p-3 text-xs text-[#68716C]">
                   <div className="flex justify-between">
                     <span className="min-w-0 truncate">
-                      {box.items.length
-                        ? box.items
+                      {contents.length
+                        ? contents
                             .slice(0, 2)
                             .map((item) => item.name)
                             .join(", ")
                         : "Список вещей пуст"}
-                      {box.items.length > 2 && ` и еще ${box.items.length - 2}`}
+                      {contents.length > 2 && ` и еще ${contents.length - 2}`}
                     </span>
                   </div>
                   <div className="mt-3 flex items-center justify-between font-bold text-[#42664D]">
                     <span className="tnum">
-                      Распаковано {unpacked}/{box.items.length}
+                      В коробке {contents.length}{" "}
+                      {plural(contents.length, ["вещь", "вещи", "вещей"])}
                     </span>
                     <span className="flex items-center gap-1">
                       Открыть{" "}
@@ -204,6 +208,46 @@ export function BoxesView({
           </div>
         )}
       </section>
+      {search.trim() && (
+        <section className="mt-6 rounded-lg bg-white p-5">
+          <h2 className="font-extrabold">
+            Найденные вещи{" "}
+            <span className="text-sm font-medium text-[#68716C]">
+              {itemResults.length}
+            </span>
+          </h2>
+          {itemResults.length ? (
+            <div className="mt-3 grid gap-2">
+              {itemResults.map((item) => {
+                const relatedBox = item.boxId
+                  ? allBoxes.find((entry) => entry.id === item.boxId)
+                  : null;
+                const location = relatedBox
+                  ? `№ ${relatedBox.number} · ${status(relatedBox.status).label}`
+                  : `${item.state === "LOST" ? "Потеряна" : item.state === "TAKEN_OUT" ? "На месте" : item.state === "TO_PACK" ? "Нужно упаковать" : "В коробке"} · ${item.sourceRoom}`;
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between gap-3 rounded-md bg-[#F5F3EE] p-3 text-sm"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <strong>{item.name}</strong>
+                      {item.quantity > 1 && ` · ${item.quantity} шт.`}
+                    </span>
+                    <span className="shrink-0 text-right text-xs text-[#68716C]">
+                      {location}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="mt-3 text-sm text-[#68716C]">
+              Вещей с таким началом слова нет.
+            </p>
+          )}
+        </section>
+      )}
     </>
   );
 }

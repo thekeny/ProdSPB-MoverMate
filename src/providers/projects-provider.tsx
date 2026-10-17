@@ -9,11 +9,10 @@ import {
   useEffect,
   useState,
 } from "react";
+import { ROOM_PRESETS } from "@/configs/consts/rooms.const";
 import { PROJECTS_STORAGE_PREFIX } from "@/configs/consts/storage.const";
-import { DEFAULT_TASK_DUE } from "@/configs/consts/tasks.const";
 import { pages } from "@/configs/paths/pages.path";
 import type { Project } from "@/configs/types/project.type";
-import type { Room } from "@/configs/types/room.type";
 import type { TaskStage } from "@/configs/types/task.type";
 import { uid } from "@/lib/id";
 import { createEmptyProject } from "@/lib/project";
@@ -46,7 +45,7 @@ type LocalState = {
 
 const ProjectsContext = createContext<ProjectsContextValue | null>(null);
 
-function loadLocal(userId: string): LocalState {
+function loadLocal(userId: string, username: string): LocalState {
   try {
     const saved = localStorage.getItem(`${PROJECTS_STORAGE_PREFIX}:${userId}`);
     if (saved) {
@@ -56,8 +55,17 @@ function loadLocal(userId: string): LocalState {
       };
       const projects = Array.isArray(data.projects)
         ? data.projects
-            .map(normalizeProject)
+            .map((item) => normalizeProject(item, userId))
             .filter((item): item is Project => item !== null)
+            .map((item) => ({
+              ...item,
+              members: [
+                username,
+                ...item.members
+                  .slice(1)
+                  .filter((member) => member !== username),
+              ],
+            }))
         : [];
       const activeId =
         typeof data.activeId === "string" &&
@@ -76,11 +84,12 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { account, ready: authReady } = useAuth();
   const accountId = account?.id ?? null;
+  const username = account?.username ?? null;
   const [local, setLocal] = useState<LocalState | null>(null);
 
   useEffect(() => {
-    setLocal(accountId ? loadLocal(accountId) : null);
-  }, [accountId]);
+    setLocal(accountId && username ? loadLocal(accountId, username) : null);
+  }, [accountId, username]);
 
   useEffect(() => {
     if (!local) return;
@@ -125,11 +134,27 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
   const createProject = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
+    const sourceRooms = String(data.get("sourceRooms") ?? "")
+      .split(",")
+      .map((room) => room.trim())
+      .filter(Boolean);
+    const destinationRooms = String(data.get("destinationRooms") ?? "")
+      .split(",")
+      .map((room) => room.trim())
+      .filter(Boolean);
     const next = createEmptyProject({
       name: String(data.get("name") ?? "").trim(),
+      ownerId: account?.id ?? "",
       date: String(data.get("date") ?? ""),
       from: String(data.get("from") ?? "").trim(),
       to: String(data.get("to") ?? "").trim(),
+      sourceRooms: sourceRooms.length
+        ? [...new Set(sourceRooms)]
+        : [...ROOM_PRESETS],
+      destinationRooms: destinationRooms.length
+        ? [...new Set(destinationRooms)]
+        : [...ROOM_PRESETS],
+      members: account?.username ? [account.username] : [],
     });
     if (!next.name || !next.date) return;
     patchLocal((state) => ({
@@ -149,27 +174,41 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       .filter(Boolean);
     const title = String(data.get("title") ?? "").trim();
     if (!title) return;
-    updateProject((current) => ({
-      ...current,
-      boxes: [
-        {
-          id: uid("box").toUpperCase(),
-          title,
-          room: data.get("room") as Room,
-          fragile: data.get("fragile") === "on",
-          deferred: false,
-          status: "packing",
-          salt: uid("salt"),
-          items: items.map((name) => ({
+    updateProject((current) => {
+      const id = uid("box");
+      const sourceRoom =
+        String(data.get("sourceRoom") ?? "") || current.sourceRooms[0];
+      return {
+        ...current,
+        lastSourceRoom: sourceRoom,
+        nextBoxNumber: current.nextBoxNumber + 1,
+        boxes: [
+          {
+            id,
+            number: current.nextBoxNumber,
+            qrToken: uid("qr"),
+            title,
+            room: String(data.get("room") ?? "") || current.destinationRooms[0],
+            sourceRooms: [sourceRoom],
+            fragile: data.get("fragile") === "on",
+            status: "packing",
+          },
+          ...current.boxes,
+        ],
+        items: [
+          ...current.items,
+          ...items.map((name) => ({
             id: uid("item"),
             name,
-            unpacked: false,
-            lost: false,
+            state: "IN_BOX" as const,
+            sourceRoom,
+            boxId: id,
+            quantity: 1,
+            priority: "NORMAL" as const,
           })),
-        },
-        ...current.boxes,
-      ],
-    }));
+        ],
+      };
+    });
   };
 
   const addTask = (event: FormEvent<HTMLFormElement>) => {
@@ -184,9 +223,12 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         {
           id: uid("task"),
           title,
+          description: String(data.get("description") ?? "").trim(),
           stage: data.get("stage") as TaskStage,
-          assignee: String(data.get("assignee") ?? ""),
-          due: String(data.get("due") ?? DEFAULT_TASK_DUE),
+          assignees: data.getAll("assignees").map(String),
+          dueAt: String(data.get("dueDate") ?? "")
+            ? `${data.get("dueDate")}${data.get("dueTime") ? `T${data.get("dueTime")}` : ""}`
+            : null,
           done: false,
         },
       ],

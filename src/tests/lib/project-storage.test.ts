@@ -23,16 +23,17 @@ describe("normalizeProject", () => {
 
     expect(project).not.toBeNull();
     expect(project?.boxes).toHaveLength(1);
-    expect(project?.boxes[0].room).toBe("Кухня");
+    expect(project?.boxes[0].room).toBe("Неизвестная комната");
     expect(project?.boxes[0].status).toBe("packing");
-    expect(project?.boxes[0].salt).toMatch(/^salt-/);
-    expect(project?.roomsLoaded).toEqual({
-      Кухня: true,
-      Кабинет: false,
-      Спальня: false,
-      Гостиная: false,
+    expect(project?.boxes[0].number).toBe(1);
+    expect(project?.boxes[0].qrToken).toMatch(/^qr-/);
+    expect(project?.items[0]).toMatchObject({
+      name: "Чашки",
+      state: "IN_BOX",
+      boxId: "BOX-1",
     });
-    expect(project?.tasks[0].stage).toBe("before");
+    expect(project?.destinationRooms).toContain("Неизвестная комната");
+    expect(project?.tasks[0].stage).toBe("BEFORE");
   });
 
   it("отклоняет запись без обязательных полей", () => {

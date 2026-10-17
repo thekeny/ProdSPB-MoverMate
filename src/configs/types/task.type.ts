@@ -1,12 +1,11 @@
-export type TaskStage = "before" | "moving" | "after";
+export type TaskStage = "BEFORE" | "DURING" | "AFTER";
 
 export type Task = {
   id: string;
   title: string;
+  description: string;
   stage: TaskStage;
-  assignee: string;
-  due: string;
+  assignees: string[];
+  dueAt: string | null;
   done: boolean;
 };
-
-export type FirstDayItem = { id: string; title: string; done: boolean };

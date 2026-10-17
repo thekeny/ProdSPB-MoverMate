@@ -45,7 +45,9 @@ describe("createEmptyProject", () => {
     });
     expect(project.qrCodeStrategy).toBe("protected");
     expect(project.boxes).toEqual([]);
-    expect(project.firstDay.length).toBeGreaterThan(0);
-    expect(Object.keys(project.roomsLoaded).length).toBe(4);
+    expect(project.nextBoxNumber).toBe(1);
+    expect(project.items).toEqual([]);
+    expect(project.sourceRooms.length).toBeGreaterThan(0);
+    expect(project.destinationRooms.length).toBeGreaterThan(0);
   });
 });

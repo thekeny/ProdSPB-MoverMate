@@ -18,6 +18,7 @@ export function Sidebar({
   onCreateProject,
   onOpenSettings,
   onLogout,
+  onOpenAccountSettings,
 }: {
   account: Account;
   project: Project;
@@ -26,6 +27,7 @@ export function Sidebar({
   onCreateProject: () => void;
   onOpenSettings: () => void;
   onLogout: () => void;
+  onOpenAccountSettings: () => void;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -57,7 +59,11 @@ export function Sidebar({
           </Button>
         ))}
       </nav>
-      <UserCard account={account} onLogout={onLogout} />
+      <UserCard
+        account={account}
+        onLogout={onLogout}
+        onOpenAccountSettings={onOpenAccountSettings}
+      />
     </aside>
   );
 }

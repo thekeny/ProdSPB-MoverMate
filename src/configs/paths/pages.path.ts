@@ -5,7 +5,7 @@ export const pages = {
   PROJECTS_NEW: "/projects/new",
   DASHBOARD: "/dashboard",
   BOXES: "/boxes",
-  BOX: "/box",
+  BOX_TOKEN: "/b",
   PLAN: "/plan",
   LABELS: "/labels",
   PROGRESS: "/progress",

@@ -4,6 +4,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { createContext, useContext, useSyncExternalStore } from "react";
 import {
+  changePasswordApiV1UsersMePasswordPut,
+  changeUsernameApiV1UsersMeUsernamePut,
+  deleteMeApiV1UsersMeDelete,
   getMeApiV1UsersMeGet,
   loginApiV1AuthLoginPost,
   logoutApiV1AuthLogoutPost,
@@ -29,6 +32,12 @@ type AuthContextValue = {
     mode: AuthMode,
   ) => Promise<void>;
   logout: () => Promise<void>;
+  changeUsername: (username: string) => Promise<void>;
+  changePassword: (values: {
+    currentPassword: string;
+    newPassword: string;
+  }) => Promise<void>;
+  deleteAccount: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -72,9 +81,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     credentials,
     mode,
   ) => {
+    const normalized = {
+      ...credentials,
+      username: credentials.username.trim().toLowerCase(),
+    };
     if (mode === "register")
-      await unwrap(registerApiV1AuthRegisterPost({ body: credentials }));
-    const tokens = await unwrap(loginApiV1AuthLoginPost({ body: credentials }));
+      await unwrap(registerApiV1AuthRegisterPost({ body: normalized }));
+    const tokens = await unwrap(loginApiV1AuthLoginPost({ body: normalized }));
     saveSession(tokens);
     queryClient.removeQueries({ queryKey: QUERY_KEYS.ME });
     await queryClient.fetchQuery({
@@ -97,8 +110,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }).catch(() => undefined);
   };
 
+  const changeUsername = async (username: string) => {
+    const updated = await unwrap(
+      changeUsernameApiV1UsersMeUsernamePut({
+        body: { new_username: username.trim().toLowerCase() },
+      }),
+    );
+    queryClient.setQueryData(QUERY_KEYS.ME, {
+      id: updated.id,
+      username: updated.username,
+    });
+  };
+
+  const changePassword = async (values: {
+    currentPassword: string;
+    newPassword: string;
+  }) => {
+    await unwrap(
+      changePasswordApiV1UsersMePasswordPut({
+        body: {
+          current_password: values.currentPassword,
+          new_password: values.newPassword,
+        },
+      }),
+    );
+    clearSession();
+    queryClient.clear();
+  };
+
+  const deleteAccount = async () => {
+    await unwrap(deleteMeApiV1UsersMeDelete());
+    clearSession();
+    queryClient.clear();
+  };
+
   return (
-    <AuthContext.Provider value={{ ready, account, authenticate, logout }}>
+    <AuthContext.Provider
+      value={{
+        ready,
+        account,
+        authenticate,
+        logout,
+        changeUsername,
+        changePassword,
+        deleteAccount,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

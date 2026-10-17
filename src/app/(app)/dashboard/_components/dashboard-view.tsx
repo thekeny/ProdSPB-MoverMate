@@ -17,7 +17,7 @@ import { DATE_NOON_SUFFIX, MS_PER_DAY } from "@/configs/consts/date.const";
 import { pages } from "@/configs/paths/pages.path";
 import { QUERY_PARAMS } from "@/configs/paths/query.path";
 import type { Project } from "@/configs/types/project.type";
-import { formatDate, plural } from "@/lib/format";
+import { formatDate, formatTaskDue, plural } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export function DashboardView({
@@ -38,16 +38,17 @@ export function DashboardView({
   const packedBoxes = project.boxes.filter(
     (box) => box.status !== "packing",
   ).length;
-  const unpackedItems = project.boxes.reduce(
-    (total, box) => total + box.items.filter((item) => item.unpacked).length,
-    0,
-  );
-  const itemCount = project.boxes.reduce(
-    (total, box) => total + box.items.length,
-    0,
-  );
-  const lostItems = project.boxes.flatMap((box) =>
-    box.items.filter((item) => item.lost),
+  const unpackedItems = project.items.filter(
+    (item) => item.state === "TAKEN_OUT",
+  ).length;
+  const itemCount = project.items.length;
+  const lostItems = project.items.filter((item) => item.state === "LOST");
+  const boxesToFill = project.boxes.filter(
+    (box) =>
+      box.status === "packing" &&
+      !project.items.some(
+        (item) => item.boxId === box.id && item.state === "IN_BOX",
+      ),
   );
   const nextTask = project.tasks.find((task) => !task.done);
 
@@ -118,8 +119,8 @@ export function DashboardView({
                 {nextTask.title}
               </h2>
               <p className="mt-2 text-sm leading-6 text-[#4E5752]">
-                {nextTask.due}.{" "}
-                {nextTask.assignee || "Ответственный не назначен"}.
+                {formatTaskDue(nextTask.dueAt)}.{" "}
+                {nextTask.assignees.join(", ") || "Ответственный не назначен"}.
               </p>
               <Button
                 variant="ghost"
@@ -144,6 +145,30 @@ export function DashboardView({
           )}
         </div>
       </section>
+      {boxesToFill.length > 0 && (
+        <section className="mt-5 rounded-lg bg-[#F3E7C8] p-5">
+          <h2 className="font-extrabold">Заполнить коробки</h2>
+          <p className="mt-1 text-sm text-[#77602B]">
+            Эти коробки ещё собираются и пока без вещей.
+          </p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {boxesToFill.map((box) => (
+              <Button
+                key={box.id}
+                variant="ghost"
+                onClick={() =>
+                  router.push(
+                    `${pages.BOXES}?${QUERY_PARAMS.BOX_ID}=${encodeURIComponent(box.id)}`,
+                  )
+                }
+                className="h-auto justify-start rounded-md bg-white p-3 text-left whitespace-normal"
+              >
+                № {box.number} · {box.title}
+              </Button>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[
@@ -232,7 +257,7 @@ export function DashboardView({
                 Что уже распаковано
               </h2>
               <p className="mt-2 text-sm leading-6 text-[#77602B]">
-                Отмечайте комнаты, как только их привели в порядок.
+                Следите за распаковкой коробок в каждой комнате.
               </p>
             </div>
             <ArrowRight className="size-5 shrink-0 text-[#77602B] transition-transform group-hover:translate-x-1" />

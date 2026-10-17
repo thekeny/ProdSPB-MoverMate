@@ -46,7 +46,7 @@ export function Modal({
           }
         }}
         className={cn(
-          "relative max-h-[calc(100vh-2rem)] w-full overscroll-contain overflow-y-auto rounded-xl bg-white p-6 duration-200 ease-out animate-in fade-in zoom-in-95 sm:p-7",
+          "relative max-h-[calc(100vh-2rem)] w-full max-w-full min-w-0 overscroll-contain overflow-y-auto rounded-xl bg-white p-6 duration-200 ease-out animate-in fade-in zoom-in-95 sm:p-7",
           className,
         )}
       >

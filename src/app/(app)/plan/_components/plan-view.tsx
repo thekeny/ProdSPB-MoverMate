@@ -1,32 +1,31 @@
 import { BookOpen, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { TaskFields } from "@/app/(app)/plan/_components/task-fields";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Field } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { PageHeading } from "@/components/ui/page-heading";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { TextInput } from "@/components/ui/text-input";
-import { TASK_STAGE_OPTIONS } from "@/configs/consts/task-stages.const";
-import { DEFAULT_TASK_DUE } from "@/configs/consts/tasks.const";
+import { MOVING_TIPS } from "@/configs/consts/moving-tips.const";
 import type { Project } from "@/configs/types/project.type";
 import type { Task, TaskStage } from "@/configs/types/task.type";
+import { formatTaskDue } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 function TaskEditForm({
   task,
+  members,
   onClose,
   onSave,
 }: {
   task: Task;
+  members: string[];
   onClose: () => void;
-  onSave: (values: Pick<Task, "title" | "stage" | "assignee" | "due">) => void;
+  onSave: (
+    values: Pick<
+      Task,
+      "title" | "description" | "stage" | "assignees" | "dueAt"
+    >,
+  ) => void;
 }) {
   return (
     <Modal className="max-w-md" label="Редактировать задачу" onClose={onClose}>
@@ -41,44 +40,17 @@ function TaskEditForm({
           if (!title) return;
           onSave({
             title,
+            description: String(data.get("description") ?? "").trim(),
             stage: (data.get("stage") as TaskStage) ?? task.stage,
-            assignee: String(data.get("assignee") ?? "").trim(),
-            due: String(data.get("due") ?? "").trim() || DEFAULT_TASK_DUE,
+            assignees: data.getAll("assignees").map(String),
+            dueAt: String(data.get("dueDate") ?? "")
+              ? `${data.get("dueDate")}${data.get("dueTime") ? `T${data.get("dueTime")}` : ""}`
+              : null,
           });
         }}
         className="mt-6 grid gap-4"
       >
-        <Field label="Задача">
-          <TextInput name="title" required defaultValue={task.title} />
-        </Field>
-        <Field label="Этап">
-          <Select
-            name="stage"
-            defaultValue={task.stage}
-            items={TASK_STAGE_OPTIONS}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TASK_STAGE_OPTIONS.map((stage) => (
-                <SelectItem key={stage.value} value={stage.value}>
-                  {stage.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-        <Field label="Ответственный">
-          <TextInput
-            name="assignee"
-            placeholder="Необязательно"
-            defaultValue={task.assignee}
-          />
-        </Field>
-        <Field label="Срок">
-          <TextInput name="due" defaultValue={task.due} />
-        </Field>
+        <TaskFields task={task} members={members} />
         <div className="mt-2 flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>
             Отмена
@@ -106,17 +78,17 @@ export function PlanView({
   const [editing, setEditing] = useState<Task | null>(null);
   const stages: { key: TaskStage; title: string; description: string }[] = [
     {
-      key: "before",
+      key: "BEFORE",
       title: "До переезда",
       description: "Подготовка дома и маршрута",
     },
     {
-      key: "moving",
+      key: "DURING",
       title: "День переезда",
       description: "Погрузка и передача ключей",
     },
     {
-      key: "after",
+      key: "AFTER",
       title: "После переезда",
       description: "Распаковка и обустройство",
     },
@@ -206,9 +178,17 @@ export function PlanView({
                           >
                             {task.title}
                           </span>
+                          {task.description && (
+                            <span className="mt-1 block whitespace-pre-wrap text-xs leading-5 text-[#4E5752]">
+                              {task.description}
+                            </span>
+                          )}
                           <span className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-xs text-[#68716C]">
-                            <span>{task.assignee || "Без ответственного"}</span>
-                            <span>{task.due}</span>
+                            <span>
+                              {task.assignees.join(", ") ||
+                                "Без ответственного"}
+                            </span>
+                            <span>{formatTaskDue(task.dueAt)}</span>
                           </span>
                         </label>
                         <div className="flex shrink-0 items-start gap-1">
@@ -260,16 +240,18 @@ export function PlanView({
           <BookOpen className="mt-0.5 size-5 text-[#42664D]" />
           <div>
             <h2 className="font-extrabold">Памятка</h2>
-            <p className="mt-1 text-sm text-[#4E5752]">
-              Документы, ключи, зарядки и аптечку перевозите с собой. Хрупкие
-              вещи подписывайте и ставьте в коробки вертикально.
-            </p>
+            <ul className="mt-2 grid gap-1 text-sm text-[#4E5752]">
+              {MOVING_TIPS.map((tip) => (
+                <li key={tip}>• {tip}</li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
       {editing && (
         <TaskEditForm
           task={editing}
+          members={project.members}
           onClose={() => setEditing(null)}
           onSave={(values) => {
             updateProject((current) => ({

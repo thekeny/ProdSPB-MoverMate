@@ -1,1 +1,1 @@
-export type Room = "Кухня" | "Кабинет" | "Спальня" | "Гостиная";
+export type Room = string;

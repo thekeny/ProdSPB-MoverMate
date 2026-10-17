@@ -18,29 +18,20 @@ export default function LabelsPage() {
   if (!project) return null;
   const currentProject = project;
   const box = currentProject.boxes.find((item) => item.id === selectedBox);
-  const update = (
-    apply: (
-      value: (typeof currentProject.boxes)[number],
-    ) => (typeof currentProject.boxes)[number],
-  ) =>
-    updateProject((current) => ({
-      ...current,
-      boxes: current.boxes.map((item) =>
-        item.id === selectedBox ? apply(item) : item,
-      ),
-    }));
   return (
     <>
       <LabelsView project={project} onSelect={setSelectedBox} />
       {box && (
         <BoxDetails
           box={box}
+          project={currentProject}
           onClose={() => setSelectedBox(null)}
-          update={update}
+          updateProject={updateProject}
           onDelete={() => {
             updateProject((current) => ({
               ...current,
               boxes: current.boxes.filter((item) => item.id !== selectedBox),
+              items: current.items.filter((item) => item.boxId !== selectedBox),
             }));
             setSelectedBox(null);
           }}

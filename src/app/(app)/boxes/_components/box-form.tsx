@@ -12,14 +12,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TextInput } from "@/components/ui/text-input";
-import { roomOptions } from "@/configs/consts/rooms.const";
 
 export function BoxForm({
   onClose,
   onSubmit,
+  destinationRooms,
+  sourceRooms,
+  lastSourceRoom,
 }: {
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  destinationRooms: string[];
+  sourceRooms: string[];
+  lastSourceRoom: string;
 }) {
   const fragileId = useId();
   return (
@@ -35,19 +40,40 @@ export function BoxForm({
             placeholder="Посуда на первое время"
           />
         </Field>
-        <Field label="Комната">
+        <Field label="Куда">
           <Select
             name="room"
-            defaultValue={roomOptions[0].value}
-            items={roomOptions}
+            defaultValue={destinationRooms[0]}
+            items={destinationRooms.map((room) => ({
+              label: room,
+              value: room,
+            }))}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {roomOptions.map((room) => (
-                <SelectItem key={room.value} value={room.value}>
-                  {room.label}
+              {destinationRooms.map((room) => (
+                <SelectItem key={room} value={room}>
+                  {room}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Вещи из комнаты">
+          <Select
+            name="sourceRoom"
+            defaultValue={lastSourceRoom}
+            items={sourceRooms.map((room) => ({ label: room, value: room }))}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {sourceRooms.map((room) => (
+                <SelectItem key={room} value={room}>
+                  {room}
                 </SelectItem>
               ))}
             </SelectContent>

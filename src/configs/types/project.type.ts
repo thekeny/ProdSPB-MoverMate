@@ -1,18 +1,22 @@
-import type { MoveBox, QrStrategy } from "@/configs/types/box.type";
-import type { Room } from "@/configs/types/room.type";
-import type { FirstDayItem, Task } from "@/configs/types/task.type";
+import type { Item, MoveBox, QrStrategy } from "@/configs/types/box.type";
+import type { Task } from "@/configs/types/task.type";
 
 export type Project = {
   id: string;
+  ownerId: string;
   name: string;
   date: string;
   from: string;
   to: string;
   qrCodeStrategy: QrStrategy;
+  sourceRooms: string[];
+  lastSourceRoom: string;
+  destinationRooms: string[];
+  members: string[];
   boxes: MoveBox[];
+  nextBoxNumber: number;
+  items: Item[];
   tasks: Task[];
-  firstDay: FirstDayItem[];
-  roomsLoaded: Record<Room, boolean>;
 };
 
 export type ProjectFlowMode = "select" | "create";

@@ -4,6 +4,7 @@ import { Logo } from "@/components/layout/logo";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { TextInput } from "@/components/ui/text-input";
+import { ROOM_PRESETS } from "@/configs/consts/rooms.const";
 import type { Project, ProjectFlowMode } from "@/configs/types/project.type";
 import { formatDate } from "@/lib/format";
 
@@ -91,6 +92,18 @@ export function ProjectFlow({
               </Field>
               <Field label="Куда (необязательно)">
                 <TextInput name="to" placeholder="ул. Садовая, 8" />
+              </Field>
+              <Field label="Комнаты откуда, через запятую">
+                <TextInput
+                  name="sourceRooms"
+                  defaultValue={ROOM_PRESETS.join(", ")}
+                />
+              </Field>
+              <Field label="Комнаты куда, через запятую">
+                <TextInput
+                  name="destinationRooms"
+                  defaultValue={ROOM_PRESETS.join(", ")}
+                />
               </Field>
               <Button type="submit" className="mt-2 h-11">
                 Создать
