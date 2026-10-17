@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { Modal } from "@/components/ui/modal";
 import { LoadingScreen } from "@/components/layout/loading-screen";
+import { Modal } from "@/components/ui/modal";
 
 describe("LoadingScreen", () => {
   it("uses a rotating loader instead of a static square", () => {

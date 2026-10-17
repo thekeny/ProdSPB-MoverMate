@@ -39,6 +39,7 @@ describe("createEmptyProject", () => {
   it("создаёт проект с корректной структурой", () => {
     const project = createEmptyProject({
       name: "Тест",
+      ownerId: "test-user",
       date: "2026-12-01",
       from: "",
       to: "",
