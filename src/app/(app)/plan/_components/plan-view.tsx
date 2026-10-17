@@ -1,13 +1,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BookOpen, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { TaskFields } from "@/app/(app)/plan/_components/task-fields";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { FormError } from "@/components/ui/form-error";
 import { Modal } from "@/components/ui/modal";
 import { PageHeading } from "@/components/ui/page-heading";
-import { MOVING_TIPS } from "@/configs/consts/moving-tips.const";
 import type { Project } from "@/configs/types/project.type";
 import type { Task, TaskStage } from "@/configs/types/task.type";
 import { formatTaskDue } from "@/lib/format";
@@ -74,6 +75,7 @@ function TaskEditForm({
           control={control}
           errors={errors}
         />
+        <FormError errors={errors} />
         <div className="mt-2 flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>
             Отмена
@@ -88,17 +90,14 @@ function TaskEditForm({
 export function PlanView({
   project,
   onAdd,
-  onAddTemplates,
-  templateNotice,
   updateProject,
 }: {
   project: Project;
   onAdd: () => void;
-  onAddTemplates: () => void;
-  templateNotice: string | null;
   updateProject: (apply: (project: Project) => Project) => void;
 }) {
   const [editing, setEditing] = useState<Task | null>(null);
+  const [removing, setRemoving] = useState<Task | null>(null);
   const stages: { key: TaskStage; title: string; description: string }[] = [
     {
       key: "BEFORE",
@@ -129,24 +128,6 @@ export function PlanView({
           </Button>
         }
       />
-      <div className="no-print mb-5 flex flex-wrap items-center gap-3">
-        <Button
-          variant="ghost"
-          onClick={onAddTemplates}
-          className="h-auto gap-2 rounded-md bg-[#E2E9DD] px-4 py-3 text-sm font-bold text-[#42664D] transition-colors duration-200 hover:bg-[#D6E1D0]"
-        >
-          <Sparkles className="size-4" />
-          Добавить шаблон задач
-        </Button>
-        {templateNotice && (
-          <p
-            aria-live="polite"
-            className="rounded-[8px] bg-[#E8E2D5] px-3 py-2 text-xs font-bold text-[#4E5752]"
-          >
-            {templateNotice}
-          </p>
-        )}
-      </div>
       <section className="grid gap-4 lg:grid-cols-3">
         {stages.map((stage) => {
           const tasks = project.tasks.filter(
@@ -172,7 +153,7 @@ export function PlanView({
                     return (
                       <div
                         key={task.id}
-                        className="flex gap-3 rounded-md bg-[#F5F3EE] p-3 transition-colors duration-200 hover:bg-[#EDF1E8]"
+                        className="flex gap-3 rounded-md bg-[#F5F3EE] p-3 transition-colors duration-200 hover:bg-[#E2E9DD]"
                       >
                         <Checkbox
                           id={checkboxId}
@@ -236,19 +217,7 @@ export function PlanView({
                           </Button>
                           <Button
                             variant="ghost"
-                            onClick={() => {
-                              if (
-                                window.confirm(
-                                  `Удалить задачу «${task.title}»?`,
-                                )
-                              )
-                                updateProject((current) => ({
-                                  ...current,
-                                  tasks: current.tasks.filter(
-                                    (item) => item.id !== task.id,
-                                  ),
-                                }));
-                            }}
+                            onClick={() => setRemoving(task)}
                             className="grid size-7 place-items-center rounded-md text-[#68716C] transition-colors hover:bg-[#E8E2D5] hover:text-[#A84D3C]"
                             aria-label={`Удалить задачу: ${task.title}`}
                           >
@@ -268,19 +237,6 @@ export function PlanView({
           );
         })}
       </section>
-      <section className="no-print mt-6 rounded-lg bg-[#E2E9DD] p-5">
-        <div className="flex items-start gap-3">
-          <BookOpen className="mt-0.5 size-5 text-[#42664D]" />
-          <div>
-            <h2 className="font-extrabold">Памятка</h2>
-            <ul className="mt-2 grid gap-1 text-sm text-[#4E5752]">
-              {MOVING_TIPS.map((tip) => (
-                <li key={tip}>• {tip}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
       {editing && (
         <TaskEditForm
           task={editing}
@@ -295,6 +251,18 @@ export function PlanView({
             }));
             setEditing(null);
           }}
+        />
+      )}
+      {removing && (
+        <ConfirmDialog
+          title={`Удалить задачу «${removing.title}»?`}
+          onClose={() => setRemoving(null)}
+          onConfirm={() =>
+            updateProject((current) => ({
+              ...current,
+              tasks: current.tasks.filter((item) => item.id !== removing.id),
+            }))
+          }
         />
       )}
     </>

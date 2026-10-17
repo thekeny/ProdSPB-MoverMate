@@ -6,6 +6,7 @@ import { Logo } from "@/components/layout/logo";
 import { Button } from "@/components/ui/button";
 import { ChipInput } from "@/components/ui/chip-input";
 import { Field } from "@/components/ui/field";
+import { FormError } from "@/components/ui/form-error";
 import { TextInput } from "@/components/ui/text-input";
 import { ROOM_PRESETS } from "@/configs/consts/rooms.const";
 import type { Project, ProjectFlowMode } from "@/configs/types/project.type";
@@ -173,11 +174,7 @@ export function ProjectFlow({
                   )}
                 />
               </Field>
-              {createError && (
-                <p role="alert" className="text-sm text-[#A84D3C]">
-                  {createError}
-                </p>
-              )}
+              <FormError errors={errors} message={createError} />
               <Button type="submit" disabled={creating} className="mt-2 h-11">
                 Создать
                 <ArrowRight />

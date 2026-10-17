@@ -16,8 +16,10 @@ export function MobileNav() {
           key={id}
           onClick={() => router.push(href)}
           className={cn(
-            "h-14 flex-col gap-0 rounded-none px-0 text-[10px] font-bold whitespace-normal transition-colors",
-            pathname === href ? "text-[#1D2923]" : "text-[#68716C]",
+            "h-14 flex-col gap-0 rounded-none px-0 text-[10px] font-bold whitespace-normal transition-colors active:scale-100 hover:bg-transparent",
+            pathname === href
+              ? "text-[#1D2923] hover:text-[#1D2923]"
+              : "text-[#68716C] hover:text-[#68716C]",
           )}
         >
           <span className="grid place-items-center gap-1">

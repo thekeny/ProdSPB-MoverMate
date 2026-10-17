@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Logo } from "@/components/layout/logo";
+import { AppLogo } from "@/components/layout/logo";
 import { ProjectSwitcher } from "@/components/layout/project-switcher";
 import { UserCard } from "@/components/layout/user-card";
 import { Button } from "@/components/ui/button";
@@ -32,8 +32,8 @@ export function Sidebar({
   const pathname = usePathname();
   const router = useRouter();
   return (
-    <aside className="no-print fixed inset-y-0 left-0 z-20 hidden w-72 flex-col overflow-y-auto bg-white p-4 lg:flex">
-      <Logo />
+    <aside className="no-print fixed inset-y-0 left-0 z-20 hidden w-72 flex-col overflow-y-scroll overscroll-contain bg-white p-4 [scrollbar-gutter:stable] lg:flex">
+      <AppLogo />
       <ProjectSwitcher
         project={project}
         projects={projects}
@@ -48,10 +48,10 @@ export function Sidebar({
             key={id}
             onClick={() => router.push(href)}
             className={cn(
-              "h-11 justify-start gap-3 rounded-[8px] px-3 text-left text-sm font-bold whitespace-normal transition-colors duration-200",
+              "h-11 justify-start gap-3 !rounded-[8px] px-3 text-left text-sm font-bold whitespace-normal transition-colors duration-200 active:scale-100",
               pathname === href
-                ? "bg-[#1D2923] text-[#F4F1E9]"
-                : "text-[#42664D] hover:bg-[#EDF1E8]",
+                ? "bg-[#1D2923] text-[#F4F1E9] hover:bg-[#1D2923] hover:text-[#F4F1E9]"
+                : "text-[#42664D] hover:bg-[#EDF1E8] hover:text-[#42664D]",
             )}
           >
             <Icon className="size-4" />

@@ -4,6 +4,7 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import { Logo } from "@/components/layout/logo";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { FormError } from "@/components/ui/form-error";
 import { TextInput } from "@/components/ui/text-input";
 import type { AuthMode } from "@/configs/types/auth.type";
 import { type AuthFormValues, authFormSchema } from "@/lib/forms/auth.schema";
@@ -104,11 +105,7 @@ export function AuthScreen({
               />
             </Field>
           )}
-          {error && (
-            <p role="alert" className="text-xs font-bold text-[#A84D3C]">
-              {error}
-            </p>
-          )}
+          <FormError errors={errors} message={error} />
           <Button
             type="submit"
             disabled={pending}

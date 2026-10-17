@@ -6,6 +6,7 @@ import {
   Search,
   X,
 } from "lucide-react";
+import { BoxTips } from "@/components/box/box-tips";
 import { Button } from "@/components/ui/button";
 import { PageHeading } from "@/components/ui/page-heading";
 import { TextInput } from "@/components/ui/text-input";
@@ -64,50 +65,97 @@ export function BoxesView({
           </Button>
         }
       />
-      <section className="no-print rounded-lg bg-white p-5">
+      <section className="no-print mt-6 rounded-lg bg-white p-5">
         <div className="flex flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#68716C]" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#68716C]" />
             <TextInput
               ref={searchRef}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="По началу слова: «зар» найдёт «зарядка»"
-              aria-label="Поиск по коробкам и вещам"
-              className="w-full pl-10"
+              aria-label="Поиск вещи"
+              className="w-full px-10"
             />
+            {search && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setSearch("")}
+                aria-label="Очистить поиск"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#68716C]"
+              >
+                <X className="size-4" />
+              </Button>
+            )}
           </div>
-          <Button
-            variant="outline"
-            className="h-11"
-            onClick={onResetFilters}
-            disabled={!isFiltered}
-          >
-            <X />
-            Очистить
-          </Button>
         </div>
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          {[
-            { name: "Все", value: "all" as const },
-            ...rooms.map((room) => ({ name: room, value: room })),
-          ].map((item) => (
-            <Button
-              variant="ghost"
-              key={item.value}
-              onClick={() => setRoomFilter(item.value)}
-              className={cn(
-                "h-auto shrink-0 rounded-full px-3 py-2 text-xs font-bold transition-colors duration-200",
-                roomFilter === item.value
-                  ? "bg-[#1D2923] text-[#F4F1E9]"
-                  : "bg-[#E8E2D5] text-[#42664D] hover:bg-[#E2E9DD]",
-              )}
-            >
-              {item.name}
-            </Button>
-          ))}
+        <div className="mt-4">
+          <p className="text-xs font-bold text-[#68716C]">
+            Коробки по комнатам
+          </p>
+          <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+            {[
+              { name: "Все", value: "all" as const },
+              ...rooms.map((room) => ({ name: room, value: room })),
+            ].map((item) => (
+              <Button
+                variant="ghost"
+                key={item.value}
+                onClick={() => setRoomFilter(item.value)}
+                className={cn(
+                  "h-auto shrink-0 rounded-full px-3 py-2 text-xs font-bold transition-colors duration-200",
+                  roomFilter === item.value
+                    ? "bg-[#1D2923] text-[#F4F1E9] hover:bg-[#1D2923] hover:text-[#F4F1E9]"
+                    : "bg-[#E8E2D5] text-[#42664D] hover:bg-[#D9D1C2] hover:text-[#42664D]",
+                )}
+              >
+                {item.name}
+              </Button>
+            ))}
+          </div>
         </div>
       </section>
+      {search.trim() && (
+        <section className="mt-5 rounded-lg bg-white p-5">
+          <h2 className="font-extrabold">
+            Найденные вещи{" "}
+            <span className="text-sm font-medium text-[#68716C]">
+              {itemResults.length}
+            </span>
+          </h2>
+          {itemResults.length ? (
+            <div className="mt-3 grid gap-2">
+              {itemResults.map((item) => {
+                const relatedBox = item.boxId
+                  ? allBoxes.find((entry) => entry.id === item.boxId)
+                  : null;
+                const location = relatedBox
+                  ? `№ ${relatedBox.number} · ${status(relatedBox.status).label}`
+                  : `${item.state === "LOST" ? "Потеряна" : item.state === "TAKEN_OUT" ? "На месте" : item.state === "TO_PACK" ? "Нужно упаковать" : "В коробке"} · ${item.sourceRoom}`;
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between gap-3 rounded-md bg-[#F5F3EE] p-3 text-sm"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <strong>{item.name}</strong>
+                      {item.quantity > 1 && ` · ${item.quantity} шт.`}
+                    </span>
+                    <span className="shrink-0 text-right text-xs text-[#68716C]">
+                      {location}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="mt-3 text-sm text-[#68716C]">
+              Вещей с таким началом слова нет.
+            </p>
+          )}
+        </section>
+      )}
       <section className="tnum mt-5 flex items-center justify-between text-sm text-[#68716C]">
         <span>
           {isFiltered ? `${boxes.length} из ` : ""}
@@ -127,7 +175,7 @@ export function BoxesView({
                 variant="ghost"
                 key={box.id}
                 onClick={() => onSelect(box.id)}
-                className="group h-full w-full flex-col items-stretch justify-start self-stretch rounded-lg bg-white p-5 text-left whitespace-normal transition-colors duration-200 hover:bg-[#EDF1E8]"
+                className="group h-full w-full flex-col items-stretch justify-start self-stretch rounded-lg bg-white p-5 text-left whitespace-normal transition-colors duration-200 hover:bg-[#E2E9DD] hover:text-[#1D2923]"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2">
@@ -218,46 +266,7 @@ export function BoxesView({
           </div>
         )}
       </section>
-      {search.trim() && (
-        <section className="mt-6 rounded-lg bg-white p-5">
-          <h2 className="font-extrabold">
-            Найденные вещи{" "}
-            <span className="text-sm font-medium text-[#68716C]">
-              {itemResults.length}
-            </span>
-          </h2>
-          {itemResults.length ? (
-            <div className="mt-3 grid gap-2">
-              {itemResults.map((item) => {
-                const relatedBox = item.boxId
-                  ? allBoxes.find((entry) => entry.id === item.boxId)
-                  : null;
-                const location = relatedBox
-                  ? `№ ${relatedBox.number} · ${status(relatedBox.status).label}`
-                  : `${item.state === "LOST" ? "Потеряна" : item.state === "TAKEN_OUT" ? "На месте" : item.state === "TO_PACK" ? "Нужно упаковать" : "В коробке"} · ${item.sourceRoom}`;
-                return (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between gap-3 rounded-md bg-[#F5F3EE] p-3 text-sm"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <strong>{item.name}</strong>
-                      {item.quantity > 1 && ` · ${item.quantity} шт.`}
-                    </span>
-                    <span className="shrink-0 text-right text-xs text-[#68716C]">
-                      {location}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="mt-3 text-sm text-[#68716C]">
-              Вещей с таким началом слова нет.
-            </p>
-          )}
-        </section>
-      )}
+      <BoxTips />
     </>
   );
 }

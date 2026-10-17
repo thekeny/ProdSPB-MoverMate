@@ -4,8 +4,8 @@ import { Qr } from "@/components/box/qr";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PageHeading } from "@/components/ui/page-heading";
-import { pages } from "@/configs/paths/pages.path";
 import type { Project } from "@/configs/types/project.type";
+import { boxLink } from "@/lib/box-link";
 
 export function LabelsView({
   project,
@@ -57,9 +57,7 @@ export function LabelsView({
             const contents = project.items.filter(
               (item) => item.boxId === box.id && item.state === "IN_BOX",
             );
-            const url = origin
-              ? `${origin}${pages.BOX_TOKEN}/${encodeURIComponent(box.qrToken)}`
-              : "";
+            const url = origin ? boxLink(box.qrToken) : "";
             return (
               <article
                 key={box.id}
@@ -96,7 +94,7 @@ export function LabelsView({
                   </div>
                   {url && <Qr value={url} size={88} />}
                 </div>
-                <div className="mt-5 rounded-[8px] bg-[#EDF1E8] p-3 text-xs leading-5 text-[#4E5752]">
+                <div className="mt-5 rounded-[10px] bg-[#EDF1E8] p-3 text-xs leading-5 text-[#4E5752]">
                   <strong>Содержимое:</strong>
                   {contents.length ? (
                     <div className="mt-2 flex flex-wrap gap-1.5">

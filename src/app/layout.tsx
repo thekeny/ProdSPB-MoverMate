@@ -4,6 +4,7 @@ import { APP } from "@/configs/consts/app.const";
 import { images } from "@/configs/paths/images.path";
 import { AuthProvider } from "@/providers/auth-provider";
 import { ProjectsProvider } from "@/providers/projects-provider";
+import { PushProvider } from "@/providers/push-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import "./globals.css";
 
@@ -51,7 +52,9 @@ export default function RootLayout({
       <body className={`${interSans.className} antialiased`}>
         <QueryProvider>
           <AuthProvider>
-            <ProjectsProvider>{children}</ProjectsProvider>
+            <PushProvider>
+              <ProjectsProvider>{children}</ProjectsProvider>
+            </PushProvider>
           </AuthProvider>
         </QueryProvider>
       </body>

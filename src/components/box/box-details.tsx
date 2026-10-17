@@ -1,12 +1,15 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Pencil, Plus, Trash2 } from "lucide-react";
+import { Check, Link2, Pencil, Plus, Trash2 } from "lucide-react";
 import { useId, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Field } from "@/components/ui/field";
+import { FormError } from "@/components/ui/form-error";
 import { Modal } from "@/components/ui/modal";
 import {
   Select,
@@ -16,12 +19,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TextInput } from "@/components/ui/text-input";
-import { FRAGILE_BOX_TIPS } from "@/configs/consts/moving-tips.const";
 import { statuses } from "@/configs/consts/statuses.const";
-import type { MoveBox } from "@/configs/types/box.type";
+import type { Item, MoveBox } from "@/configs/types/box.type";
 import type { Project } from "@/configs/types/project.type";
+import { copyBoxLink } from "@/lib/box-link";
 import { plural } from "@/lib/format";
-import { boxEditSchema, roomItemSchema } from "@/lib/forms/project.schema";
+import { boxEditSchema } from "@/lib/forms/project.schema";
 import { uid } from "@/lib/id";
 import { cn } from "@/lib/utils";
 
@@ -40,14 +43,18 @@ export function BoxDetails({
 }) {
   const fragileId = useId();
   const [editing, setEditing] = useState(false);
-  const addItemForm = useForm<{ name: string; sourceRoom: string }>({
-    resolver: zodResolver(roomItemSchema),
+  const [confirmBox, setConfirmBox] = useState(false);
+  const [removingItem, setRemovingItem] = useState<Item | null>(null);
+  const [copied, setCopied] = useState(false);
+  const addItemForm = useForm<{ name: string }>({
+    resolver: zodResolver(
+      z.object({
+        name: z.string().trim().min(1, "Введите название вещи."),
+      }),
+    ),
     mode: "onBlur",
     reValidateMode: "onChange",
-    defaultValues: {
-      name: "",
-      sourceRoom: project.lastSourceRoom || project.sourceRooms[0] || "",
-    },
+    defaultValues: { name: "" },
   });
   const editForm = useForm<{ title: string; room: string; fragile: boolean }>({
     resolver: zodResolver(boxEditSchema),
@@ -96,6 +103,23 @@ export function BoxDetails({
           <Button
             variant="ghost"
             size="icon"
+            aria-label={copied ? "Ссылка скопирована" : "Скопировать ссылку"}
+            onClick={() => {
+              void copyBoxLink(box.qrToken).then(() => {
+                setCopied(true);
+                window.setTimeout(() => setCopied(false), 2000);
+              });
+            }}
+          >
+            {copied ? (
+              <Check className="size-4" />
+            ) : (
+              <Link2 className="size-4" />
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setEditing(true)}
             aria-label="Редактировать коробку"
           >
@@ -106,15 +130,7 @@ export function BoxDetails({
               variant="ghost"
               size="icon"
               aria-label="Удалить коробку"
-              onClick={() => {
-                const count = contents.length;
-                if (
-                  window.confirm(
-                    `Удалить коробку № ${box.number}? Вместе с ней удалятся ${count} ${plural(count, ["вещь", "вещи", "вещей"])}.`,
-                  )
-                )
-                  onDelete();
-              }}
+              onClick={() => setConfirmBox(true)}
             >
               <Trash2 className="size-4" />
             </Button>
@@ -122,7 +138,7 @@ export function BoxDetails({
         </div>
         <h2 className="mt-4 text-2xl font-extrabold">{box.title}</h2>
       </div>
-      <section className="mt-6 rounded-[8px] bg-[#EDF1E8] p-4">
+      <section className="mt-6 rounded-[10px] bg-[#EDF1E8] p-4">
         <p className="text-xs font-bold text-[#42664D]">Статус коробки</p>
         <div className="mt-3 grid grid-cols-5 gap-1">
           {statuses.map((item, index) => (
@@ -145,50 +161,31 @@ export function BoxDetails({
           ))}
         </div>
       </section>
-      {box.fragile && (
-        <section className="mt-4 rounded-md bg-[#F9E8E2] p-4 text-sm text-[#713E33]">
-          <h3 className="font-extrabold">Памятка для хрупкого</h3>
-          <ul className="mt-2 grid gap-1">
-            {FRAGILE_BOX_TIPS.map((tip) => (
-              <li key={tip}>• {tip}</li>
-            ))}
-          </ul>
-        </section>
-      )}
       <section className="mt-6">
         <h3 className="font-extrabold">
           В коробке {contents.length}{" "}
           {plural(contents.length, ["вещь", "вещи", "вещей"])}
         </h3>
         <form
-          className="mt-3 grid gap-2 sm:grid-cols-[1fr_10rem_auto]"
+          className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]"
           noValidate
-          onSubmit={addItemForm.handleSubmit(({ name, sourceRoom }) => {
+          onSubmit={addItemForm.handleSubmit(({ name }) => {
             updateProject((current) => ({
               ...current,
-              lastSourceRoom: sourceRoom,
-              boxes: current.boxes.map((entry) =>
-                entry.id === box.id && !entry.sourceRooms.includes(sourceRoom)
-                  ? {
-                      ...entry,
-                      sourceRooms: [...entry.sourceRooms, sourceRoom],
-                    }
-                  : entry,
-              ),
               items: [
                 ...current.items,
                 {
                   id: uid("item"),
                   name: name.trim(),
                   state: "IN_BOX",
-                  sourceRoom,
+                  sourceRoom: box.room,
                   boxId: box.id,
                   quantity: 1,
                   priority: "NORMAL",
                 },
               ],
             }));
-            addItemForm.reset({ name: "", sourceRoom });
+            addItemForm.reset({ name: "" });
           })}
         >
           <TextInput
@@ -200,43 +197,7 @@ export function BoxDetails({
               addItemForm.formState.errors.name ? "box-item-error" : undefined
             }
           />
-          {addItemForm.formState.errors.name && (
-            <p
-              id="box-item-error"
-              role="alert"
-              className="text-xs text-[#A84D3C] sm:col-span-full"
-            >
-              {addItemForm.formState.errors.name.message}
-            </p>
-          )}
-          <Controller
-            control={addItemForm.control}
-            name="sourceRoom"
-            render={({ field }) => (
-              <Select
-                value={field.value}
-                onValueChange={field.onChange}
-                items={project.sourceRooms.map((room) => ({
-                  label: room,
-                  value: room,
-                }))}
-              >
-                <SelectTrigger
-                  aria-label="Комната, откуда вещь"
-                  onBlur={field.onBlur}
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {project.sourceRooms.map((room) => (
-                    <SelectItem key={room} value={room}>
-                      {room}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
+          <FormError errors={addItemForm.formState.errors} />
           <Button type="submit" variant="outline">
             <Plus />
             Добавить
@@ -292,15 +253,7 @@ export function BoxDetails({
                   variant="ghost"
                   size="icon-sm"
                   aria-label={`Удалить ${item.name}`}
-                  onClick={() => {
-                    if (window.confirm(`Удалить вещь «${item.name}»?`))
-                      updateProject((current) => ({
-                        ...current,
-                        items: current.items.filter(
-                          (entry) => entry.id !== item.id,
-                        ),
-                      }));
-                  }}
+                  onClick={() => setRemovingItem(item)}
                 >
                   <Trash2 className="size-4" />
                 </Button>
@@ -397,6 +350,28 @@ export function BoxDetails({
             </div>
           </form>
         </Modal>
+      )}
+      {confirmBox && onDelete && (
+        <ConfirmDialog
+          title={`Удалить коробку № ${box.number}?`}
+          description={`Вместе с ней удалятся ${contents.length} ${plural(contents.length, ["вещь", "вещи", "вещей"])}.`}
+          onClose={() => setConfirmBox(false)}
+          onConfirm={onDelete}
+        />
+      )}
+      {removingItem && (
+        <ConfirmDialog
+          title={`Удалить вещь «${removingItem.name}»?`}
+          onClose={() => setRemovingItem(null)}
+          onConfirm={() =>
+            updateProject((current) => ({
+              ...current,
+              items: current.items.filter(
+                (entry) => entry.id !== removingItem.id,
+              ),
+            }))
+          }
+        />
       )}
     </Modal>
   );

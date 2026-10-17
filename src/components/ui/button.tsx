@@ -1,17 +1,19 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { Spinner } from "./spinner";
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-[7px] bg-clip-padding text-xs font-bold whitespace-nowrap transition-[color,background-color,transform,opacity] duration-200 outline-none select-none focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#D96B4C] active:not-aria-[haspopup]:scale-[0.96] disabled:pointer-events-none disabled:opacity-50 aria-invalid:ring-3 aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-[7px] bg-clip-padding text-xs font-bold whitespace-nowrap transition-[color,background-color,transform,opacity,box-shadow] duration-200 outline-none select-none focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#D96B4C] active:not-aria-[haspopup]:scale-[0.96] disabled:pointer-events-none disabled:opacity-50 aria-invalid:ring-3 aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/80",
+        default:
+          "bg-primary text-primary-foreground shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:bg-primary/80 hover:shadow-[0_2px_4px_rgba(0,0,0,0.1)]",
         outline:
-          "bg-[#E8E2D5] hover:-translate-y-px hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
+          "bg-[#E8E2D5] shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:-translate-y-px hover:bg-muted hover:text-foreground hover:shadow-[0_2px_4px_rgba(0,0,0,0.08)] aria-expanded:bg-muted aria-expanded:text-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "bg-secondary text-secondary-foreground shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] hover:shadow-[0_2px_4px_rgba(0,0,0,0.08)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
           "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
         destructive:
@@ -39,19 +41,33 @@ const buttonVariants = cva(
   },
 );
 
+interface ButtonProps
+  extends ButtonPrimitive.Props,
+    VariantProps<typeof buttonVariants> {
+  loading?: boolean;
+}
+
 function Button({
   className,
   variant = "default",
   size = "default",
+  loading = false,
+  disabled,
+  children,
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonProps) {
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size }), className)}
+      disabled={disabled || loading}
       {...props}
-    />
+    >
+      {loading && <Spinner size="sm" className="text-current" />}
+      {children}
+    </ButtonPrimitive>
   );
 }
 
 export { Button, buttonVariants };
+export type { ButtonProps };

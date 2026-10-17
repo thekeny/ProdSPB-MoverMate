@@ -41,6 +41,11 @@ describe("createProjectLocalData", () => {
     expect(project.boxes).toEqual([]);
     expect(project.nextBoxNumber).toBe(1);
     expect(project.items).toEqual([]);
+    expect(project.tasks.map((task) => task.title)).toEqual([
+      "Уведомить управляющую компанию",
+      "Сфотографировать счётчики",
+      "Проверить доставку коробок",
+    ]);
     expect(project.sourceRooms.length).toBeGreaterThan(0);
     expect(project.destinationRooms.length).toBeGreaterThan(0);
   });

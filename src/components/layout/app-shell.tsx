@@ -6,6 +6,7 @@ import { AccountSettingsModal } from "@/components/layout/account-settings-modal
 import { MobileHeader } from "@/components/layout/mobile-header";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { ProjectSettingsModal } from "@/components/layout/project-settings-modal";
+import { PushPrompt } from "@/components/layout/push-prompt";
 import { Sidebar } from "@/components/layout/sidebar";
 import {
   LEGACY_PROJECTS_STORAGE_PREFIX,
@@ -58,7 +59,7 @@ export function AppShell({
         onLogout={logout}
         onOpenAccountSettings={() => setAccountSettingsOpen(true)}
       />
-      <main className="mx-auto min-w-0 max-w-[1240px] px-5 pb-24 pt-6 lg:ml-72 lg:px-10 lg:py-10 xl:px-12">
+      <main className="mx-auto min-w-0 max-w-[1240px] px-6 pb-24 pt-6 sm:px-8 lg:ml-72 lg:px-10 lg:py-10 xl:px-12">
         <MobileHeader
           project={project}
           projects={projects}
@@ -68,6 +69,7 @@ export function AppShell({
           onLogout={logout}
           onOpenAccountSettings={() => setAccountSettingsOpen(true)}
         />
+        <PushPrompt />
         {children}
       </main>
       <MobileNav />

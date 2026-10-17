@@ -11,6 +11,7 @@ import { statuses } from "@/configs/consts/statuses.const";
 import { pages } from "@/configs/paths/pages.path";
 import { QUERY_PARAMS } from "@/configs/paths/query.path";
 import type { Status } from "@/configs/types/box.type";
+import { useDebounce } from "@/lib/use-debounce";
 import { useProjects } from "@/providers/projects-provider";
 
 export default function BoxesPage() {
@@ -18,6 +19,7 @@ export default function BoxesPage() {
   const searchParams = useSearchParams();
   const { project, addBox, updateProject } = useProjects();
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [roomFilter, setRoomFilter] = useState<string>("all");
   const [selectedBox, setSelectedBox] = useState<string | null>(
     searchParams.get(QUERY_PARAMS.BOX_ID),
@@ -45,7 +47,7 @@ export default function BoxesPage() {
   if (!project) return null;
   const currentProject = project;
   const queryWords =
-    search.toLocaleLowerCase("ru").match(/[\p{L}\p{N}]+/gu) ?? [];
+    debouncedSearch.toLocaleLowerCase("ru").match(/[\p{L}\p{N}]+/gu) ?? [];
   const startsWithQuery = (value: string) => {
     const words = value.toLocaleLowerCase("ru").match(/[\p{L}\p{N}]+/gu) ?? [];
     return queryWords.every((queryWord) =>
@@ -61,7 +63,7 @@ export default function BoxesPage() {
           ? "Нужно упаковать"
           : "В коробке";
   const itemResults =
-    search.trim() && queryWords.length
+    debouncedSearch.trim() && queryWords.length
       ? currentProject.items.filter((item) => {
           if (item.boxId) {
             const box = currentProject.boxes.find(
@@ -92,10 +94,10 @@ export default function BoxesPage() {
   const boxes = currentProject.boxes.filter(
     (box) =>
       (roomFilter === "all" || box.room === roomFilter) &&
-      (!search.trim() ||
+      (!debouncedSearch.trim() ||
         (queryWords.length === 1 &&
-          /^\d+$/.test(search.trim()) &&
-          box.number === Number(search.trim())) ||
+          /^\d+$/.test(debouncedSearch.trim()) &&
+          box.number === Number(debouncedSearch.trim())) ||
         (queryWords.length > 0 &&
           startsWithQuery(
             `${box.title} ${box.room} ${currentProject.items

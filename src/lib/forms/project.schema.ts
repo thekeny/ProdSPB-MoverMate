@@ -144,7 +144,6 @@ export const roomItemSchema = z.object({
   name: z.string().trim().min(1, "Введите название вещи."),
   sourceRoom: z.string().min(1, "Выберите исходную комнату."),
 });
-
 export const boxEditSchema = boxSchema.pick({
   title: true,
   room: true,

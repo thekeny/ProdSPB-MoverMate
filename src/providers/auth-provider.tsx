@@ -23,6 +23,7 @@ import {
 import { QUERY_KEYS } from "@/configs/consts/api.const";
 import type { Account } from "@/configs/types/account.type";
 import type { AuthMode } from "@/configs/types/auth.type";
+import { disablePush } from "@/lib/push";
 
 type AuthContextValue = {
   ready: boolean;
@@ -102,6 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     const refreshToken = getRefreshToken();
+    await disablePush();
     clearSession();
     queryClient.clear();
     if (refreshToken)
@@ -135,12 +137,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       }),
     );
+    await disablePush();
     clearSession();
     queryClient.clear();
   };
 
   const deleteAccount = async () => {
     await unwrap(deleteMeApiV1UsersMeDelete());
+    await disablePush();
     clearSession();
     queryClient.clear();
   };

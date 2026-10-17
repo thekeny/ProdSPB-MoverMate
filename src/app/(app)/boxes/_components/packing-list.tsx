@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { ItemScanModal } from "@/app/(app)/boxes/_components/item-scan-modal";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Select,
   SelectContent,
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { TextInput } from "@/components/ui/text-input";
 import { ITEM_PRIORITY_OPTIONS } from "@/configs/consts/item-priorities.const";
+import type { Item } from "@/configs/types/box.type";
 import type { Project } from "@/configs/types/project.type";
 import {
   type PackingItemFormValues,
@@ -27,6 +29,7 @@ export function PackingList({
   project: Project;
   updateProject: (apply: (project: Project) => Project) => void;
 }) {
+  const [removing, setRemoving] = useState<Item | null>(null);
   const [scanOpen, setScanOpen] = useState(false);
   const {
     register,
@@ -262,15 +265,7 @@ export function PackingList({
                 variant="ghost"
                 size="icon-sm"
                 aria-label={`Удалить ${item.name}`}
-                onClick={() => {
-                  if (window.confirm(`Удалить вещь «${item.name}»?`))
-                    updateProject((current) => ({
-                      ...current,
-                      items: current.items.filter(
-                        (entry) => entry.id !== item.id,
-                      ),
-                    }));
-                }}
+                onClick={() => setRemoving(item)}
               >
                 <Trash2 className="size-4" />
               </Button>
@@ -280,6 +275,18 @@ export function PackingList({
           <p className="text-sm text-[#68716C]">Вещей для упаковки пока нет.</p>
         )}
       </div>
+      {removing && (
+        <ConfirmDialog
+          title={`Удалить вещь «${removing.name}»?`}
+          onClose={() => setRemoving(null)}
+          onConfirm={() =>
+            updateProject((current) => ({
+              ...current,
+              items: current.items.filter((entry) => entry.id !== removing.id),
+            }))
+          }
+        />
+      )}
     </section>
   );
 }

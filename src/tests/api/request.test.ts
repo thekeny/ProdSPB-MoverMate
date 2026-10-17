@@ -10,6 +10,25 @@ describe("unwrap", () => {
     expect(data).toEqual({ id: 1 });
   });
 
+  it("разворачивает ошибку, которую бэкенд отдаёт массивом", async () => {
+    const error = (await unwrap(
+      Promise.resolve({
+        error: [
+          {
+            error: {
+              code: "username_taken",
+              message: "taken",
+              details: [],
+            },
+          },
+        ],
+        response: new Response("{}", { status: 409 }),
+      }),
+    ).catch((reason: unknown) => reason)) as ApiError;
+    expect(error.code).toBe("username_taken");
+    expect(apiErrorMessage(error)).toBe("Это имя уже занято.");
+  });
+
   it("превращает ошибку бэкенда в ApiError с кодом и полями", async () => {
     const error = (await unwrap(
       Promise.resolve({

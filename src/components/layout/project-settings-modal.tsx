@@ -6,6 +6,7 @@ import { z } from "zod";
 import { ApiError } from "@/api/request";
 import { Button } from "@/components/ui/button";
 import { ChipInput } from "@/components/ui/chip-input";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Field } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import {
@@ -59,6 +60,8 @@ export function ProjectSettingsModal({
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [memberRequestPending, setMemberRequestPending] = useState(false);
   const [deletePending, setDeletePending] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [roomNotice, setRoomNotice] = useState<string | null>(null);
   const projectForm = useForm<ProjectSettingsFormValues>({
     resolver: zodResolver(projectSettingsSchema),
     mode: "onBlur",
@@ -242,15 +245,16 @@ export function ProjectSettingsModal({
                             )
                           : project.boxes.some((box) => box.room === room);
                       if (inUse) {
-                        window.alert(
+                        setRoomNotice(
                           "Комната используется коробками или вещами. Сначала переместите их.",
                         );
                         return;
                       }
                       if (project[kind].length <= 1) {
-                        window.alert("Оставьте хотя бы одну комнату.");
+                        setRoomNotice("Оставьте хотя бы одну комнату.");
                         return;
                       }
+                      setRoomNotice(null);
                       onUpdateProject((current) => ({
                         ...current,
                         [kind]: current[kind].filter((name) => name !== room),
@@ -469,26 +473,35 @@ export function ProjectSettingsModal({
           <Button
             variant="destructive"
             className="mt-3"
-            onClick={() => {
-              if (deletePending) return;
-              if (
-                !window.confirm(
-                  `Удалить проект «${project.name}» без возможности восстановления?`,
-                )
-              )
-                return;
-              setDeleteError(null);
-              setDeletePending(true);
-              void onDelete()
-                .catch((error) => setDeleteError(apiErrorMessage(error)))
-                .finally(() => setDeletePending(false));
-            }}
+            onClick={() => setConfirmDelete(true)}
             disabled={deletePending}
           >
             <Trash2 />
             Удалить проект
           </Button>
         </div>
+      )}
+      {roomNotice && (
+        <p
+          role="alert"
+          className="mt-4 rounded-md bg-[#F9E8E2] p-3 text-sm text-[#A84D3C]"
+        >
+          {roomNotice}
+        </p>
+      )}
+      {confirmDelete && (
+        <ConfirmDialog
+          title={`Удалить проект «${project.name}»?`}
+          description="Восстановить проект будет нельзя."
+          onClose={() => setConfirmDelete(false)}
+          onConfirm={() => {
+            setDeleteError(null);
+            setDeletePending(true);
+            void onDelete()
+              .catch((error) => setDeleteError(apiErrorMessage(error)))
+              .finally(() => setDeletePending(false));
+          }}
+        />
       )}
     </Modal>
   );

@@ -24,6 +24,13 @@ type Result<T> = {
   response?: Response;
 };
 
+function asErrorBody(error: unknown): Partial<ErrorResponse> | undefined {
+  if (!error || typeof error !== "object") return undefined;
+  const body = Array.isArray(error) ? error[0] : error;
+  if (!body || typeof body !== "object") return undefined;
+  return body as Partial<ErrorResponse>;
+}
+
 export async function unwrap<T>(request: Promise<Result<T>>): Promise<T> {
   let result: Result<T>;
   try {
@@ -33,9 +40,6 @@ export async function unwrap<T>(request: Promise<Result<T>>): Promise<T> {
   }
   const { data, error, response } = result;
   if (error !== undefined || !response?.ok)
-    throw new ApiError(
-      response?.status ?? 0,
-      typeof error === "object" ? (error as Partial<ErrorResponse>) : undefined,
-    );
+    throw new ApiError(response?.status ?? 0, asErrorBody(error));
   return data as T;
 }

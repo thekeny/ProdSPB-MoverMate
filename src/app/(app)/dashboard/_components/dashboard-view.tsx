@@ -1,13 +1,11 @@
 import {
   ArrowRight,
   Box,
-  CalendarClock,
   CheckCircle2,
   CircleAlert,
   PackageCheck,
   Plus,
   Search,
-  Truck,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -72,19 +70,12 @@ export function DashboardView({
       <section className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
         <div className="relative overflow-hidden rounded-[24px] bg-[#1D2923] p-6 text-[#F4F1E9] sm:p-8">
           <div className="relative z-10 max-w-lg">
-            <div className="flex items-center gap-2 text-sm text-[#C8D5C8]">
-              <CalendarClock className="size-4" />
-              <span>
-                До переезда{" "}
-                {daysLeft === 1
-                  ? "остался 1 день"
-                  : `осталось ${daysLeft} ${plural(daysLeft, ["день", "дня", "дней"])}`}
-              </span>
-            </div>
-            <p className="tnum mt-8 text-6xl font-extrabold tracking-[-0.08em] sm:text-7xl">
+            <p className="tnum text-6xl font-extrabold tracking-[-0.08em] sm:text-7xl">
               {daysLeft}
             </p>
-            <p className="mt-1 text-sm text-[#C8D5C8]">дней на подготовку</p>
+            <p className="mt-1 text-sm text-[#C8D5C8]">
+              {plural(daysLeft, ["день", "дня", "дней"])} до переезда
+            </p>
             <div className="mt-8 flex flex-wrap gap-2">
               <Button
                 variant="secondary"
@@ -222,62 +213,6 @@ export function DashboardView({
             </p>
           </div>
         ))}
-      </section>
-
-      <section className="mt-5 grid gap-5 lg:grid-cols-[1fr_0.8fr]">
-        <div className="rounded-lg bg-white p-6">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-extrabold tracking-[0.1em] text-[#42664D] uppercase">
-                Коробки
-              </p>
-              <h2 className="mt-2 text-2xl font-extrabold tracking-[-0.05em]">
-                Готовность к переезду
-              </h2>
-            </div>
-            <Truck className="size-6 text-[#42664D]" />
-          </div>
-          <div className="mt-6 h-3 overflow-hidden rounded-full bg-[#E8E2D5]">
-            <div
-              className="h-full rounded-full bg-[#42664D] transition-[width] duration-500"
-              style={{
-                width: `${project.boxes.length ? (packedBoxes / project.boxes.length) * 100 : 0}%`,
-              }}
-            />
-          </div>
-          <div className="tnum mt-3 flex justify-between text-xs font-bold text-[#68716C]">
-            <span>
-              {packedBoxes}{" "}
-              {plural(packedBoxes, ["коробка", "коробки", "коробок"])} готовы
-            </span>
-            <span>
-              {project.boxes.length
-                ? Math.round((packedBoxes / project.boxes.length) * 100)
-                : 0}
-              %
-            </span>
-          </div>
-        </div>
-        <Button
-          variant="ghost"
-          onClick={() => router.push(pages.PROGRESS)}
-          className="group h-auto cursor-pointer justify-start rounded-lg bg-[#F3E7C8] p-6 text-left whitespace-normal transition-colors duration-200 hover:bg-[#EBDDBB]"
-        >
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-extrabold tracking-[0.1em] text-[#77602B] uppercase">
-                Комнаты
-              </p>
-              <h2 className="mt-2 text-2xl font-extrabold tracking-[-0.05em]">
-                Что уже распаковано
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-[#77602B]">
-                Следите за распаковкой коробок в каждой комнате.
-              </p>
-            </div>
-            <ArrowRight className="size-5 shrink-0 text-[#77602B] transition-transform group-hover:translate-x-1" />
-          </div>
-        </Button>
       </section>
     </>
   );

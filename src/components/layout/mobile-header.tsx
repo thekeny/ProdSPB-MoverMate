@@ -1,7 +1,7 @@
 "use client";
 
 import { LogOut, Settings } from "lucide-react";
-import { Logo } from "@/components/layout/logo";
+import { AppLogo } from "@/components/layout/logo";
 import { ProjectSwitcher } from "@/components/layout/project-switcher";
 import { Button } from "@/components/ui/button";
 import type { Project } from "@/configs/types/project.type";
@@ -25,7 +25,7 @@ export function MobileHeader({
 }) {
   return (
     <header className="no-print mb-8 flex items-center justify-between lg:hidden">
-      <Logo small />
+      <AppLogo small />
       <div className="flex items-center gap-1">
         <ProjectSwitcher
           compact

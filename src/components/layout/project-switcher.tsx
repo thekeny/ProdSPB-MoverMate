@@ -29,7 +29,6 @@ export function ProjectSwitcher({
   compact?: boolean;
 }) {
   const sidebarMenuContainerRef = useRef<HTMLDivElement>(null);
-
   const menuPositioner = (
     <DropdownMenuPositioner
       className={cn(!compact && "static! mt-2 w-full transform-none!")}
@@ -92,18 +91,20 @@ export function ProjectSwitcher({
       <DropdownMenuTrigger
         aria-label="Переключить проект"
         className={cn(
-          "group mt-8 flex w-full items-center gap-3 rounded-lg bg-[#EDF1E8] p-4 text-left transition-colors duration-200 hover:bg-[#E2E9DD] focus-visible:ring-3 focus-visible:ring-[#42664D]/30",
-          compact && "mt-0 w-auto p-2.5",
+          "group mt-8 flex w-full items-center gap-3 rounded-lg bg-[#EDF1E8] px-4 py-3 text-left transition-colors duration-200 hover:bg-[#E2E9DD] focus-visible:ring-3 focus-visible:ring-[#42664D]/30",
+          compact && "mt-0 max-w-44 px-3 py-2",
         )}
       >
-        <span className={cn("min-w-0 flex-1", compact && "hidden sm:block")}>
-          <span className="block text-[10px] font-extrabold tracking-[0.12em] text-[#42664D] uppercase">
-            Текущий проект
-          </span>
-          <span className="mt-1 block truncate text-sm font-bold">
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-bold">
             {project.name}
           </span>
-          <span className="tnum mt-1 block text-xs text-[#68716C]">
+          <span
+            className={cn(
+              "tnum mt-0.5 block text-xs text-[#68716C]",
+              compact && "hidden sm:block",
+            )}
+          >
             {formatDate(project.date)}
           </span>
         </span>

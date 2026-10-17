@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { type ReactNode, useEffect, useId } from "react";
 import { Button } from "@/components/ui/button";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import { cn } from "@/lib/utils";
 
 export function Modal({
@@ -15,6 +16,7 @@ export function Modal({
   label?: string;
 }) {
   const titleId = useId();
+  const dialogRef = useFocusTrap<HTMLDivElement>();
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -35,6 +37,7 @@ export function Modal({
         onClick={() => onClose?.()}
       />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={label ? titleId : undefined}

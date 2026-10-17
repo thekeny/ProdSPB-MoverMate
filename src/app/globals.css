@@ -23,12 +23,27 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-terra-ink: var(--terra-ink);
+  --color-terra-moss: var(--terra-moss);
+  --color-terra-sand: var(--terra-sand);
+  --color-terra-paper: var(--terra-paper);
+  --color-terra-coral: var(--terra-coral);
+  --color-terra-muted: var(--terra-muted);
+  --color-terra-line: var(--terra-line);
+  --color-terra-pale-green: var(--terra-pale-green);
+  --color-terra-pale-green-hover: var(--terra-pale-green-hover);
+  --color-terra-warm-white: var(--terra-warm-white);
+  --color-terra-success: var(--terra-success);
+  --color-terra-error: var(--terra-error);
+  --color-terra-warning-bg: var(--terra-warning-bg);
+  --color-terra-warning-text: var(--terra-warning-text);
   --font-sans: var(--font-sans);
   --font-serif: Georgia, serif;
   --radius-sm: 0.4375rem;
   --radius-md: 0.625rem;
   --radius-lg: 1rem;
   --radius-xl: 1.5rem;
+  --font-size-base: 15px;
 }
 
 :root {
@@ -43,7 +58,7 @@
   --secondary: #e2e9dd;
   --secondary-foreground: #1d2923;
   --muted: #edf1e8;
-  --muted-foreground: #68716c;
+  --muted-foreground: #4e5752;
   --accent: #e8e2d5;
   --accent-foreground: #1d2923;
   --destructive: #a84d3c;
@@ -55,14 +70,53 @@
   --terra-sand: #e8e2d5;
   --terra-paper: #f5f3ee;
   --terra-coral: #d96b4c;
-  --terra-muted: #68716c;
+  --terra-muted: #4e5752;
+  --terra-line: #cfcabd;
+  --terra-pale-green: #edf1e8;
+  --terra-pale-green-hover: #e2e9dd;
+  --terra-warm-white: #f4f1e9;
+  --terra-success: #3d6b4c;
+  --terra-error: #a84d3c;
+  --terra-warning-bg: #f3e7c8;
+  --terra-warning-text: #77602b;
 }
 
 @layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #cfcabd transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: #cfcabd;
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: #9ba69f;
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
   html {
     @apply font-sans;
     -webkit-font-smoothing: antialiased;
     scroll-behavior: smooth;
+    scrollbar-gutter: stable;
   }
 
   body {
@@ -70,6 +124,7 @@
     min-width: 320px;
     overflow-x: hidden;
     text-rendering: optimizeLegibility;
+    font-size: 15px;
   }
 
   h1,

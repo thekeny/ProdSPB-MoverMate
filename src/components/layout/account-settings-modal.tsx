@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { ApiError } from "@/api/request";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Field } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { TextInput } from "@/components/ui/text-input";
@@ -33,6 +34,7 @@ export function AccountSettingsModal({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const usernameForm = useForm<{ username: string }>({
     resolver: zodResolver(usernameFormSchema),
     mode: "onBlur",
@@ -192,29 +194,30 @@ export function AccountSettingsModal({
           variant="destructive"
           className="mt-3"
           disabled={pending}
-          onClick={async () => {
-            if (
-              !window.confirm("Удалить аккаунт? Это действие нельзя отменить.")
-            )
-              return;
-            setError(null);
-            setPending(true);
-            try {
-              await onDeleteAccount();
-            } catch (cause) {
-              const status = (cause as { status?: number })?.status;
-              setError(
-                status === 409
-                  ? "Сначала удалите свои проекты, затем повторите удаление аккаунта."
-                  : apiErrorMessage(cause),
-              );
-              setPending(false);
-            }
-          }}
+          onClick={() => setConfirmDelete(true)}
         >
           Удалить аккаунт
         </Button>
       </div>
+      {confirmDelete && (
+        <ConfirmDialog
+          title="Удалить аккаунт?"
+          description="Это действие нельзя отменить."
+          onClose={() => setConfirmDelete(false)}
+          onConfirm={() => {
+            setError(null);
+            setPending(true);
+            void onDeleteAccount().catch((cause) => {
+              setError(
+                cause instanceof ApiError && cause.status === 409
+                  ? "Сначала удалите свои проекты, затем повторите удаление аккаунта."
+                  : apiErrorMessage(cause),
+              );
+              setPending(false);
+            });
+          }}
+        />
+      )}
     </Modal>
   );
 }
