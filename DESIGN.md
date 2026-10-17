@@ -87,21 +87,21 @@ Large sans-serif headings use tight line height (`.96–1.03`) and negative lett
 - Cards: **16 px**.
 - Large feature surfaces: **24 px**.
 - Pills and fully rounded controls: `100px` or `50%`.
-- White cards use **25 px** padding. Large Terra feature surfaces may use a soft shadow such as `0 16px 30px rgba(44, 54, 45, .11)`. Signal surfaces should remain flatter and avoid decorative shadows.
+- White cards use **25 px** padding. Do not use drop shadows or visible container borders. Create hierarchy with tonal surfaces, spacing, rounded corners, typography, and subtle background changes instead.
 
 ## Components
 
 ### Buttons
 
 - **Primary:** `ink` fill, white text, Manrope 700 at 12 px, 7 px radius, 13 px vertical and 15 px horizontal padding. Use for the single most important action on a screen.
-- **Secondary:** transparent fill, `#9BA69F` border, `ink` text, matching size and radius. It should not compete with the primary action.
+- **Secondary:** `sand` or pale green fill, `ink` text, matching size and radius. It should not compete with the primary action.
 - **Text button:** no fill or radius; use an `ink` underline.
 - **Icon button:** 38 × 38 px, circular, coral fill, white icon.
 - Use concise, verb-led action labels.
 
 ### Fields and statuses
 
-- Fields are **43 px** high, with a **7 px** radius, `#9BA69F` border, and **12 px** horizontal padding.
+- Fields are **43 px** high, with a **7 px** radius, a pale green surface, and **12 px** horizontal padding. Use the focus outline for affordance instead of a persistent border.
 - Field labels use **11 px**, weight **700**, with **6 px** between the label and field.
 - Show success and error with both color and a text or icon indicator; never rely on color alone.
 - Focused fields use a soft green outline: `3px solid rgba(66, 102, 77, .3)` with a 2 px offset.
@@ -119,6 +119,7 @@ Large sans-serif headings use tight line height (`.96–1.03`) and negative lett
 - At **430 px**, reduce heading sizes further and simplify dense demo navigation and Signal grids.
 - Preserve content order and readability when layouts reflow; do not depend on desktop-only horizontal space.
 - All interactive elements need a visible `:focus-visible` state: a 3 px `coral` outline with a 3 px offset.
+- Interactive elements must have a short, purposeful hover and press transition. Prefer tonal color changes, small `translate-y` movement, or a slight scale change; do not use shadows or borders as hover feedback.
 - Respect `prefers-reduced-motion`: disable smooth scrolling and transitions when the user requests reduced motion.
 
 ## Interface Voice
@@ -131,3 +132,4 @@ Write in plain, specific language. Prefer short, verb-led phrases and show the r
 - Continue using **shadcn/ui** components for accessible interface primitives. Customize their variants and tokens to match this design system instead of replacing the system’s visual direction with shadcn defaults.
 - Preserve the color, typography, spacing, radius, responsive, and accessibility rules above when composing or adapting Tailwind and shadcn/ui components.
 - Keep repeated design values centralized as reusable theme tokens or CSS variables rather than scattering inconsistent one-off values through the interface.
+- Do not introduce shadows or visible borders in new UI. Use shadcn/ui primitives for menus, lists, dialogs, and other accessible controls, customized to these no-border, no-shadow rules.

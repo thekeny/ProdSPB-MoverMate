@@ -43,3 +43,11 @@ next-env.d.ts
 # ci
 /.npm
 /code-quality-report.json
+
+template.html
+
+# IDE
+.idea/
+
+# Documentation
+BACKEND_INTEGRATION.md

@@ -25,3 +25,11 @@
 - Keep `src/configs/` as the single source of truth for URLs, route paths, and static constants.
 - Update this `AGENTS.md` file whenever adding architectural decisions, new tooling, or project conventions.
 - Create design with rules from `DESIGN.md`
+
+## Skills
+- Use `ui-ux-pro-max` for UI/UX direction, design-system choices, responsive behavior, accessibility, and UX review.
+- Use `frontend-design` when building or redesigning production frontend pages, flows, or components.
+- Use `design-taste-frontend` when a page needs a distinctive visual concept, especially landing pages and portfolios.
+- Use `make-interfaces-feel-better` to review and polish interaction details, typography, spacing, motion, and visual finish.
+- Use `browser-automation` for browser-based navigation, interaction, and verification workflows.
+- Use `diagnosing-bugs` for hard, intermittent, or unclear bugs; establish a reproducible feedback loop before changing code.
