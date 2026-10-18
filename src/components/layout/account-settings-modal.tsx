@@ -55,10 +55,37 @@ export function AccountSettingsModal({
       confirmPassword: "",
     },
   });
+  const hasUnsavedChanges =
+    usernameForm.formState.isDirty || passwordForm.formState.isDirty;
+  const closeModal = hasUnsavedChanges || pending ? undefined : onClose;
+  const discardChangesAndClose = () => {
+    usernameForm.reset();
+    passwordForm.reset();
+    onClose();
+  };
 
   return (
-    <Modal className="max-w-xl" label="Настройки аккаунта" onClose={onClose}>
+    <Modal className="max-w-xl" label="Настройки аккаунта" onClose={closeModal}>
       <h2 className="text-2xl font-extrabold">Аккаунт</h2>
+      {hasUnsavedChanges && (
+        <output
+          aria-live="polite"
+          className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-[#F4F1E9] p-3"
+        >
+          <p className="text-sm text-[#1D2923]">
+            Есть несохранённые изменения. Сохраните их или отмените, чтобы
+            закрыть настройки.
+          </p>
+          <Button
+            variant="ghost"
+            disabled={pending}
+            onClick={discardChangesAndClose}
+            className="text-[#42664D]"
+          >
+            Отменить изменения
+          </Button>
+        </output>
+      )}
       <form
         className="mt-5 grid gap-3"
         noValidate
@@ -69,6 +96,9 @@ export function AccountSettingsModal({
             setPending(true);
             try {
               await onChangeUsername(nextUsername);
+              usernameForm.reset({
+                username: nextUsername.trim().toLowerCase(),
+              });
               setNotice("Имя пользователя обновлено.");
             } catch (cause) {
               const fieldError =

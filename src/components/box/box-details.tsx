@@ -78,10 +78,6 @@ export function BoxDetails({
     (item) => item.boxId === box.id && item.state === "IN_BOX",
   );
   const currentIndex = statuses.findIndex((item) => item.key === box.status);
-  const availableStatuses = statuses
-    .filter((_, index) => Math.abs(currentIndex - index) === 1)
-    .map((item) => item.label)
-    .join(" или ");
   const updateBox = (apply: (box: MoveBox) => MoveBox) =>
     updateProject((current) => ({
       ...current,
@@ -160,7 +156,7 @@ export function BoxDetails({
       </div>
       <section className="mt-6 rounded-[10px] bg-[#EDF1E8] p-4">
         <p className="text-xs font-bold text-[#42664D]">Статус коробки</p>
-        <div className="mt-3 grid grid-cols-5 gap-1">
+        <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-5">
           {statuses.map((item, index) => (
             <Button
               variant="ghost"
@@ -184,7 +180,7 @@ export function BoxDetails({
                 }
               }}
               className={cn(
-                "h-auto min-w-0 rounded-md px-1 py-2.5 text-[9px] font-extrabold whitespace-normal sm:text-[10px]",
+                "h-auto min-h-11 min-w-0 rounded-md px-2 py-2.5 text-[10px] leading-tight font-extrabold whitespace-normal",
                 item.key === box.status
                   ? "bg-[#1D2923] text-[#F4F1E9]"
                   : "bg-white text-[#42664D]",
@@ -194,11 +190,6 @@ export function BoxDetails({
             </Button>
           ))}
         </div>
-        {pendingStatus === null && (
-          <p className="mt-2 text-xs text-[#5C6560]">
-            Статус меняется по одному шагу. Сейчас доступны: {availableStatuses}
-          </p>
-        )}
       </section>
       <BoxContentsReminder
         key={box.id}

@@ -5,7 +5,15 @@ import { Logo } from "@/components/layout/logo";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { FormError } from "@/components/ui/form-error";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { TextInput } from "@/components/ui/text-input";
+import { TEST_USERS } from "@/configs/consts/test-users.const";
 import type { AuthMode } from "@/configs/types/auth.type";
 import { type AuthFormValues, authFormSchema } from "@/lib/forms/auth.schema";
 import { cn } from "@/lib/utils";
@@ -16,16 +24,19 @@ export function AuthScreen({
   onSubmit,
   pending,
   error,
+  testPassword,
 }: {
   mode: AuthMode;
   setMode: (mode: AuthMode) => void;
   onSubmit: (values: AuthFormValues) => void;
   pending: boolean;
   error: string | null;
+  testPassword?: string;
 }) {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<AuthFormValues>({
     resolver: zodResolver(authFormSchema),
@@ -67,6 +78,30 @@ export function AuthScreen({
           noValidate
           className="mt-6 grid gap-4"
         >
+          {mode === "login" && testPassword && (
+            <Field label="Тестовый аккаунт">
+              <Select
+                onValueChange={(username) => {
+                  if (typeof username !== "string") return;
+                  setValue("username", username, { shouldValidate: true });
+                  setValue("password", testPassword, {
+                    shouldValidate: true,
+                  });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Выберите аккаунт" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TEST_USERS.map((username) => (
+                    <SelectItem key={username} value={username}>
+                      {username}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+          )}
           <Field label="Имя пользователя" error={errors.username?.message}>
             <TextInput
               {...register("username")}

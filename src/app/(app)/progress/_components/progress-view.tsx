@@ -172,13 +172,13 @@ export function ProgressView({
               return (
                 <div
                   key={name}
-                  className="flex items-center gap-3 rounded-md bg-[#F5F3EE] p-3"
+                  className="grid grid-cols-[16px_minmax(0,1fr)] items-center gap-x-3 gap-y-1 rounded-md bg-[#F5F3EE] p-3"
                 >
-                  <Icon className="size-4 text-[#42664D]" />
-                  <span className="min-w-0 flex-1 text-xs font-bold">
+                  <Icon className="size-4 shrink-0 text-[#42664D]" />
+                  <span className="min-w-0 text-xs font-bold">
                     <span className="[overflow-wrap:anywhere]">{name}</span>
                   </span>
-                  <span className="tnum text-xs text-[#5C6560]">
+                  <span className="tnum col-start-2 min-w-0 text-xs text-[#5C6560]">
                     {entry.is_loaded
                       ? "Погружено"
                       : `Погружено ${loaded} из ${boxes.length}${entry.to_pack_count ? ` · осталось упаковать ${entry.to_pack_count}` : ""}`}

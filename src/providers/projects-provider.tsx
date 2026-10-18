@@ -86,6 +86,7 @@ import {
   getBrowserTimeZone,
   parseRoomList,
 } from "@/lib/project";
+import { getRoomChanges } from "@/lib/project-rooms";
 import { parseStoredProjects } from "@/lib/project-storage";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -390,25 +391,23 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     ]);
   };
 
-  const syncProjectChanges = async (current: Project, updated: Project) => {
+  const syncProjectChanges = async (
+    current: Project,
+    updated: Project,
+    baseline: ProjectData,
+  ) => {
     const projectId = current.id;
     const roomKind: Record<"sourceRooms" | "destinationRooms", RoomKind> = {
       sourceRooms: "SOURCE",
       destinationRooms: "DESTINATION",
     };
-    const baseline = queryClient.getQueryData<ProjectData>(
-      QUERY_KEYS.PROJECT_DATA(projectId),
-    );
     const knownRooms = {
-      sourceRooms: baseline?.sourceRooms ?? current.sourceRooms,
-      destinationRooms: baseline?.destinationRooms ?? current.destinationRooms,
+      sourceRooms: baseline.sourceRooms,
+      destinationRooms: baseline.destinationRooms,
     };
     for (const kind of ["sourceRooms", "destinationRooms"] as const) {
-      const previous = new Set(
-        knownRooms[kind].map((name) => name.toLocaleLowerCase("ru")),
-      );
-      for (const name of updated[kind]) {
-        if (previous.has(name.toLocaleLowerCase("ru"))) continue;
+      const changes = getRoomChanges(knownRooms[kind], updated[kind]);
+      for (const name of changes.added) {
         const room = await unwrap(
           createRoomApi({
             path: { project_id: projectId },
@@ -447,23 +446,8 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
               : current,
         );
       }
-      const present = new Set(
-        (baseline?.[kind] ?? current[kind]).map((entry) =>
-          entry.toLocaleLowerCase("ru"),
-        ),
-      );
-      for (const name of present) {
-        if (updated[kind].some((next) => next.toLocaleLowerCase("ru") === name))
-          continue;
-        const roomName =
-          (baseline?.[kind] ?? current[kind]).find(
-            (entry) => entry.toLocaleLowerCase("ru") === name,
-          ) ?? name;
-        const roomId = findRoomId(
-          baseline?.rooms ?? current.rooms,
-          roomKind[kind],
-          roomName,
-        );
+      for (const roomName of changes.removed) {
+        const roomId = findRoomId(baseline.rooms, roomKind[kind], roomName);
         if (!roomId) continue;
         await unwrap(deleteRoomApi({ path: { room_id: roomId } }));
         updated.rooms = updated.rooms.filter((room) => room.id !== roomId);
@@ -826,7 +810,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         },
       }));
     try {
-      const save = syncProjectChanges(project, updated);
+      const save = syncProjectChanges(project, updated, previousData);
       if (changeLabel)
         await toast.promise(save, {
           loading: "Сохраняем изменения…",

@@ -2,20 +2,21 @@
 
 import { useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
-import { enablePush, pushSupported } from "@/lib/push";
+import { enablePush, pushSetupErrorMessage, pushSupported } from "@/lib/push";
 
 const subscribe = () => () => {};
 
 export function PushPrompt() {
   const [dismissed, setDismissed] = useState(false);
   const [pending, setPending] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [enabled, setEnabled] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const granted = useSyncExternalStore(
     subscribe,
     () => !pushSupported() || Notification.permission === "granted",
     () => true,
   );
-  if (granted || dismissed) return null;
+  if (granted || enabled || dismissed) return null;
   return (
     <div className="no-print mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-white p-4">
       <p className="text-sm">
@@ -29,19 +30,21 @@ export function PushPrompt() {
           disabled={pending}
           onClick={() => {
             setPending(true);
-            setFailed(false);
+            setError(null);
             void enablePush()
-              .then((enabled) => setFailed(!enabled))
-              .catch(() => setFailed(true))
+              .then(() => setEnabled(true))
+              .catch((reason: unknown) =>
+                setError(pushSetupErrorMessage(reason)),
+              )
               .finally(() => setPending(false));
           }}
         >
           Включить
         </Button>
       </div>
-      {failed && (
+      {error && (
         <p role="alert" className="basis-full text-xs font-bold text-[#A84D3C]">
-          Не удалось включить уведомления. Разрешите их в браузере и повторите.
+          {error}
         </p>
       )}
     </div>

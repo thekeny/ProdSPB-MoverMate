@@ -104,7 +104,7 @@ export function BoxesView({
               ref={searchRef}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="По началу слова: «зар» найдёт «зарядка»"
+              placeholder="Введите название..."
               aria-label="Поиск вещи"
               className="w-full px-10"
             />

@@ -7,6 +7,39 @@ import { unwrap } from "@/api/request";
 import { API } from "@/configs/consts/api.const";
 import { isConnected } from "@/lib/connectivity";
 
+type PushFailure =
+  | "unsupported"
+  | "permission"
+  | "service-worker"
+  | "browser-subscription"
+  | "server";
+
+export class PushSetupError extends Error {
+  constructor(readonly reason: PushFailure) {
+    super(reason);
+    this.name = "PushSetupError";
+  }
+}
+
+export function pushSetupErrorMessage(error: unknown) {
+  if (!(error instanceof PushSetupError))
+    return "Не удалось подключить уведомления. Попробуйте ещё раз.";
+  switch (error.reason) {
+    case "unsupported":
+      return "Этот браузер не поддерживает push-уведомления.";
+    case "permission":
+      return "Разрешите уведомления для этого сайта в настройках браузера.";
+    case "service-worker":
+      return "Не удалось запустить уведомления. Обновите страницу и попробуйте снова.";
+    case "browser-subscription":
+      return "Браузер не смог создать подписку. Проверьте настройки уведомлений сайта.";
+    case "server":
+      return isConnected()
+        ? "Не удалось сохранить подписку на сервере. Попробуйте позже."
+        : "Нет связи с сервером. Проверьте подключение и повторите попытку.";
+  }
+}
+
 function applicationServerKey(value: string) {
   const padded = value.replace(/-/g, "+").replace(/_/g, "/");
   const binary = atob(padded.padEnd(Math.ceil(padded.length / 4) * 4, "="));
@@ -31,8 +64,25 @@ export async function registerAppServiceWorker() {
 }
 
 async function registration() {
-  await registerAppServiceWorker();
-  return navigator.serviceWorker.ready;
+  try {
+    await registerAppServiceWorker();
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise<never>((_, reject) => {
+          timeout = setTimeout(
+            () => reject(new Error("service worker timeout")),
+            15_000,
+          );
+        }),
+      ]);
+    } finally {
+      if (timeout) clearTimeout(timeout);
+    }
+  } catch {
+    throw new PushSetupError("service-worker");
+  }
 }
 
 function sameKey(current: ArrayBuffer | null, expected: Uint8Array) {
@@ -44,7 +94,12 @@ function sameKey(current: ArrayBuffer | null, expected: Uint8Array) {
 export async function syncPushSubscription() {
   if (!pushSupported() || Notification.permission !== "granted") return;
   const worker = await registration();
-  const { public_key } = await unwrap(getVapidPublicKey());
+  let public_key: string;
+  try {
+    ({ public_key } = await unwrap(getVapidPublicKey()));
+  } catch {
+    throw new PushSetupError("server");
+  }
   const serverKey = applicationServerKey(public_key);
   let subscription = await worker.pushManager.getSubscription();
   // A subscription made for another server key (old deploy, recreated key)
@@ -57,28 +112,42 @@ export async function syncPushSubscription() {
     subscription = null;
   }
   if (!subscription) {
-    subscription = await worker.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: serverKey,
-    });
+    try {
+      subscription = await worker.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: serverKey,
+      });
+    } catch {
+      throw new PushSetupError("browser-subscription");
+    }
   }
   const json = subscription.toJSON();
-  if (!json.endpoint || !json.keys?.p256dh || !json.keys.auth) return;
-  await unwrap(
-    upsertPushSubscription({
-      body: {
-        endpoint: json.endpoint,
-        keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
-        expirationTime: json.expirationTime,
-      },
-    }),
-  );
+  if (!json.endpoint || !json.keys?.p256dh || !json.keys.auth)
+    throw new PushSetupError("browser-subscription");
+  try {
+    await unwrap(
+      upsertPushSubscription({
+        body: {
+          endpoint: json.endpoint,
+          keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
+          expirationTime: json.expirationTime,
+        },
+      }),
+    );
+  } catch {
+    throw new PushSetupError("server");
+  }
 }
 
 export async function enablePush() {
-  if (!pushSupported()) return false;
-  const permission = await Notification.requestPermission();
-  if (permission !== "granted") return false;
+  if (!pushSupported()) throw new PushSetupError("unsupported");
+  let permission: NotificationPermission;
+  try {
+    permission = await Notification.requestPermission();
+  } catch {
+    throw new PushSetupError("permission");
+  }
+  if (permission !== "granted") throw new PushSetupError("permission");
   await syncPushSubscription();
   return true;
 }

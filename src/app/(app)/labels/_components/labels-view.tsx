@@ -5,6 +5,7 @@ import { Qr } from "@/components/box/qr";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PageHeading } from "@/components/ui/page-heading";
+import { LIST_PAGE_SIZE } from "@/configs/consts/lists.const";
 import type { Project } from "@/configs/types/project.type";
 import { boxLink } from "@/lib/box-link";
 
@@ -47,6 +48,7 @@ export function LabelsView({
   useEffect(() => setOrigin(window.location.origin), []);
   const allSelected =
     boxes.length > 0 && boxes.every((box) => selected.includes(box.id));
+  const [limit, setLimit] = useState(LIST_PAGE_SIZE);
   return (
     <>
       <PageHeading
@@ -78,7 +80,7 @@ export function LabelsView({
       )}
       <section className="print-labels grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {boxes.length ? (
-          boxes.map((box) => {
+          boxes.slice(0, limit).map((box) => {
             const url = origin ? boxLink(box.qrToken) : "";
             return (
               <article
@@ -162,6 +164,16 @@ export function LabelsView({
           </div>
         )}
       </section>
+      {boxes.length > limit && (
+        <Button
+          className="no-print mt-4"
+          variant="outline"
+          onClick={() => setLimit((current) => current + LIST_PAGE_SIZE)}
+        >
+          Ещё этикетки · показано {Math.min(limit, boxes.length)} из{" "}
+          {boxes.length}
+        </Button>
+      )}
     </>
   );
 }

@@ -100,13 +100,6 @@ export function LandingPage() {
                 </li>
               ))}
             </ul>
-            <Link
-              href={pages.LOGIN}
-              className="landing-reveal landing-delay-5 mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-[7px] bg-[#1D2923] px-5 text-sm font-bold text-white transition-[background-color,transform] hover:-translate-y-px hover:bg-[#42664D] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#D96B4C]"
-            >
-              Попробовать MoverMate
-              <ArrowRight aria-hidden="true" className="size-4" />
-            </Link>
           </div>
         </div>
       </section>

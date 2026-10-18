@@ -89,6 +89,12 @@ export function ProjectSettingsModal({
     reValidateMode: "onChange",
     defaultValues: { name: "", kind: "sourceRooms" },
   });
+  const hasUnsavedChanges = projectForm.formState.isDirty;
+  const closeModal = hasUnsavedChanges ? undefined : onClose;
+  const discardChangesAndClose = () => {
+    projectForm.reset();
+    onClose();
+  };
   const memberForm = useForm<{ name: string }>({
     resolver: zodResolver(memberNameSchema),
     mode: "onBlur",
@@ -96,10 +102,28 @@ export function ProjectSettingsModal({
     defaultValues: { name: "" },
   });
   return (
-    <Modal className="max-w-4xl" label="Настройки проекта" onClose={onClose}>
+    <Modal className="max-w-4xl" label="Настройки проекта" onClose={closeModal}>
       <h2 className="text-2xl font-extrabold tracking-[-0.04em]">
         Настройки проекта
       </h2>
+      {hasUnsavedChanges && (
+        <output
+          aria-live="polite"
+          className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-[#F4F1E9] p-3"
+        >
+          <p className="text-sm text-[#1D2923]">
+            Есть несохранённые изменения. Сохраните их или отмените, чтобы
+            закрыть настройки.
+          </p>
+          <Button
+            variant="ghost"
+            onClick={discardChangesAndClose}
+            className="text-[#42664D]"
+          >
+            Отменить изменения
+          </Button>
+        </output>
+      )}
       <form
         noValidate
         onSubmit={projectForm.handleSubmit(async (values) => {
@@ -211,7 +235,11 @@ export function ProjectSettingsModal({
           </p>
         )}
         <div className="mt-2 flex justify-end gap-2">
-          <Button variant="ghost" onClick={onClose}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={discardChangesAndClose}
+          >
             Отмена
           </Button>
           <Button type="submit">Сохранить</Button>
