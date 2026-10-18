@@ -2,13 +2,6 @@ import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { FIRST_DAY_ITEMS } from "@/configs/consts/first-day.const";
 import { pages } from "@/configs/paths/pages.path";
 import { QUERY_PARAMS } from "@/configs/paths/query.path";
@@ -28,36 +21,12 @@ export function FirstDayChecklist({
     (item) => item.priority === "FIRST_NECESSITY",
   );
   const [pending, setPending] = useState<string | null>(null);
-  const [room, setRoom] = useState(
-    project.lastSourceRoom || project.sourceRooms[0] || "",
-  );
+  const room = project.lastSourceRoom || project.sourceRooms[0] || "";
   return (
     <section className="mt-5 rounded-lg bg-white p-5">
       <h2 className="font-extrabold">Первый день</h2>
       {canEdit && (
         <div className="mt-3 flex flex-wrap gap-2">
-          <Select
-            value={room}
-            onValueChange={(value) => value && setRoom(value)}
-            items={project.sourceRooms.map((name) => ({
-              value: name,
-              label: name,
-            }))}
-          >
-            <SelectTrigger
-              className="w-full sm:w-auto"
-              aria-label="Исходная комната вещей первого дня"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {project.sourceRooms.map((name) => (
-                <SelectItem key={name} value={name}>
-                  {name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
           <Button
             variant="outline"
             disabled={!room || pending !== null}
