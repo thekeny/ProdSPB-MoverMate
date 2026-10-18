@@ -50,13 +50,18 @@ self.addEventListener("install", (event) => {
         );
         const assets = new Set();
         for (const page of pages)
-          for (const match of page.matchAll(/(?:src|href)="([^"]+)"/g))
+          for (const match of page.matchAll(/(?:src|href)="([^"]+)"/g)) {
+            // Attribute values are HTML-escaped: "&amp;" breaks /_next/image (400).
+            const url = match[1]?.replaceAll("&amp;", "&");
             if (
-              match[1]?.startsWith("/_next/static/") ||
-              match[1]?.startsWith("/_next/image?")
+              url?.startsWith("/_next/static/") ||
+              url?.startsWith("/_next/image?")
             )
-              assets.add(match[1]);
-        if (assets.size) await cache.addAll([...assets]);
+              assets.add(url);
+          }
+        // Best effort: one missing asset must not fail the install, or the
+        // worker never activates and push subscription hangs on `ready`.
+        await Promise.allSettled([...assets].map((asset) => cache.add(asset)));
       }),
   );
 });

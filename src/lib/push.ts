@@ -35,15 +35,31 @@ async function registration() {
   return navigator.serviceWorker.ready;
 }
 
+function sameKey(current: ArrayBuffer | null, expected: Uint8Array) {
+  if (!current || current.byteLength !== expected.byteLength) return false;
+  const bytes = new Uint8Array(current);
+  return bytes.every((byte, index) => byte === expected[index]);
+}
+
 export async function syncPushSubscription() {
   if (!pushSupported() || Notification.permission !== "granted") return;
   const worker = await registration();
+  const { public_key } = await unwrap(getVapidPublicKey());
+  const serverKey = applicationServerKey(public_key);
   let subscription = await worker.pushManager.getSubscription();
+  // A subscription made for another server key (old deploy, recreated key)
+  // is rejected by the push service: replace it with one for the current key.
+  if (
+    subscription &&
+    !sameKey(subscription.options.applicationServerKey, serverKey)
+  ) {
+    await subscription.unsubscribe();
+    subscription = null;
+  }
   if (!subscription) {
-    const { public_key } = await unwrap(getVapidPublicKey());
     subscription = await worker.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: applicationServerKey(public_key),
+      applicationServerKey: serverKey,
     });
   }
   const json = subscription.toJSON();
