@@ -98,7 +98,7 @@ export function AccountSettingsModal({
             spellCheck={false}
           />
         </Field>
-        <p className="text-xs text-[#68716C]">
+        <p className="text-xs text-[#5C6560]">
           Имя автоматически приводится к нижнему регистру.
         </p>
         <Button type="submit" variant="outline" disabled={pending}>
@@ -172,7 +172,7 @@ export function AccountSettingsModal({
         <Button type="submit" variant="outline" disabled={pending}>
           Сменить пароль
         </Button>
-        <p className="text-xs text-[#68716C]">
+        <p className="text-xs text-[#5C6560]">
           После смены пароля потребуется войти снова.
         </p>
       </form>
@@ -191,7 +191,7 @@ export function AccountSettingsModal({
       )}
       <div className="mt-6 border-t border-[#E8E2D5] pt-5">
         <h3 className="font-extrabold text-[#A84D3C]">Удалить аккаунт</h3>
-        <p className="mt-2 text-sm text-[#68716C]">
+        <p className="mt-2 text-sm text-[#5C6560]">
           Ваши проекты хранятся отдельно в этом браузере и также будут удалены.
         </p>
         <Button

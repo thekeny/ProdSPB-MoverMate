@@ -78,7 +78,7 @@ export function BoxContentsReminder({
           {new Date(box.contentsReminderAt).toLocaleString("ru")}
         </output>
       )}
-      <p className="text-xs text-[#68716C]">
+      <p className="text-xs text-[#5C6560]">
         Напоминание придёт вам, если уведомления включены. При сборке коробки
         оно отменится.
       </p>

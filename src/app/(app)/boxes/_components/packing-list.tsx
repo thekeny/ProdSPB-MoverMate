@@ -228,7 +228,7 @@ export function PackingList({
                 <strong className="[overflow-wrap:anywhere]">
                   {item.name}
                 </strong>
-                <span className="ml-2 text-[#68716C]">
+                <span className="ml-2 text-[#5C6560]">
                   {item.quantity > 1 ? `${item.quantity} шт. · ` : ""}
                   {item.sourceRoom}
                   {item.priority === "FIRST_NECESSITY" ? " · Первый день" : ""}
@@ -266,7 +266,10 @@ export function PackingList({
                     value: box.id,
                   }))}
                 >
-                  <SelectTrigger className="h-10 w-auto min-w-40 px-2 text-xs">
+                  <SelectTrigger
+                    className="h-10 w-auto min-w-40 px-2 text-xs"
+                    aria-label="Положить в коробку"
+                  >
                     <SelectValue placeholder="Положить в коробку" />
                   </SelectTrigger>
                   <SelectContent>
@@ -291,7 +294,7 @@ export function PackingList({
             </div>
           ))
         ) : (
-          <p className="text-sm text-[#68716C]">Вещей для упаковки пока нет.</p>
+          <p className="text-sm text-[#5C6560]">Вещей для упаковки пока нет.</p>
         )}
       </div>
       {pending.length > limit && (

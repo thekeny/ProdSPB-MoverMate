@@ -69,7 +69,6 @@ export default function BoxesPage() {
       router.replace(pages.BOXES, { scroll: false });
     } else if (searchParams.get(QUERY_PARAMS.FIND) && searchInput) {
       searchInput.focus();
-      router.replace(pages.BOXES, { scroll: false });
     }
   }, [projectId, searchParams, searchInput, router, canEdit]);
 

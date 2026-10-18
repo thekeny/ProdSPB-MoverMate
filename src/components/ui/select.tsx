@@ -21,7 +21,7 @@ function SelectTrigger({
     >
       {children}
       <SelectPrimitive.Icon>
-        <ChevronDown className="size-4 text-[#68716C]" />
+        <ChevronDown className="size-4 text-[#5C6560]" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );

@@ -52,7 +52,7 @@ export function ProjectSettingsModal({
     > & { reminderOffsetsDays: number[] },
   ) => Promise<void>;
   onDelete: () => Promise<void>;
-  onUpdateProject: (apply: (project: Project) => Project) => void;
+  onUpdateProject: (apply: (project: Project) => Project) => Promise<boolean>;
   onAddMember: (username: string) => Promise<void>;
   onRemoveMember: (userId: string, username: string) => Promise<void>;
 }) {
@@ -62,6 +62,7 @@ export function ProjectSettingsModal({
   const [deletePending, setDeletePending] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [roomNotice, setRoomNotice] = useState<string | null>(null);
+  const [roomPending, setRoomPending] = useState(false);
   const projectForm = useForm<ProjectSettingsFormValues>({
     resolver: zodResolver(projectSettingsSchema),
     mode: "onBlur",
@@ -163,7 +164,7 @@ export function ProjectSettingsModal({
                   onBlur={field.onBlur}
                   aria-label="Разрешить просмотр по QR-коду всем, у кого есть ссылка"
                 />
-                <span className="text-sm text-[#68716C]">
+                <span className="text-sm text-[#5C6560]">
                   {field.value === "open"
                     ? "Любой со ссылкой может посмотреть"
                     : "Только участники проекта"}
@@ -234,7 +235,9 @@ export function ProjectSettingsModal({
                     variant="ghost"
                     size="icon-sm"
                     aria-label={`Удалить комнату ${room}`}
+                    disabled={roomPending}
                     onClick={() => {
+                      if (roomPending) return;
                       const inUse =
                         kind === "sourceRooms"
                           ? project.items.some(
@@ -255,7 +258,8 @@ export function ProjectSettingsModal({
                         return;
                       }
                       setRoomNotice(null);
-                      onUpdateProject((current) => ({
+                      setRoomPending(true);
+                      void onUpdateProject((current) => ({
                         ...current,
                         [kind]: current[kind].filter((name) => name !== room),
                         ...(kind === "sourceRooms" &&
@@ -267,7 +271,12 @@ export function ProjectSettingsModal({
                                 ) ?? "",
                             }
                           : {}),
-                      }));
+                      }))
+                        .then((saved) => {
+                          if (!saved)
+                            setRoomNotice("Не удалось удалить комнату.");
+                        })
+                        .finally(() => setRoomPending(false));
                     }}
                   >
                     <Trash2 className="size-3" />
@@ -280,7 +289,8 @@ export function ProjectSettingsModal({
         <form
           className="mt-3 flex items-start gap-2"
           noValidate
-          onSubmit={roomForm.handleSubmit(({ name: rawName, kind }) => {
+          onSubmit={roomForm.handleSubmit(async ({ name: rawName, kind }) => {
+            if (roomPending) return;
             const name = rawName.trim();
             if (
               project[kind].some(
@@ -291,11 +301,18 @@ export function ProjectSettingsModal({
               roomForm.setError("name", { message: "Такая комната уже есть." });
               return;
             }
-            onUpdateProject((current) => ({
-              ...current,
-              [kind]: [...current[kind], name],
-            }));
-            roomForm.reset({ name: "", kind });
+            setRoomNotice(null);
+            setRoomPending(true);
+            try {
+              const saved = await onUpdateProject((current) => ({
+                ...current,
+                [kind]: [...current[kind], name],
+              }));
+              if (saved) roomForm.reset({ name: "", kind });
+              else setRoomNotice("Не удалось добавить комнату.");
+            } finally {
+              setRoomPending(false);
+            }
           })}
         >
           <Controller
@@ -350,6 +367,7 @@ export function ProjectSettingsModal({
             type="submit"
             aria-label="Добавить комнату"
             className="shrink-0"
+            disabled={roomPending}
           >
             <Plus />
           </Button>
@@ -357,7 +375,7 @@ export function ProjectSettingsModal({
       </section>
       <section className="mt-6 border-t border-[#E8E2D5] pt-5">
         <h3 className="font-extrabold">Участники</h3>
-        <p className="mt-1 text-xs text-[#68716C]">
+        <p className="mt-1 text-xs text-[#5C6560]">
           Участники проекта управляются на сервере.
         </p>
         <div className="mt-3 grid gap-2">
@@ -371,7 +389,7 @@ export function ProjectSettingsModal({
                 {project.collaborators.find(
                   (entry) => entry.username === member,
                 )?.isOwner && (
-                  <span className="ml-2 text-xs text-[#68716C]">Владелец</span>
+                  <span className="ml-2 text-xs text-[#5C6560]">Владелец</span>
                 )}
               </span>
               {!project.collaborators.find((entry) => entry.username === member)
@@ -470,7 +488,7 @@ export function ProjectSettingsModal({
       {canDelete && (
         <div className="mt-6 border-t border-[#E8E2D5] pt-5">
           <h3 className="font-extrabold text-[#A84D3C]">Удалить проект</h3>
-          <p className="mt-2 text-sm text-[#68716C]">
+          <p className="mt-2 text-sm text-[#5C6560]">
             Удаление проекта необратимо: коробки, задачи и отметки будут
             потеряны.
           </p>

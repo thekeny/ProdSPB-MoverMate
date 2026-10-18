@@ -69,7 +69,7 @@ export function TaskFields({
               onValueChange={field.onChange}
               items={TASK_STAGE_OPTIONS}
             >
-              <SelectTrigger onBlur={field.onBlur}>
+              <SelectTrigger onBlur={field.onBlur} aria-label="Этап задачи">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -146,7 +146,7 @@ export function TaskFields({
                 {fieldState.error.message}
               </p>
             )}
-            <p className="text-xs text-[#68716C]">
+            <p className="text-xs text-[#5C6560]">
               {dueDate
                 ? "Напоминания получат ответственные с включёнными уведомлениями."
                 : field.value.length
@@ -183,7 +183,7 @@ export function TaskFields({
             </div>
           ))
         ) : (
-          <p className="text-xs text-[#68716C]">
+          <p className="text-xs text-[#5C6560]">
             Добавьте участников в настройках проекта.
           </p>
         )}

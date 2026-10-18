@@ -20,7 +20,7 @@ export function PageHeading({
         <h1 className="mt-2 max-w-3xl text-4xl font-extrabold tracking-[-0.06em] sm:text-5xl">
           {title}
         </h1>
-        <p className="mt-3 max-w-xl text-sm leading-6 text-[#68716C]">
+        <p className="mt-3 max-w-xl text-sm leading-6 text-[#5C6560]">
           {description}
         </p>
       </div>

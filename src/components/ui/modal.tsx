@@ -63,7 +63,7 @@ export function Modal({
             variant="ghost"
             size="icon-lg"
             onClick={onClose}
-            className="absolute top-5 right-5 rounded-full text-[#68716C] hover:bg-[#EDF1E8] hover:text-[#1D2923]"
+            className="absolute top-5 right-5 rounded-full text-[#5C6560] hover:bg-[#EDF1E8] hover:text-[#1D2923]"
             aria-label="Закрыть"
           >
             <X className="size-5" />

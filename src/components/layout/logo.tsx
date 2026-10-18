@@ -24,9 +24,9 @@ export function Logo({
     <Image
       src={images.LOGO}
       alt={APP.NAME}
-      width={250}
+      width={200}
       height={50}
-      className="object-contain"
+      className="h-auto w-[200px] object-contain"
       priority
     />
   );

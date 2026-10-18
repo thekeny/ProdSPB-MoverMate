@@ -16,19 +16,34 @@
     - dp auth configure-kaniko
     - |
       run_build() {
-        set +e
-        out=$(executor "$@" 2>&1)
-        rc=$?
-        set -e
+        export GODEBUG=http2client=0
+        attempt=1
+        while [ "$attempt" -le 3 ]; do
+          set +e
+          out=$(executor "$@" 2>&1)
+          rc=$?
+          set -e
 
-        echo "$out"
+          echo "$out"
 
-        if [ "$rc" -ne 0 ] && echo "$out" | grep -q "MANIFEST_FOR_TAG_EXISTS"; then
-          echo ">> image already exists in registry - treating as success"
-          return 0
-        fi
+          if [ "$rc" -eq 0 ]; then
+            return 0
+          fi
 
-        return "$rc"
+          if echo "$out" | grep -q "MANIFEST_FOR_TAG_EXISTS"; then
+            echo ">> image already exists in registry - treating as success"
+            return 0
+          fi
+
+          if [ "$attempt" -lt 3 ] && echo "$out" | grep -Eq "CANCEL; received from peer|failed to get filesystem from image"; then
+            echo ">> registry stream dropped, retrying ($attempt/3)"
+            attempt=$((attempt + 1))
+            sleep $((attempt * 5))
+            continue
+          fi
+
+          return "$rc"
+        done
       }
   script:
     - |

@@ -1,5 +1,4 @@
 import { onlineManager } from "@tanstack/react-query";
-import { useSyncExternalStore } from "react";
 
 const listeners = new Set<() => void>();
 let connected = typeof navigator === "undefined" || navigator.onLine;
@@ -59,12 +58,4 @@ export function subscribeConnectivity(listener: () => void) {
 
 export function getConnectivitySnapshot() {
   return connected;
-}
-
-export function useIsConnected() {
-  return useSyncExternalStore(
-    subscribeConnectivity,
-    getConnectivitySnapshot,
-    () => true,
-  );
 }

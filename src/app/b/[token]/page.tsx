@@ -45,7 +45,7 @@ export default function TokenBoxPage() {
     return null;
   if (boxQuery.isPending)
     return (
-      <main className="mx-auto max-w-xl p-6 text-sm text-[#68716C]">
+      <main className="mx-auto max-w-xl p-6 text-sm text-[#5C6560]">
         Загружаем коробку…
       </main>
     );
@@ -57,7 +57,7 @@ export default function TokenBoxPage() {
             ? "Коробка не найдена"
             : "Не удалось загрузить коробку"}
         </h1>
-        <p className="mt-3 text-sm text-[#68716C]">
+        <p className="mt-3 text-sm text-[#5C6560]">
           {boxQuery.error instanceof ApiError && boxQuery.error.status === 404
             ? "Ссылка недействительна или у вас нет доступа."
             : "Проверьте подключение и попробуйте ещё раз."}
@@ -81,12 +81,12 @@ export default function TokenBoxPage() {
     <main className="mx-auto max-w-xl p-6">
       <p className="text-sm text-[#42664D]">{project.name}</p>
       <h1 className="mt-2 text-3xl font-extrabold">Коробка № {box.number}</h1>
-      <p className="mt-2 text-[#68716C]">
+      <p className="mt-2 text-[#5C6560]">
         {box.title || "Без названия"} · {box.destination_room.name}
       </p>
       <p className="mt-2 text-sm font-bold text-[#42664D]">{status?.label}</p>
       {!canWrite && (
-        <p className="mt-2 text-xs text-[#68716C]">
+        <p className="mt-2 text-xs text-[#5C6560]">
           Только просмотр по QR-ссылке.
         </p>
       )}
@@ -105,7 +105,7 @@ export default function TokenBoxPage() {
             ))}
           </ul>
         ) : (
-          <p className="mt-3 text-sm text-[#68716C]">Вещей пока нет.</p>
+          <p className="mt-3 text-sm text-[#5C6560]">Вещей пока нет.</p>
         )}
       </section>
       {canWrite && (

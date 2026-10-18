@@ -19,7 +19,6 @@ import {
   type TaskFormValues,
 } from "@/lib/forms/project.schema";
 import { cn } from "@/lib/utils";
-import { TaskTemplatesModal } from "./task-templates-modal";
 
 function TaskEditForm({
   task,
@@ -129,7 +128,6 @@ export function PlanView({
 }) {
   const [editing, setEditing] = useState<Task | null>(null);
   const [removing, setRemoving] = useState<Task | null>(null);
-  const [showTemplates, setShowTemplates] = useState(false);
   const [limits, setLimits] = useState<Partial<Record<TaskStage, number>>>({});
   const stages: { key: TaskStage; title: string; description: string }[] = [
     {
@@ -156,23 +154,14 @@ export function PlanView({
         description="Список дел по этапам: до переезда, в день переезда и после. Отмечайте выполненное."
         action={
           canEdit ? (
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                className="h-11"
-                onClick={() => setShowTemplates(true)}
-              >
-                Из шаблонов
-              </Button>
-              <Button onClick={onAdd} className="h-11">
-                <Plus />
-                Новая задача
-              </Button>
-            </div>
+            <Button onClick={onAdd} className="h-11">
+              <Plus />
+              Новая задача
+            </Button>
           ) : undefined
         }
       />
-      <section className="grid min-w-0 gap-4 lg:grid-cols-3">
+      <section className="grid min-w-0 gap-4 lg:grid-cols-3 2xl:gap-5">
         {stages.map((stage) => {
           const tasks = project.tasks.filter(
             (task) => task.stage === stage.key,
@@ -182,7 +171,7 @@ export function PlanView({
               <div className="flex items-start justify-between gap-3 rounded-md bg-[#F5F3EE] p-4">
                 <div>
                   <h2 className="font-extrabold">{stage.title}</h2>
-                  <p className="mt-1 text-xs text-[#68716C]">
+                  <p className="mt-1 text-xs text-[#5C6560]">
                     {stage.description}
                   </p>
                 </div>
@@ -225,7 +214,7 @@ export function PlanView({
                               <span
                                 className={cn(
                                   "block text-xs font-bold",
-                                  task.done && "text-[#68716C] line-through",
+                                  task.done && "text-[#5C6560] line-through",
                                 )}
                               >
                                 {task.title}
@@ -237,7 +226,7 @@ export function PlanView({
                                   </span>
                                 </span>
                               )}
-                              <span className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-[#68716C]">
+                              <span className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-[#5C6560]">
                                 {task.assignees.length ? (
                                   task.assignees.map((assignee) => (
                                     <span
@@ -263,7 +252,7 @@ export function PlanView({
                                   variant="ghost"
                                   size="icon-sm"
                                   onClick={() => setEditing(task)}
-                                  className="text-[#68716C] hover:bg-[#E8E2D5] hover:text-[#1D2923]"
+                                  className="text-[#5C6560] hover:bg-[#E8E2D5] hover:text-[#1D2923]"
                                   aria-label={`Редактировать задачу: ${task.title}`}
                                 >
                                   <Pencil className="size-3.5" />
@@ -271,7 +260,7 @@ export function PlanView({
                                 <Button
                                   variant="ghost"
                                   onClick={() => setRemoving(task)}
-                                  className="grid size-7 place-items-center rounded-md text-[#68716C] transition-colors hover:bg-[#E8E2D5] hover:text-[#A84D3C]"
+                                  className="grid size-7 place-items-center rounded-md text-[#5C6560] transition-colors hover:bg-[#E8E2D5] hover:text-[#A84D3C]"
                                   aria-label={`Удалить задачу: ${task.title}`}
                                 >
                                   <Trash2 className="size-3.5" />
@@ -283,7 +272,7 @@ export function PlanView({
                       );
                     })
                 ) : (
-                  <p className="py-5 text-center text-xs text-[#68716C]">
+                  <p className="py-5 text-center text-xs text-[#5C6560]">
                     Задач пока нет
                   </p>
                 )}
@@ -307,12 +296,6 @@ export function PlanView({
           );
         })}
       </section>
-      {showTemplates && canEdit && (
-        <TaskTemplatesModal
-          project={project}
-          onClose={() => setShowTemplates(false)}
-        />
-      )}
       {editing && canEdit && (
         <TaskEditForm
           task={editing}

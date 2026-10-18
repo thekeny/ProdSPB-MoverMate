@@ -46,10 +46,15 @@ export const projectCreationSchema = z.object({
   to: z.string().max(200, "Не более 200 символов."),
   sourceRooms: z.array(z.string().trim().min(2).max(50)),
   destinationRooms: z.array(z.string().trim().min(2).max(50)),
+  templateIds: z.array(z.string()),
 });
 
 export const projectSettingsSchema = projectCreationSchema
-  .omit({ sourceRooms: true, destinationRooms: true })
+  .omit({
+    sourceRooms: true,
+    destinationRooms: true,
+    templateIds: true,
+  })
   .extend({
     qrCodeStrategy: z.string(),
     reminderOffsets: z.array(z.string()),
@@ -196,14 +201,6 @@ export const itemScanPlacementSchema = itemScanSchema.extend({
   room: z.string().min(1, "Выберите исходную комнату."),
 });
 
-export const roomItemSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, "Введите не менее 2 символов.")
-    .max(100, "Название должно содержать не более 100 символов."),
-  sourceRoom: z.string().min(1, "Выберите исходную комнату."),
-});
 export const boxEditSchema = boxSchema.pick({
   title: true,
   room: true,

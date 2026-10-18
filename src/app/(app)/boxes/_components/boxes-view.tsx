@@ -98,7 +98,7 @@ export function BoxesView({
       <section className="no-print mt-6 rounded-lg bg-white p-5">
         <div className="flex flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#68716C]" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#5C6560]" />
             <TextInput
               maxLength={100}
               ref={searchRef}
@@ -114,7 +114,7 @@ export function BoxesView({
                 size="icon-sm"
                 onClick={() => setSearch("")}
                 aria-label="Очистить поиск"
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#68716C]"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#5C6560]"
               >
                 <X className="size-4" />
               </Button>
@@ -122,7 +122,7 @@ export function BoxesView({
           </div>
         </div>
         <div className="mt-4">
-          <p className="text-xs font-bold text-[#68716C]">
+          <p className="text-xs font-bold text-[#5C6560]">
             Коробки по комнатам
           </p>
           <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
@@ -151,12 +151,12 @@ export function BoxesView({
         <section className="mt-5 rounded-lg bg-white p-5">
           <h2 className="font-extrabold">
             Найденные вещи{" "}
-            <span className="text-sm font-medium text-[#68716C]">
+            <span className="text-sm font-medium text-[#5C6560]">
               {itemResults.length}
             </span>
           </h2>
           {searching ? (
-            <output className="mt-3 block text-sm text-[#68716C]">
+            <output className="mt-3 block text-sm text-[#5C6560]">
               Ищем вещи…
             </output>
           ) : itemResults.length ? (
@@ -177,7 +177,7 @@ export function BoxesView({
                       <strong>{item.name}</strong>
                       {item.quantity > 1 && ` · ${item.quantity} шт.`}
                     </span>
-                    <span className="text-xs text-[#68716C] [overflow-wrap:anywhere]">
+                    <span className="text-xs text-[#5C6560] [overflow-wrap:anywhere]">
                       {location}
                     </span>
                     {relatedBox && (
@@ -193,7 +193,7 @@ export function BoxesView({
               })}
             </div>
           ) : (
-            <p className="mt-3 text-sm text-[#68716C]">
+            <p className="mt-3 text-sm text-[#5C6560]">
               Вещей с таким началом слова нет.
             </p>
           )}
@@ -210,14 +210,14 @@ export function BoxesView({
           )}
         </section>
       )}
-      <section className="tnum mt-5 flex items-center justify-between text-sm text-[#68716C]">
+      <section className="tnum mt-5 flex items-center justify-between text-sm text-[#5C6560]">
         <span>
           {isFiltered ? `${boxes.length} из ` : ""}
           {totalCount} {plural(totalCount, ["коробка", "коробки", "коробок"])}
         </span>
         {search && <span>Поиск: «{search}»</span>}
       </section>
-      <section className="mt-3 grid items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <section className="mt-3 grid items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {boxes.length ? (
           boxes.slice(0, limit).map((box) => {
             const RoomIcon = roomIcon(box.room);
@@ -258,7 +258,7 @@ export function BoxesView({
                     </span>
                   </div>
                 )}
-                <div className="mt-3 rounded-md bg-[#F5F3EE] p-3 text-xs text-[#68716C]">
+                <div className="mt-3 rounded-md bg-[#F5F3EE] p-3 text-xs text-[#5C6560]">
                   <div className="flex flex-wrap gap-1.5">
                     {contents.length ? (
                       <>
@@ -296,9 +296,9 @@ export function BoxesView({
           })
         ) : isFiltered ? (
           <div className="col-span-full rounded-lg bg-white/60 p-12 text-center">
-            <Search className="mx-auto size-8 text-[#68716C]" />
+            <Search className="mx-auto size-8 text-[#5C6560]" />
             <p className="mt-4 font-bold">Ничего не найдено</p>
-            <p className="mt-1 text-sm text-[#68716C]">
+            <p className="mt-1 text-sm text-[#5C6560]">
               {search
                 ? `По запросу «${search}» ничего нет.`
                 : "В этой комнате коробок нет."}
@@ -312,7 +312,7 @@ export function BoxesView({
           <div className="col-span-full rounded-lg bg-white/60 p-12 text-center">
             <PackageCheck className="mx-auto size-8 text-[#42664D]" />
             <p className="mt-4 font-bold">Коробок пока нет</p>
-            <p className="mt-1 text-sm text-[#68716C]">
+            <p className="mt-1 text-sm text-[#5C6560]">
               Нажмите «Новая коробка», чтобы добавить первую.
             </p>
           </div>

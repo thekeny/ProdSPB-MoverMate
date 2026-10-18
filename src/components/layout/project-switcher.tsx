@@ -1,5 +1,5 @@
 import { Check, ChevronsUpDown, Plus, Settings2 } from "lucide-react";
-import { useRef } from "react";
+import { useId, useRef } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +31,8 @@ export function ProjectSwitcher({
   compact?: boolean;
 }) {
   const sidebarMenuContainerRef = useRef<HTMLDivElement>(null);
+  const nameId = useId();
+  const dateId = useId();
   const menuPositioner = (
     <DropdownMenuPositioner
       className={cn(!compact && "static! mt-2 w-full transform-none!")}
@@ -47,7 +49,7 @@ export function ProjectSwitcher({
             : "w-full bg-[#E2E9DD] ring-1 ring-[#CFCABD]/70",
         )}
       >
-        <p className="px-3 py-2 text-[10px] font-extrabold tracking-[0.12em] text-[#68716C] uppercase">
+        <p className="px-3 py-2 text-[10px] font-extrabold tracking-[0.12em] text-[#5C6560] uppercase">
           Ваши проекты
         </p>
         {projects.map((item) => (
@@ -60,7 +62,7 @@ export function ProjectSwitcher({
               <span className="block break-words text-sm font-bold">
                 <span className="[overflow-wrap:anywhere]">{item.name}</span>
               </span>
-              <span className="mt-0.5 block text-xs text-[#68716C]">
+              <span className="mt-0.5 block text-xs text-[#5C6560]">
                 {formatDate(item.date)}
               </span>
             </span>
@@ -95,19 +97,20 @@ export function ProjectSwitcher({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        aria-label="Переключить проект"
+        aria-labelledby={`${nameId} ${dateId}`}
         className={cn(
           "group mt-8 flex w-full items-center gap-3 rounded-lg bg-[#EDF1E8] px-4 py-3 text-left transition-colors duration-200 hover:bg-[#E2E9DD] focus-visible:ring-3 focus-visible:ring-[#42664D]/30",
           compact && "mt-0 max-w-44 px-3 py-2",
         )}
       >
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-bold">
+          <span id={nameId} className="block truncate text-sm font-bold">
             {project.name}
           </span>
           <span
+            id={dateId}
             className={cn(
-              "tnum mt-0.5 block text-xs text-[#68716C]",
+              "tnum mt-0.5 block text-xs text-[#5C6560]",
               compact && "hidden sm:block",
             )}
           >

@@ -19,11 +19,13 @@ import {
   createBox as createBoxApi,
   createItem as createItemApi,
   createProject as createProjectApi,
+  createRoom as createRoomApi,
   createTask,
   createTasksFromTemplates,
   deleteBox as deleteBoxApi,
   deleteItem as deleteItemApi,
   deleteProject as deleteProjectApi,
+  deleteRoom as deleteRoomApi,
   deleteTask,
   getBoxLabels,
   getLoadingChecklist,
@@ -31,7 +33,6 @@ import {
   getUnpackingProgress,
   listCollaborators,
   listProjects,
-  listTaskTemplates,
   removeCollaborator as removeCollaboratorApi,
   reopenTask,
   setBoxStatus as setBoxStatusApi,
@@ -47,6 +48,7 @@ import {
 import type {
   CollaboratorResponse,
   ProjectResponse,
+  RoomKind,
 } from "@/api/generated/types.gen";
 import type { ProjectData } from "@/api/project-data";
 import {
@@ -390,6 +392,119 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
 
   const syncProjectChanges = async (current: Project, updated: Project) => {
     const projectId = current.id;
+    const roomKind: Record<"sourceRooms" | "destinationRooms", RoomKind> = {
+      sourceRooms: "SOURCE",
+      destinationRooms: "DESTINATION",
+    };
+    const baseline = queryClient.getQueryData<ProjectData>(
+      QUERY_KEYS.PROJECT_DATA(projectId),
+    );
+    const knownRooms = {
+      sourceRooms: baseline?.sourceRooms ?? current.sourceRooms,
+      destinationRooms: baseline?.destinationRooms ?? current.destinationRooms,
+    };
+    for (const kind of ["sourceRooms", "destinationRooms"] as const) {
+      const previous = new Set(
+        knownRooms[kind].map((name) => name.toLocaleLowerCase("ru")),
+      );
+      for (const name of updated[kind]) {
+        if (previous.has(name.toLocaleLowerCase("ru"))) continue;
+        const room = await unwrap(
+          createRoomApi({
+            path: { project_id: projectId },
+            body: { kind: roomKind[kind], name },
+          }),
+        );
+        updated.rooms = [...updated.rooms, room];
+        queryClient.setQueryData<ProjectData>(
+          QUERY_KEYS.PROJECT_DATA(projectId),
+          (current) =>
+            current
+              ? {
+                  ...current,
+                  rooms: current.rooms.some((entry) => entry.id === room.id)
+                    ? current.rooms
+                    : [...current.rooms, room],
+                  sourceRooms:
+                    room.kind === "SOURCE" &&
+                    !current.sourceRooms.some(
+                      (entry) =>
+                        entry.toLocaleLowerCase("ru") ===
+                        room.name.toLocaleLowerCase("ru"),
+                    )
+                      ? [...current.sourceRooms, room.name]
+                      : current.sourceRooms,
+                  destinationRooms:
+                    room.kind === "DESTINATION" &&
+                    !current.destinationRooms.some(
+                      (entry) =>
+                        entry.toLocaleLowerCase("ru") ===
+                        room.name.toLocaleLowerCase("ru"),
+                    )
+                      ? [...current.destinationRooms, room.name]
+                      : current.destinationRooms,
+                }
+              : current,
+        );
+      }
+      const present = new Set(
+        (baseline?.[kind] ?? current[kind]).map((entry) =>
+          entry.toLocaleLowerCase("ru"),
+        ),
+      );
+      for (const name of present) {
+        if (updated[kind].some((next) => next.toLocaleLowerCase("ru") === name))
+          continue;
+        const roomName =
+          (baseline?.[kind] ?? current[kind]).find(
+            (entry) => entry.toLocaleLowerCase("ru") === name,
+          ) ?? name;
+        const roomId = findRoomId(
+          baseline?.rooms ?? current.rooms,
+          roomKind[kind],
+          roomName,
+        );
+        if (!roomId) continue;
+        await unwrap(deleteRoomApi({ path: { room_id: roomId } }));
+        updated.rooms = updated.rooms.filter((room) => room.id !== roomId);
+        queryClient.setQueryData<ProjectData>(
+          QUERY_KEYS.PROJECT_DATA(projectId),
+          (cached) =>
+            cached
+              ? {
+                  ...cached,
+                  rooms: cached.rooms.filter((room) => room.id !== roomId),
+                  sourceRooms:
+                    kind === "sourceRooms"
+                      ? cached.sourceRooms.filter(
+                          (entry) =>
+                            entry.toLocaleLowerCase("ru") !==
+                            roomName.toLocaleLowerCase("ru"),
+                        )
+                      : cached.sourceRooms,
+                  destinationRooms:
+                    kind === "destinationRooms"
+                      ? cached.destinationRooms.filter(
+                          (entry) =>
+                            entry.toLocaleLowerCase("ru") !==
+                            roomName.toLocaleLowerCase("ru"),
+                        )
+                      : cached.destinationRooms,
+                  lastSourceRoom:
+                    kind === "sourceRooms" &&
+                    cached.lastSourceRoom.toLocaleLowerCase("ru") ===
+                      roomName.toLocaleLowerCase("ru")
+                      ? (cached.sourceRooms.find(
+                          (entry) =>
+                            entry.toLocaleLowerCase("ru") !==
+                            roomName.toLocaleLowerCase("ru"),
+                        ) ?? "")
+                      : cached.lastSourceRoom,
+                }
+              : cached,
+        );
+      }
+    }
     const previousTasks = new Map(current.tasks.map((task) => [task.id, task]));
     const nextTasks = new Map(updated.tasks.map((task) => [task.id, task]));
     const previousBoxes = new Map(current.boxes.map((box) => [box.id, box]));
@@ -688,6 +803,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         current
           ? {
               ...current,
+              rooms: updated.rooms,
               sourceRooms: updated.sourceRooms,
               lastSourceRoom: updated.lastSourceRoom,
               destinationRooms: updated.destinationRooms,
@@ -787,7 +903,6 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       (async () => {
         const sourceRooms = parseRoomList(values.sourceRooms);
         const destinationRooms = parseRoomList(values.destinationRooms);
-        const templates = await unwrap(listTaskTemplates());
         const response = await unwrap(
           createProjectApi({
             body: {
@@ -803,14 +918,12 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
             headers: { "idempotency-key": uid("create") },
           }),
         );
-        if (templates.length)
+        if (values.templateIds.length)
           try {
             await unwrap(
               createTasksFromTemplates({
                 path: { project_id: response.id },
-                body: {
-                  template_ids: templates.map((template) => template.id),
-                },
+                body: { template_ids: values.templateIds },
               }),
             );
           } catch (error) {

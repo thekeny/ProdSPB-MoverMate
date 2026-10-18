@@ -88,7 +88,10 @@ export function BoxForm({
                     value: room,
                   }))}
                 >
-                  <SelectTrigger onBlur={field.onBlur}>
+                  <SelectTrigger
+                    onBlur={field.onBlur}
+                    aria-label="Комната, куда поставить коробку"
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -115,7 +118,10 @@ export function BoxForm({
                     value: room,
                   }))}
                 >
-                  <SelectTrigger onBlur={field.onBlur}>
+                  <SelectTrigger
+                    onBlur={field.onBlur}
+                    aria-label="Взять вещи из комнаты"
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

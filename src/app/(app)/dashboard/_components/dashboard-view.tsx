@@ -84,7 +84,7 @@ export function DashboardView({
         }
       />
 
-      <section className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
+      <section className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr] xl:gap-5 2xl:grid-cols-[1.5fr_0.75fr]">
         <div className="relative overflow-hidden rounded-[24px] bg-[#1D2923] p-6 text-[#F4F1E9] sm:p-8">
           <div className="relative z-10 max-w-lg">
             <p className="tnum text-6xl font-extrabold tracking-[-0.08em] sm:text-7xl">
@@ -97,7 +97,7 @@ export function DashboardView({
               <Button
                 variant="secondary"
                 onClick={() => router.push(pages.PLAN)}
-                className="bg-[#D96B4C] text-white hover:bg-[#C85C3E]"
+                className="bg-[#F4F1E9] text-[#1D2923] hover:bg-white"
               >
                 Открыть план <ArrowRight />
               </Button>
@@ -148,7 +148,7 @@ export function DashboardView({
                     </span>
                   ))
                 ) : (
-                  <span className="text-xs text-[#68716C]">
+                  <span className="text-xs text-[#5C6560]">
                     Ответственный не назначен
                   </span>
                 )}
@@ -207,7 +207,7 @@ export function DashboardView({
         </section>
       )}
 
-      <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4 2xl:gap-4">
         {[
           {
             label: "Коробки собраны",
@@ -236,7 +236,7 @@ export function DashboardView({
         ].map(({ label, value, icon: Icon, tone }) => (
           <div key={label} className={cn("rounded-lg p-5", tone)}>
             <div className="flex items-center justify-between gap-3">
-              <p className="text-sm text-[#68716C]">{label}</p>
+              <p className="text-sm text-[#5C6560]">{label}</p>
               <Icon className="size-5 text-[#42664D]" />
             </div>
             <p className="tnum mt-4 text-3xl font-extrabold tracking-[-0.06em]">

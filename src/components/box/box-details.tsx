@@ -195,7 +195,7 @@ export function BoxDetails({
           ))}
         </div>
         {pendingStatus === null && (
-          <p className="mt-2 text-xs text-[#68716C]">
+          <p className="mt-2 text-xs text-[#5C6560]">
             Статус меняется по одному шагу. Сейчас доступны: {availableStatuses}
           </p>
         )}
@@ -310,7 +310,7 @@ export function BoxDetails({
                       }))
                     }
                   />
-                  <span className="text-xs text-[#68716C]">Первый день</span>
+                  <span className="text-xs text-[#5C6560]">Первый день</span>
                   {canEdit && (
                     <Button
                       variant="ghost"
@@ -345,7 +345,7 @@ export function BoxDetails({
               </div>
             ))
           ) : (
-            <p className="rounded-md bg-[#F5F3EE] p-5 text-center text-sm text-[#68716C]">
+            <p className="rounded-md bg-[#F5F3EE] p-5 text-center text-sm text-[#5C6560]">
               Список пуст.
             </p>
           )}

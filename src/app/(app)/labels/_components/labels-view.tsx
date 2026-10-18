@@ -76,7 +76,7 @@ export function LabelsView({
           Выбрать все
         </div>
       )}
-      <section className="print-labels grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <section className="print-labels grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {boxes.length ? (
           boxes.map((box) => {
             const url = origin ? boxLink(box.qrToken) : "";
@@ -97,7 +97,7 @@ export function LabelsView({
                     }
                     aria-label={`Выбрать коробку № ${box.number}`}
                   />
-                  <span className="text-xs text-[#68716C]">Печатать</span>
+                  <span className="text-xs text-[#5C6560]">Печатать</span>
                 </div>
                 <div className="flex min-w-0 items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
@@ -111,7 +111,7 @@ export function LabelsView({
                       {box.room}
                     </p>
                     <p
-                      className="mt-1 text-xs text-[#68716C]"
+                      className="mt-1 text-xs text-[#5C6560]"
                       style={{ overflowWrap: "anywhere" }}
                     >
                       {box.title}
@@ -157,7 +157,7 @@ export function LabelsView({
             );
           })
         ) : (
-          <div className="col-span-full rounded-lg bg-white p-12 text-center text-sm text-[#68716C]">
+          <div className="col-span-full rounded-lg bg-white p-12 text-center text-sm text-[#5C6560]">
             Сначала добавьте коробки.
           </div>
         )}

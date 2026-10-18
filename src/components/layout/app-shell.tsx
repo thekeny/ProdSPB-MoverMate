@@ -32,6 +32,7 @@ export function AppShell({
   const { logout, changeUsername, changePassword, deleteAccount } = useAuth();
   const {
     projects,
+    project: liveProject,
     canEdit,
     setActiveId,
     updateProjectMeta,
@@ -79,20 +80,22 @@ export function AppShell({
         onLogout={logoutAndGoHome}
         onOpenAccountSettings={() => setAccountSettingsOpen(true)}
       />
-      <main className="mx-auto min-w-0 max-w-[1240px] px-6 pb-24 pt-6 sm:px-8 lg:ml-72 lg:px-10 lg:py-10 xl:px-12">
-        <MobileHeader
-          project={project}
-          projects={projects}
-          canEdit={canEdit}
-          onSelectProject={selectProject}
-          onCreateProject={createProject}
-          onOpenSettings={() => setSettingsOpen(true)}
-          onLogout={logoutAndGoHome}
-          onOpenAccountSettings={() => setAccountSettingsOpen(true)}
-        />
-        <PushPrompt />
-        {children}
-      </main>
+      <div className="min-h-screen lg:pl-72">
+        <main className="mx-auto min-w-0 max-w-[1240px] px-6 pb-24 pt-6 sm:px-8 lg:px-10 lg:py-10 xl:px-12 2xl:max-w-[1440px] 2xl:px-16 2xl:py-12">
+          <MobileHeader
+            project={liveProject ?? project}
+            projects={projects}
+            canEdit={canEdit}
+            onSelectProject={selectProject}
+            onCreateProject={createProject}
+            onOpenSettings={() => setSettingsOpen(true)}
+            onLogout={logoutAndGoHome}
+            onOpenAccountSettings={() => setAccountSettingsOpen(true)}
+          />
+          <PushPrompt />
+          {children}
+        </main>
+      </div>
       <MobileNav />
       {settingsOpen && canEdit && (
         <ProjectSettingsModal

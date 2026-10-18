@@ -149,12 +149,12 @@ export function ItemScanModal({
                   Нашли {found} {plural(found, ["вещь", "вещи", "вещей"])}
                 </span>
               ) : (
-                <span className="text-[#68716C]">
+                <span className="text-[#5C6560]">
                   Вещей на фото не нашлось. Попробуйте другой ракурс.
                 </span>
               )
             ) : (
-              <span className="text-[#68716C]">
+              <span className="text-[#5C6560]">
                 JPEG, PNG, WebP или GIF до 5 МБ
               </span>
             )}
@@ -263,7 +263,10 @@ export function ItemScanModal({
                         value: room,
                       }))}
                     >
-                      <SelectTrigger onBlur={field.onBlur}>
+                      <SelectTrigger
+                        onBlur={field.onBlur}
+                        aria-label="Из комнаты"
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -289,7 +292,10 @@ export function ItemScanModal({
                       onValueChange={field.onChange}
                       items={ITEM_PRIORITY_OPTIONS}
                     >
-                      <SelectTrigger onBlur={field.onBlur}>
+                      <SelectTrigger
+                        onBlur={field.onBlur}
+                        aria-label="Приоритет"
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

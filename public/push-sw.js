@@ -1,4 +1,4 @@
-const CACHE = "movermate-app-v4";
+const CACHE = "movermate-app-v5";
 const CACHE_PREFIX = "movermate-app-";
 const APP_SHELL = [
   "/",

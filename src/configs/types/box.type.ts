@@ -1,6 +1,6 @@
 export type Status = "packing" | "packed" | "loaded" | "delivered" | "unpacked";
 export type QrStrategy = "protected" | "open";
-export type ItemState = "TO_PACK" | "IN_BOX" | "TAKEN_OUT" | "LOST";
+type ItemState = "TO_PACK" | "IN_BOX" | "TAKEN_OUT" | "LOST";
 export type ItemPriority = "NORMAL" | "FIRST_NECESSITY";
 
 export type Item = {

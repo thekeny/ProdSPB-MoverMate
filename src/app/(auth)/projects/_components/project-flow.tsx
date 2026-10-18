@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, ChevronRight, Plus } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Logo } from "@/components/layout/logo";
+import { TaskTemplatePicker } from "@/components/task/task-template-picker";
 import { Button } from "@/components/ui/button";
 import { ChipInput } from "@/components/ui/chip-input";
 import { Field } from "@/components/ui/field";
@@ -20,6 +21,7 @@ import {
   type ProjectFormValues,
   projectCreationSchema,
 } from "@/lib/forms/project.schema";
+import { useTaskTemplates } from "@/lib/use-task-templates";
 
 export function ProjectFlow({
   projects,
@@ -38,6 +40,7 @@ export function ProjectFlow({
 }) {
   const [createError, setCreateError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const templates = useTaskTemplates();
   const {
     register,
     control,
@@ -54,6 +57,7 @@ export function ProjectFlow({
       to: "",
       sourceRooms: [...ROOM_PRESETS],
       destinationRooms: [...ROOM_PRESETS],
+      templateIds: [],
     },
   });
   return (
@@ -65,7 +69,7 @@ export function ProjectFlow({
             <h1 className="mt-9 text-3xl font-extrabold tracking-[-0.05em]">
               Ваши переезды
             </h1>
-            <p className="mt-2 text-sm text-[#68716C]">
+            <p className="mt-2 text-sm text-[#5C6560]">
               Выберите проект или создайте новый.
             </p>
             {projects.length > 0 && (
@@ -81,7 +85,7 @@ export function ProjectFlow({
                       <span className="block text-sm font-bold">
                         {project.name}
                       </span>
-                      <span className="mt-1 block text-xs text-[#68716C]">
+                      <span className="mt-1 block text-xs text-[#5C6560]">
                         {formatDate(project.date)}
                       </span>
                     </span>
@@ -191,8 +195,32 @@ export function ProjectFlow({
                   )}
                 />
               </Field>
+              <Controller
+                control={control}
+                name="templateIds"
+                render={({ field }) => (
+                  <fieldset className="grid min-w-0 gap-2">
+                    <legend className="text-xs font-bold text-[#42664D]">
+                      Задачи в плане
+                    </legend>
+                    <p className="mb-1 text-xs text-[#5C6560]">
+                      Отметьте шаблоны, которые сразу добавятся в план переезда.
+                    </p>
+                    <TaskTemplatePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={creating}
+                      selectAllByDefault
+                    />
+                  </fieldset>
+                )}
+              />
               <FormError errors={errors} message={createError} />
-              <Button type="submit" disabled={creating} className="mt-2 h-11">
+              <Button
+                type="submit"
+                disabled={creating || templates.isPending}
+                className="mt-2 h-11"
+              >
                 Создать
                 <ArrowRight />
               </Button>

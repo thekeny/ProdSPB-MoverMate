@@ -1,6 +1,6 @@
 # Packages a prebuilt app: run `npm run build` first (the `build:next` CI job does it).
 # Keep the node image in sync with NODE_IMAGE in .gitlab-ci.yml.
-FROM node:24.22.0-alpine3.24
+FROM public.ecr.aws/docker/library/node:24.22.0-alpine3.24
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \

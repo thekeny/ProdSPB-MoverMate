@@ -63,7 +63,7 @@ export function ProgressView({
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {statuses.map((status) => (
           <div key={status.key} className="rounded-lg bg-white p-4">
-            <p className="text-xs text-[#68716C]">{status.label}</p>
+            <p className="text-xs text-[#5C6560]">{status.label}</p>
             <p className="tnum mt-2 text-3xl font-extrabold">
               {boxStatusCounts
                 ? boxStatusCounts[
@@ -127,7 +127,7 @@ export function ProgressView({
                 )}
               </div>
             ) : (
-              <p className="mt-1 text-sm text-[#68716C]">
+              <p className="mt-1 text-sm text-[#5C6560]">
                 Потерянных вещей нет.
               </p>
             )}
@@ -178,7 +178,7 @@ export function ProgressView({
                   <span className="min-w-0 flex-1 text-xs font-bold">
                     <span className="[overflow-wrap:anywhere]">{name}</span>
                   </span>
-                  <span className="tnum text-xs text-[#68716C]">
+                  <span className="tnum text-xs text-[#5C6560]">
                     {entry.is_loaded
                       ? "Погружено"
                       : `Погружено ${loaded} из ${boxes.length}${entry.to_pack_count ? ` · осталось упаковать ${entry.to_pack_count}` : ""}`}
@@ -230,7 +230,7 @@ export function ProgressView({
           onClose={() => setFoundItem(null)}
         >
           <h2 className="text-xl font-extrabold">Где нашлась вещь?</h2>
-          <p className="mt-2 text-sm text-[#68716C]">
+          <p className="mt-2 text-sm text-[#5C6560]">
             {foundItem.name} · {foundItem.sourceRoom}
           </p>
           <Field label="Место">

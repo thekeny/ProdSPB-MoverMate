@@ -14,7 +14,7 @@ export function BoxTips() {
         <BookOpen className="size-5 text-[#42664D]" />
         <div>
           <h2 className="font-extrabold">Памятка</h2>
-          <p className="mt-1 text-xs text-[#68716C]">
+          <p className="mt-1 text-xs text-[#5C6560]">
             Откройте вопрос, чтобы посмотреть, как лучше сделать.
           </p>
         </div>

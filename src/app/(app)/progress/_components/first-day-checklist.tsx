@@ -118,7 +118,7 @@ export function FirstDayChecklist({
                   {item.name}
                 </strong>
                 {(item.state !== "TAKEN_OUT" || !canEdit) && (
-                  <span className="text-[#68716C]">
+                  <span className="text-[#5C6560]">
                     {item.state === "TAKEN_OUT"
                       ? "На месте"
                       : item.state === "TO_PACK"
@@ -176,7 +176,7 @@ export function FirstDayChecklist({
             );
           })
         ) : (
-          <p className="text-sm text-[#68716C]">
+          <p className="text-sm text-[#5C6560]">
             Добавьте базовый набор или отметьте свои вещи как «Первая
             необходимость».
           </p>

@@ -20,7 +20,7 @@ export function ConfirmDialog({
     <Modal label={title} onClose={onClose} className="max-w-sm">
       <h2 className="pr-10 text-lg font-extrabold">{title}</h2>
       {description && (
-        <p className="mt-2 text-sm text-[#68716C]">{description}</p>
+        <p className="mt-2 text-sm text-[#5C6560]">{description}</p>
       )}
       <div className="mt-5 flex justify-end gap-2">
         <Button variant="ghost" onClick={onClose}>

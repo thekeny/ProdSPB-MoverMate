@@ -22,7 +22,7 @@ export function LostItemSuggestions({
     queryFn: () => unwrap(getItemSuggestions({ path: { item_id: itemId } })),
   });
   return (
-    <div className="basis-full text-xs text-[#68716C]">
+    <div className="basis-full text-xs text-[#5C6560]">
       {query.data?.length ? (
         <div className="flex flex-wrap items-center gap-2">
           <span>Проверьте коробки:</span>
