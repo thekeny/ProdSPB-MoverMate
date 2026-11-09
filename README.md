@@ -13,6 +13,8 @@
 
 6 место на хаке (фронт 9/10 баллов)
 
+**Backend: [github.com/KenykaGit/MoverMate-Backend](https://github.com/KenykaGit/MoverMate-Backend.git)**
+
 ## Быстрый старт
 
 ```sh
